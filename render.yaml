@@ -1,0 +1,22 @@
+# Render Blueprint — New → Blueprint → pick this repo → Apply.
+services:
+  - type: web
+    name: ankurit
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: GEMINI_API_KEY
+        sync: false          # Render asks you to paste it during setup
+      - key: OPENAI_API_KEY  # optional Groq backup — leave empty if not used
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: OPENAI_MODEL
+        value: llama-3.3-70b-versatile
+      - key: RATE_LIMIT_PER_MIN
+        value: "30"
