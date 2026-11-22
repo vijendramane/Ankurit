@@ -9,10 +9,16 @@ var S = {
   cycles: lsGet('cycles', []), store: 'local', uid: null, db: null,
   sample: null, sampleReady: false, imgOk: false, tts: null, dict: null,
   chat: [], scanMode: 'leaf', scanFile: null, scanUrl: null, scanRes: {}, guides: {}, reviews: {}, reco: null,
-  libCat: 'all', libQ: '', cycTab: 'overview', speakingId: null
+  libCat: 'all', libQ: '', cycTab: 'overview', speakingId: null, webSearch: false,
+  news: null, newsBusy: false, newsErr: null, newsCat: 'all', newsLang: 'all', newsShown: 12, newsAI: {},
+  soils: lsGet('soils', []), soilForm: lsGet('soilDraft', {}), soilTab: 'card', soilPlan: null, soilHome: null, soilHomeQ: {}, soilRead: null, openTest: null,
+  exoFit: true, plExotic: true,
+  cimg: lsGet('cimg', {}), gps: lsGet('gps', null), wx: lsGet('wx', null), wxBusy: false, wxErr: null, wxOpen: false, wxAI: null, bigText: lsGet('bigText', false)
 };
 var LANGNAME = {en:'English', hi:'Hindi (हिंदी, Devanagari script)', mr:'Marathi (मराठी, Devanagari script)'};
-var CATCOL = {cereal:'#B7791F', pulse:'#8B5E3C', oil:'#A16207', cash:'#1D6F42', veg:'#2F7D4F', fruit:'#C2410C', spice:'#B45309'};
+var CATCOL = {cereal:'#B7791F', pulse:'#8B5E3C', oil:'#A16207', cash:'#1D6F42', veg:'#2F7D4F', fruit:'#C2410C', spice:'#B45309', exotic:'#9D174D', leafy:'#4D7C0F', flower:'#BE185D', fodder:'#65A30D'};
+var NEWSCOL = {market:'#B45309', weather:'#1F6FB2', schemes:'#7C3AED', advisory:'#2F7D4F', tech:'#0E7490', livestock:'#8B5E3C', success:'#C2410C', other:'#56635B'};
+var NEWSCATS = ['all','market','weather','schemes','advisory','tech','livestock','success','other'];
 var STAGECOL = ['#9BC9A9','#5FAF7B','#E2B33C','#D9920E','#8B5E3C','#6B4D0B'];
 var EXPCATS = ['seed','manure','organic','protection','labour','irrigation','machinery','transport','other'];
 var ACTS = ['prep','sow','irrigate','manure','spray','weed','scout','harvest','scan','other'];
@@ -36,10 +42,13 @@ function fmtDs(d){ return d.getDate() + ' ' + MONTHS[S.lang][d.getMonth()]; }
 function num(n, dp){ var loc = S.lang === 'en' ? 'en-IN' : (S.lang === 'hi' ? 'hi-IN' : 'mr-IN'); try{ return Number(n).toLocaleString(loc, {maximumFractionDigits: dp == null ? 2 : dp}); }catch(e){ return String(n); } }
 function rs(n){ return '₹' + num(Math.round(n), 0); }
 function seasonNow(){ var m = new Date().getMonth() + 1; return (m >= 6 && m <= 9) ? 'kharif' : ((m >= 10 || m <= 1) ? 'rabi' : 'zaid'); }
-function place(){ return S.district ? (S.district + ', ' + S.state) : (S.state || 'India'); }
+function place(){ var g = S.gps && S.gps.en; if(g && g.place) return [g.place, g.taluka && g.taluka !== g.place ? g.taluka + ' taluka' : '', (g.district || S.district) ? (g.district || S.district) + ' district' : '', g.state || S.state].filter(Boolean).join(', '); return S.district ? (S.district + ', ' + S.state) : (S.state || 'India'); }
 function sowText(c){ return c.sow.map(function(m){ return MONTHS[S.lang][m - 1]; }).join(', '); }
 function avgDur(c){ return Math.round((c.d[0] + c.d[1]) / 2); }
 function stagesFor(c, dur){ var set = STAGESETS[c.st]; return set.map(function(s, i){ var start = Math.round(dur * s[1] / 100), end = i < set.length - 1 ? Math.round(dur * set[i + 1][1] / 100) : dur; return {k: s[0], start: start, end: end}; }); }
+function money(n){ n = Math.round(n); if(n >= 100000) return '₹' + num(n / 100000, n >= 1000000 ? 0 : 1) + ' ' + t('lakh'); return rs(n); }
+function moneyR(a, b){ return money(a) + ' – ' + money(b); }
+function ago(ts){ var m = Math.max(0, Math.round((Date.now() - ts) / 60000)); if(m < 2) return t('just_now'); if(m < 60) return t('mins_ago', {n: num(m, 0)}); var h = Math.round(m / 60); if(h < 24) return t('hrs_ago', {n: num(h, 0)}); return t('days_ago_s', {n: num(Math.round(h / 24), 0)}); }
 function stripMd(s){ return String(s).replace(/[#*_`>|]/g, '').replace(/\n{2,}/g, '\n'); }
 
 var ICONS = {
@@ -67,6 +76,21 @@ var ICONS = {
  flask:'M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9V3', user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
  refresh:'M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5', rupee:'M6 3h12M6 8h12M6 13l8.5 8M6 13h3a5 5 0 0 0 0-10',
  sun:'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4',
+ news:'M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9h4M18 14h-8M15 18h-5M10 6h8v4h-8z',
+ globe:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20',
+ layers:'M12 2 2 7l10 5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5', cloud:'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z',
+ cloudsun:'M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.65A4 4 0 0 0 8.5 9.5M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z',
+ rain:'M16 13v8M8 13v8M12 15v8M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25',
+ storm:'M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9M13 11l-4 6h6l-4 6',
+ wind:'M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2',
+ dots:'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM12 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM12 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+ pin:'M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+ gps:'M12 2v3M12 19v3M2 12h3M19 12h3M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+ text:'M4 7V4h16v3M9 20h6M12 4v16',
+ thermo:'M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z',
+ share:'M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',
+ download:'M12 3v12M7 10l5 5 5-5M5 21h14',
+ clock:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
  edit:'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z', pin:'M12 22s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'
 };
 function I(n, cls){ return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (cls ? ' class="' + cls + '"' : '') + '><path d="' + ICONS[n] + '"/></svg>'; }
@@ -94,12 +118,28 @@ function md(src){
 
 /* ---------- capabilities ---------- */
 function use(n){ try{ return (window.ANK && window.ANK[n]) ? Promise.resolve(window.ANK[n]()).catch(function(){ return null; }) : Promise.resolve(null); }catch(e){ return Promise.resolve(null); } }
-function aiMsg(e){ var c = e && e.code; if(c === 'rate_limited') return t('err_rate'); if(c === 'image_rejected' || c === 'images_unavailable') return t('err_img'); if(c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled' || c === 'capability_removed') return t('ai_off'); return t('err'); }
-function aiLangRule(){ return 'Write the ENTIRE answer in ' + LANGNAME[S.lang] + '. Use simple words a farmer understands. Units: acre, guntha, kg, quintal, litre, ₹.'; }
-function ctxRule(){ return 'Farmer location: ' + place() + ', India. Today: ' + fmtD(new Date()) + ' (season: ' + T.en[seasonNow()] + ').'; }
+function aiMsg(e){ var c = e && e.code; if(c === 'busy') return t('err_busy'); if(c === 'upstream_error' && e.message) return t('err') + ' (' + String(e.message).slice(0, 120) + ')'; if(c === 'rate_limited') return t('err_rate'); if(c === 'image_rejected' || c === 'images_unavailable') return t('err_img'); if(c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled' || c === 'capability_removed') return t('ai_off'); return t('err'); }
+/* ---------- AI prompt building blocks ----------
+   One expert persona (system instruction) + context + strict language rule.
+   Every feature adds its own task and output format on top. */
+var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function aiLangRule(){
+  return 'LANGUAGE: Write the ENTIRE answer in ' + LANGNAME[S.lang] + ' — headings, lists and tables too. ' + (S.lang === 'en' ? '' : 'Use the everyday farming words used in ' + (S.lang === 'mr' ? 'Maharashtra (as in Agrowon)' : 'Hindi-speaking villages') + '; you may add the English or technical name in brackets once. ') +
+    'Use short, simple sentences a village farmer understands. Units: acre and guntha (1 acre = 40 guntha), kg, quintal, litre, ₹. For any spray, give the amount per 15-litre knapsack pump AND per acre (about 150–200 litres of spray water per acre).';
+}
+function soilCtx(){
+  var r = S.soils[0]; if(!r) return '';
+  return ' Latest soil test' + (r.plot ? ' (' + r.plot + ')' : '') + ' on ' + r.date + ': ' + soilSummaryEn(r.v, r.pu) + '.';
+}
+function ctxRule(){ var d = new Date(); return 'FARMER CONTEXT: Location ' + place() + ', India. Today is ' + d.getDate() + ' ' + MON_EN[d.getMonth()] + ' ' + d.getFullYear() + '; current season: ' + T.en[seasonNow()] + '.' + soilCtx() + wxCtx(); }
+var EXPERT = 'You are "Ankurit", a senior Indian agronomist (ICAR / state agricultural university background) and natural-farming expert who advises small and marginal farmers.\n' +
+  'ACCURACY: Base every recommendation on ICAR, state agricultural university and Krishi Vigyan Kendra (KVK) package of practices for the farmer\'s region and season. Be specific and practical. If you are not sure, say so plainly instead of guessing. Never invent variety names, brand names, scheme amounts, prices, dates, phone numbers, websites or statistics. Use ranges and words like "about" for yields, costs and doses that vary.\n' +
+  'CROP PROTECTION: Organic and biological options first (Neemastra, Dashparni, neem oil 1500 ppm, Trichoderma, Pseudomonas, Beauveria, Metarhizium, pheromone/sticky traps, cultural control, field sanitation). When a chemical is truly needed, name only the CIB&RC-registered active ingredient (never brand names), tell the farmer to follow the label dose (give a typical dose only if you are confident it is the label dose), and always mention protective clothing, spraying in calm morning/evening hours and the waiting period before harvest. Never suggest banned or highly hazardous pesticides, and never suggest mixing many chemicals together.\n' +
+  'SAFETY: For poisoning, human/animal health or a severe crop loss, tell the farmer to contact a doctor/vet, the local KVK or the Kisan Call Centre 1800-180-1551.';
+function sysPrompt(extra){ return EXPERT + '\n' + ctxRule() + '\n' + aiLangRule() + (extra ? '\n' + extra : ''); }
 
 function initCaps(){
-  use('sample').then(function(s){ S.sample = s; S.sampleReady = true; if(s && s.limits){ s.limits().then(function(l){ S.imgOk = !!(l && l.images); refreshAI(); }).catch(function(){ refreshAI(); }); } else refreshAI(); });
+  use('sample').then(function(s){ S.sample = s; S.sampleReady = true; if(s && s.status){ s.status().then(function(x){ S.webSearch = !!(x && x.webSearch); }); } if(s && s.limits){ s.limits().then(function(l){ S.imgOk = !!(l && l.images); refreshAI(); }).catch(function(){ refreshAI(); }); } else refreshAI(); });
   use('tts').then(function(x){ S.tts = x; });
   use('dictation').then(function(x){ S.dict = x; refreshAI(); });
   Promise.all([use('db'), use('user')]).then(function(r){
@@ -127,7 +167,7 @@ function initCaps(){
     });
   });
 }
-function refreshAI(){ if(['crop','planner','scan','ai','cycle'].indexOf(route().v) > -1) softRender(); }
+function refreshAI(){ if(['crop','planner','scan','ai','cycle','soil','news'].indexOf(route().v) > -1) softRender(); }
 
 /* ---------- storage ---------- */
 var wq = {};
@@ -174,28 +214,33 @@ function buildTasks(){
 function route(){ var h = (location.hash || '#home').slice(1); var m;
   if((m = h.match(/^crop-([a-z]+)$/))) return {v:'crop', id:m[1]};
   if((m = h.match(/^cycle-(c-[a-z0-9]+)$/))) return {v:'cycle', id:m[1]};
-  if(['home','crops','planner','scan','farm','organic','ai'].indexOf(h) > -1) return {v:h};
+  if(h === 'exotic'){ S.libCat = 'exotic'; return {v:'crops'}; }
+  if(['home','crops','planner','scan','farm','organic','ai','news','soil','weather'].indexOf(h) > -1) return {v:h};
   return {v:'home'};
 }
-var NAV = [['home','home','nav_home'],['crops','book','nav_crops'],['planner','map','nav_planner'],['scan','scan','nav_scan'],['farm','sprout','nav_farm'],['organic','jar','nav_organic'],['ai','chat','nav_ai']];
+var NAV = [['home','home','nav_home'],['farm','sprout','nav_farm'],['crops','book','nav_crops'],['news','news','nav_news'],['weather','cloudsun','nav_wx'],'-',['scan','scan','t_doctor'],['soil','layers','nav_soil'],['planner','map','nav_planner'],['organic','jar','nav_organic'],['ai','chat','nav_ai']];
 function navKey(v){ return v === 'crop' ? 'crops' : (v === 'cycle' ? 'farm' : v); }
 
 /* ---------- shell ---------- */
 function shell(){
   var r = route(), nk = navKey(r.v);
   var side = '<aside class="side" aria-label="' + esc(t('app')) + '"><a class="logo" href="#home"><span class="mk">' + MARK + '</span><span><b>' + esc(t('app')) + '</b><small>' + esc(t('tagline')) + '</small></span></a><nav class="snav">' +
-    NAV.map(function(n, i){ return (i === 3 ? '<div class="sep"></div>' : '') + '<a href="#' + n[0] + '" class="' + (nk === n[0] ? 'on' : '') + '"' + (nk === n[0] ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') +
+    NAV.map(function(n){ if(n === '-') return '<div class="sep"></div>'; return '<a href="#' + n[0] + '" class="' + (nk === n[0] ? 'on' : '') + '"' + (nk === n[0] ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') +
     '</nav><div class="foot"><b>' + esc(t('helpline')) + '</b><a href="tel:18001801551" style="color:#4D3706;font-weight:700;text-decoration:none">1800-180-1551</a></div></aside>';
-  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('nav_organic'), ai:t('ai_h')};
+  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('nav_organic'), ai:t('ai_h'), news:t('news_h'), soil:t('soil_h'), weather:t('wx_h')};
   var top = '<header class="top" id="top"><div class="ttl">' + esc(titles[r.v]) + '</div><a class="logo mlogo" href="#home" style="padding:0"><span class="mk" style="width:36px;height:36px;border-radius:11px">' + MARK + '</span><span><b style="font-size:19px">' + esc(t('app')) + '</b></span></a>' +
-    '<div class="lang" role="group" aria-label="' + esc(t('language')) + '">' + [['mr','मरा'],['hi','हिं'],['en','EN']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div></header>';
-  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['scan','camera','nav_scan'],['farm','sprout','nav_farm'],['ai','chat','nav_ai']];
-  var bnav = '<nav class="bnav" aria-label="Main">' + bn.map(function(n){ var on = nk === n[0]; if(n[0] === 'scan') return '<a href="#scan" class="scan' + (on ? ' on' : '') + '"><span class="sc">' + I('camera') + '</span><span>' + esc(t(n[2])) + '</span></a>'; return '<a href="#' + n[0] + '" class="' + (on ? 'on' : '') + '">' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') + '</nav>';
+    '<div class="topr"><div class="lang" role="group" aria-label="' + esc(t('language')) + '">' + [['mr','मरा'],['hi','हिं'],['en','EN']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div><button type="button" class="kebab" data-act="menu" aria-label="' + esc(t('menu')) + '" title="' + esc(t('menu')) + '">' + I('dots') + '</button></div></header>';
+  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['farm','sprout','nav_farm'],['news','news','nav_news'],['ai','chat','nav_ai']];
+  var bnav = '<nav class="bnav" aria-label="Main">' + bn.map(function(n){ var on = nk === n[0]; if(n[0] === 'farm') return '<a href="#farm" class="mid' + (on ? ' on' : '') + '"' + (on ? ' aria-current="page"' : '') + '><span class="sc">' + I('sprout') + '</span><span>' + esc(t(n[2])) + '</span></a>'; return '<a href="#' + n[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') + '</nav>';
   return '<div class="app">' + side + '<div class="main">' + top + '<main class="view" id="view"></main></div></div>' + bnav;
 }
 
 /* ---------- views ---------- */
-function cropDot(c, big){ return '<span class="' + (big ? 'cbig' : 'cdot') + '" style="background:' + CATCOL[c.cat] + '" aria-hidden="true">' + esc(first(L(c.n))) + '</span>'; }
+function cropImg(c){ return S.cimg && S.cimg[c.id] ? S.cimg[c.id] : ''; }
+function imgTag(src, cls){ return '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"' + (cls ? ' class="' + cls + '"' : '') + ' onerror="this.remove()">'; }
+function cropDot(c, big){ var src = cropImg(c); return '<span class="' + (big ? 'cbig' : 'cdot') + '" style="background:' + CATCOL[c.cat] + '" aria-hidden="true">' + esc(first(L(c.n))) + (src ? imgTag(src) : '') + '</span>'; }
+function cropPhoto(c){ var src = cropImg(c); return '<div class="cph" style="background:' + CATCOL[c.cat] + '"><span>' + esc(first(L(c.n))) + '</span>' + (src ? imgTag(src) : '') + '</div>'; }
+function loadCropImgs(){ fetch('/api/cropimgs').then(function(r){ return r.ok ? r.json() : {}; }).then(function(m){ if(m && Object.keys(m).length){ var changed = JSON.stringify(m) !== JSON.stringify(S.cimg); S.cimg = m; lsSet('cimg', m); if(changed) softRender(); } }).catch(function(){}); }
 function locBox(){
   var ds = DISTRICTS[S.state];
   return '<div class="loc"><span class="lbl">' + esc(t('location')) + '</span>' +
@@ -206,11 +251,16 @@ function locBox(){
 var HEROART = '<svg class="art" viewBox="0 120 520 140" preserveAspectRatio="none" aria-hidden="true"><path d="M0 200 C120 150 220 170 320 150 S480 120 520 130 V260 H0Z" fill="#2F8F57" opacity=".55"/><path d="M0 230 C140 190 260 210 360 190 S500 180 520 185 V260 H0Z" fill="#1D6F42"/><g stroke="#5FAF7B" stroke-width="3" stroke-linecap="round" opacity=".7"><path d="M60 250 C160 220 260 228 360 212"/><path d="M40 262 C150 236 270 242 400 226"/><path d="M120 262 C220 246 330 248 470 236"/></g><g fill="#9BC9A9" opacity=".85"><path d="M300 168c0-10 6-17 16-18-1 10-7 16-16 18z"/><path d="M300 172c0-9-6-15-15-16 1 9 6 15 15 16z"/><path d="M340 160c0-8 5-14 13-15-1 8-6 13-13 15z"/></g></svg>';
 
 function vHome(){
-  var se = seasonNow(), sc = CROPS.filter(function(c){ return c.s.indexOf(se) > -1; });
+  var se = seasonNow(), sc = CROPS.filter(function(c){ return c.s.indexOf(se) > -1 && c.cat !== 'exotic' && c.s.indexOf('perennial') < 0; });
   var tasks = buildTasks();
-  var tiles = [['scan','leaf','g','t_doctor','t_doctor_d',1,'leaf'],['scan','bug','r','t_pest','t_pest_d',1,'insect'],['farm','sprout','s','t_farm','t_farm_d',0],['ai','chat','b','t_ai','t_ai_d',1],['crops','book','g','t_lib','t_lib_d',0],['planner','map','o','t_planner','t_planner_d',1],['organic','jar','s','t_organic','t_organic_d',0]];
-  var h = '<section class="hero"><div style="position:relative"><span class="seasonpill">' + I('sun') + '<span>' + esc(t('season_now')) + '</span><b>' + esc(t(se)) + '</b></span><h1 style="margin-top:16px">' + esc(t('greet')) + '!</h1><p>' + esc(t('greet_sub')) + '</p><div class="row wrap"><a class="btn" style="background:#fff;color:var(--g2)" href="#scan">' + I('camera') + esc(t('t_doctor')) + '</a><a class="btn" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)" href="#ai">' + I('chat') + esc(t('t_ai')) + '</a></div></div>' + locBox() + HEROART + '</section>';
-  h += '<div class="tiles">' + tiles.map(function(x){ return '<a class="tile" href="#' + x[0] + '"' + (x[6] ? ' data-act="scanmode" data-v="' + x[6] + '"' : '') + '><span class="ico ' + x[2] + '">' + I(x[1]) + '</span><b>' + esc(t(x[3])) + (x[5] ? ' <span class="ai-dot">AI</span>' : '') + '</b><span class="d">' + esc(t(x[4], {n: CROPS.length})) + '</span></a>'; }).join('') + '</div>';
+  /* [route, icon, colour, title, desc, AI?] */
+  var tiles = [['scan','scan','g','t_doctor','t_doctor_d',1],['soil','layers','o','t_soil','t_soil_d',1],['farm','sprout','s','t_farm','t_farm_d',0],
+    ['weather','cloudsun','b','t_wx','t_wx_d',0],['news','news','b','t_news','t_news_d',0],['ai','chat','b','t_ai','t_ai_d',1],
+    ['crops','book','g','t_lib','t_lib_d',0],['planner','map','o','t_planner','t_planner_d',1],['organic','jar','s','t_organic','t_organic_d',0]];
+  var h = '<section class="hero"><div style="position:relative;z-index:1">' + wxWidget(se) + '<h1 style="margin-top:16px">' + esc(t('greet')) + '!</h1><p>' + esc(t('greet_sub')) + '</p><div class="row wrap"><a class="btn" style="background:#fff;color:var(--g2)" href="#scan">' + I('camera') + esc(t('t_doctor')) + '</a><a class="btn" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)" href="#ai">' + I('chat') + esc(t('t_ai')) + '</a></div></div>' + HEROART + '</section>';
+  if(S.wxOpen) h += '<div id="wxpanel" class="wxpanel">' + wxDetail(true) + '</div>';
+  h += '<div class="tiles">' + tiles.map(function(x, i){ return '<a class="tile' + (i === 0 ? ' feat' : '') + '" href="#' + x[0] + '"><span class="ico ' + x[2] + '">' + I(x[1]) + '</span><b>' + esc(t(x[3])) + (x[5] ? ' <span class="ai-dot">AI</span>' : '') + '</b><span class="d">' + esc(t(x[4], {n: CROPS.length})) + '</span></a>'; }).join('') + '</div>';
+  h += '<div class="h-sec"><h2>' + esc(t('latest_news')) + '</h2><a href="#news">' + esc(t('see_all')) + ' →</a></div><div id="homenews">' + homeNews() + '</div>';
   h += '<div class="h-sec"><h2>' + esc(t('crops_season')) + ' · ' + esc(t(se)) + '</h2><a href="#crops" data-act="libseason" data-v="' + se + '">' + esc(t('see_all')) + ' →</a></div><p class="mu sm" style="margin:-8px 0 12px">' + esc(t('season_' + se + '_d')) + '</p><div class="cropstrip">' + sc.map(function(c){ return '<a class="cmini" href="#crop-' + c.id + '">' + cropDot(c) + esc(L(c.n)) + '</a>'; }).join('') + '</div>';
   h += '<div class="grid g2" style="margin-top:26px;align-items:start"><div><div class="h-sec" style="margin-top:0"><h2>' + esc(t('tasks')) + '</h2><a href="#farm">' + esc(t('nav_farm')) + ' →</a></div><div class="card tasks">' +
     (tasks.length ? tasks.map(function(k){ return '<a class="task" href="#cycle-' + k.cid + '" style="text-decoration:none;color:inherit"><span class="when' + (k.dd === 0 ? ' today' : '') + '"><b>' + k.d.getDate() + '</b><small>' + esc(MONTHS[S.lang][k.d.getMonth()]) + '</small></span><span class="tx"><b>' + esc(k.title) + '</b><span>' + esc(k.sub) + ' · ' + esc(k.dd === 0 ? t('today') : t('in_days', {n: k.dd})) + '</span></span></a>'; }).join('')
@@ -219,29 +269,33 @@ function vHome(){
     '<div class="card"><div class="pad" style="padding-bottom:6px"><h2 style="font-size:18px">' + esc(t('links')) + '</h2></div><div class="linkrow"><a href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + esc(t('link_mandi')) + I('ext') + '</a><a href="https://enam.gov.in" target="_blank" rel="noopener">' + esc(t('link_enam')) + I('ext') + '</a><a href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + esc(t('link_shc')) + I('ext') + '</a></div></div></div></div>';
   return h;
 }
-
 function vCrops(){
-  var cats = ['all','cereal','pulse','oil','cash','veg','fruit','spice'];
-  var q = S.libQ.toLowerCase();
-  var list = CROPS.filter(function(c){ return (S.libCat === 'all' || c.cat === S.libCat || c.s.indexOf(S.libCat) > -1) && (!q || (c.n.en + ' ' + c.n.hi + ' ' + c.n.mr).toLowerCase().indexOf(q) > -1); });
+  var cats = ['all','cereal','pulse','oil','veg','leafy','fruit','spice','cash','flower','fodder','exotic'];
+  var list = libList();
   var h = '<div class="ph"><h1>' + esc(t('t_lib')) + '</h1><p>' + esc(t('t_lib_d', {n: CROPS.length})) + '</p></div>';
   h += '<div class="toolbar"><div class="search">' + I('search') + '<input class="inp" type="search" data-act="libq" value="' + esc(S.libQ) + '" placeholder="' + esc(t('search_crops')) + '" aria-label="' + esc(t('search_crops')) + '"></div></div>';
   h += '<div class="chips" role="group" style="margin-bottom:18px">' + cats.concat(['kharif','rabi','zaid']).map(function(c){ return '<button type="button" data-act="libcat" data-v="' + c + '" aria-pressed="' + (S.libCat === c) + '">' + esc(c === 'all' ? t('all') : (['kharif','rabi','zaid'].indexOf(c) > -1 ? t(c) : t('cat_' + c))) + '</button>'; }).join('') + '</div>';
   h += '<div class="cgrid" id="cgrid">' + cropCards(list) + '</div>';
   return h;
 }
+function fitChip(c){ var f = exoticFit(c, S.state); return '<span class="chip ' + (f === 'good' ? 'g' : (f === 'ok' ? 's' : '')) + '">' + I(f === 'good' ? 'check' : (f === 'ok' ? 'info' : 'x')).replace('<svg', '<svg width="14" height="14" stroke="currentColor"') + esc(t('fit_' + f, {state: S.state})) + '</span>'; }
+function libList(){ var q = S.libQ.toLowerCase(); var list = CROPS.filter(function(c){ return (S.libCat === 'all' || c.cat === S.libCat || c.s.indexOf(S.libCat) > -1) && (!q || (c.n.en + ' ' + c.n.hi + ' ' + c.n.mr).toLowerCase().indexOf(q) > -1); });
+  if(S.libCat === 'exotic'){ var o = {good: 0, ok: 1, no: 2}; list.sort(function(a, b){ return o[exoticFit(a, S.state)] - o[exoticFit(b, S.state)]; }); }
+  return list; }
 function cropCards(list){
   if(!list.length) return '<div class="empty" style="grid-column:1/-1">—</div>';
   return list.map(function(c){ var alt = S.lang === 'en' ? c.n.mr + ' · ' + c.n.hi : c.n.en;
-    return '<a class="ccard" href="#crop-' + c.id + '"><div class="hd">' + cropDot(c, true) + '<div><h3>' + esc(L(c.n)) + '</h3><div class="alt">' + esc(alt) + '</div></div></div><div class="meta">' + c.s.map(function(s){ return '<span class="chip g">' + esc(t(s)) + '</span>'; }).join('') + '<span class="chip">' + c.d[0] + '–' + c.d[1] + ' ' + esc(t('days')) + '</span><span class="chip b">' + I('drop', '') .replace('<svg', '<svg width="14" height="14" stroke="currentColor"') + esc(t(c.w)) + '</span></div></a>'; }).join('');
+    return '<a class="ccard" href="#crop-' + c.id + '">' + cropPhoto(c) + '<div class="hd"><div><h3>' + esc(L(c.n)) + '</h3><div class="alt">' + esc(alt) + '</div></div></div><div class="meta">' + (c.x ? fitChip(c) : '') + c.s.map(function(s){ return '<span class="chip g">' + esc(t(s)) + '</span>'; }).join('') + '<span class="chip">' + c.d[0] + '–' + c.d[1] + ' ' + esc(t('days')) + '</span><span class="chip b">' + I('drop', '') .replace('<svg', '<svg width="14" height="14" stroke="currentColor"') + esc(t(c.w)) + '</span></div></a>'; }).join('');
 }
 
 function vCrop(id){
   var c = crop(id); if(!c) return vCrops();
   var dur = avgDur(c), st = stagesFor(c, dur), key = c.id + '|' + S.lang + '|' + place();
   var h = '<div class="dhead"><a class="btn bs bsm" href="#crops">' + I('arrowl') + esc(t('back')) + '</a></div>';
+  if(cropImg(c)) h += '<div class="cbanner">' + imgTag(cropImg(c)) + '</div>';
   h += '<div class="dhead" style="margin-top:0">' + cropDot(c, true) + '<div style="flex:1;min-width:200px"><h1>' + esc(L(c.n)) + '</h1><div class="mu">' + esc(S.lang === 'en' ? c.n.mr + ' · ' + c.n.hi : c.n.en) + ' · ' + esc(t('cat_' + c.cat)) + '</div></div><button class="btn bp" data-act="newcycle" data-v="' + c.id + '">' + I('plus') + esc(t('start_track')) + '</button></div>';
   h += '<div class="facts">' + [['season', c.s.map(function(s){ return t(s); }).join(', ')], ['duration', c.d[0] + '–' + c.d[1] + ' ' + t('days')], ['sowing', sowText(c)], ['soil', c.soil.map(function(s){ return t('soil_' + s); }).join(', ')], ['water', t(c.w)], ['temp', c.t]].map(function(f){ return '<div class="fact"><small>' + esc(t(f[0])) + '</small><b>' + esc(f[1]) + '</b></div>'; }).join('') + '</div>';
+  if(c.x) h += exoEcon(c);
   h += '<div class="card pad" style="margin-top:16px"><h2 style="font-size:19px">' + esc(t('stages')) + '</h2><div class="stagebar">' + st.map(function(s, i){ return '<i style="flex:' + Math.max(1, s.end - s.start) + ';background:' + STAGECOL[i] + '"></i>'; }).join('') + '</div><div class="stagelist">' + st.map(function(s, i){ return '<div><i style="background:' + STAGECOL[i] + '"></i><span>' + esc(t('st_' + s.k)) + '<small>' + esc(t('day_n', {n: s.start + 1})) + ' – ' + s.end + '</small></span></div>'; }).join('') + '</div><p class="xs mu2" style="margin:12px 0 0">' + esc(t('approx')) + '</p></div>';
   h += '<div class="grid g2" style="margin-top:16px"><div class="card pad"><h2 style="font-size:19px;margin-bottom:12px;display:flex;gap:8px;align-items:center"><span class="ico r" style="width:36px;height:36px;border-radius:10px">' + I('bug') + '</span>' + esc(t('pests')) + '</h2><div class="row wrap" style="gap:8px">' + c.p.map(function(p){ return '<span class="chip r">' + esc(L(PESTS[p])) + '</span>'; }).join('') + '</div><h2 style="font-size:19px;margin:20px 0 12px;display:flex;gap:8px;align-items:center"><span class="ico s" style="width:36px;height:36px;border-radius:10px">' + I('alert') + '</span>' + esc(t('diseases')) + '</h2><div class="row wrap" style="gap:8px">' + c.ds.map(function(d){ return '<span class="chip s">' + esc(L(DISEASES[d])) + '</span>'; }).join('') + '</div><div class="row wrap" style="margin-top:18px"><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="leaf">' + I('leaf') + esc(t('t_doctor')) + '</a><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="insect">' + I('bug') + esc(t('t_pest')) + '</a></div></div>';
   h += '<div class="card pad"><h2 style="font-size:19px;margin-bottom:14px;display:flex;gap:8px;align-items:center"><span class="ico g" style="width:36px;height:36px;border-radius:10px">' + I('leaf') + '</span>' + esc(t('organic_plan')) + '</h2><ul class="ulist">' + ['op1','op2','op3','op4','op5','op6','op7'].map(function(k){ return '<li>' + I('check') + '<span>' + esc(t(k)) + '</span></li>'; }).join('') + '</ul><a class="btn bg bsm" style="margin-top:12px;padding-left:0" href="#organic">' + esc(t('t_organic')) + ' →</a></div></div>';
@@ -253,18 +307,36 @@ function aiButtons(kind, id, g){
   if(S.sampleReady && !S.sample) return '<div class="note" style="max-width:360px">' + I('info') + esc(t('ai_off')) + '</div>';
   if(g && g.busy) return '<button class="btn bs" data-act="ai-stop" data-k="' + kind + '">' + I('stop') + esc(t('stop_gen')) + '</button>';
   var lbl = kind === 'guide' ? (g && g.text ? t('regen') : t('gen_guide')) : t('get_review');
-  return '<div class="row">' + (g && g.text ? speakBtn(kind + id) : '') + '<button class="btn bp" data-act="' + kind + '" data-v="' + id + '"' + (S.sampleReady ? '' : ' disabled') + '>' + I(g && g.text ? 'refresh' : 'spark') + esc(lbl) + '</button></div>';
+  return '<div class="row wrap">' + (g && g.text ? speakBtn(kind + id) : '') + '<button class="btn bp" data-act="' + kind + '" data-v="' + id + '"' + (S.sampleReady ? '' : ' disabled') + '>' + I(g && g.text ? 'refresh' : 'spark') + esc(lbl) + '</button></div>';
 }
-function speakBtn(sid){ if(!S.tts) return ''; var on = S.speakingId === sid; return '<button class="btn bs bsm" data-act="speak" data-v="' + sid + '">' + I(on ? 'stop' : 'vol') + esc(on ? t('stop') : t('listen')) + '</button>'; }
+function speakBtn(sid){ var on = S.speakingId === sid; return (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="' + sid + '">' + I(on ? 'stop' : 'vol') + esc(on ? t('stop') : t('listen')) + '</button>' : '') + (sid.indexOf('chat') === 0 ? '' : dlBtn(sid)); }
 
 var ctl = {};
+function exoFacts(c){
+  if(!c || !c.x) return '';
+  var x = c.x, u = x.yu === 'bag' ? ' per 100 bags' : ' per acre';
+  return 'App reference ranges (approximate): yield ' + x.yld[0] + '–' + x.yld[1] + ' kg' + u + ' at full bearing; farm-gate price ₹' + x.price[0] + '–' + x.price[1] + '/kg; first-year cost ₹' + x.inv[0] + '–' + x.inv[1] + u + '; first income after about ' + x.first + ' months; grown in: ' + T.en['prot_' + x.prot] + '. Suitability for ' + S.state + ': ' + {good: 'grown well here', ok: 'possible only with care (hill pockets / shade net / polyhouse / special varieties)', no: 'not suitable here'}[exoticFit(c, S.state)] + '.';
+}
 function runGuide(id){
-  var c = crop(id), key = c.id + '|' + S.lang + '|' + place(), regen = !!(S.guides[key] && S.guides[key].text);
-  var prompt = 'You are an experienced Indian agronomist and natural-farming advisor. Write a complete, practical crop guide for ' + c.n.en + ' (' + c.n.hi + ' / ' + c.n.mr + ').\n' + ctxRule() + '\n' + aiLangRule() + '\n' +
-    'Use Markdown with these ## sections, each short and actionable:\n1. Best season and sowing window for this area\n2. Suitable varieties (only name well-known released varieties you are confident about; tell the farmer to confirm locally)\n3. Land preparation and soil\n4. Seed rate, spacing and seed treatment (Beejamrut/biological first)\n5. Nutrient plan — organic first (FYM/compost, Ghanjeevamrut, Jeevamrut, biofertilizers); then the general chemical recommendation as a reference\n6. Irrigation by crop stage\n7. Weed management\n8. Major pests and diseases: symptoms, organic control, and when to escalate\n9. Harvest, typical yield range per acre, storage\n10. Ways to cut cost and raise profit\nGive ranges and say "approximately" instead of exact claims. Do not invent statistics. End with one line advising to confirm with the local Krishi Vigyan Kendra.';
+  var c = crop(id), key = c.id + '|' + S.lang + '|' + place(), regen = !!(S.guides[key] && S.guides[key].text), exo = c.cat === 'exotic';
+  var prompt = 'TASK: Write a complete, practical cultivation guide for ' + c.n.en + ' (' + c.n.hi + ' / ' + c.n.mr + ') for this farmer\'s district (' + place() + ').\n' +
+    (exo ? 'This is a high-value / foreign crop. ' + exoFacts(c) + ' If it does not suit this location, say so clearly at the start and suggest what would make it possible.\n' : '') +
+    'Use Markdown with these ## sections. Keep each section short, with bullet points and numbers:\n' +
+    '1. Is it right for my area? (climate, soil, water and the best sowing / planting window here)\n' +
+    '2. Varieties (only well-known released varieties or types you are sure about for this region; ask the farmer to confirm at the KVK / agricultural university)\n' +
+    '3. Land preparation and soil\n' +
+    '4. Seed or plants: rate per acre, spacing, seed / seedling treatment (Beejamrut, Trichoderma, biofertilizers first)\n' +
+    '5. Nutrient plan: organic first (FYM/compost per acre, Ghanjeevamrut, Jeevamrut schedule, biofertilizers), then the general recommended N-P-K dose per acre as a reference, split by stage' + (S.soils[0] ? ', adjusted to the soil test in the context' : '') + '\n' +
+    '6. Irrigation by crop stage, and the critical stages that must not miss water\n' +
+    '7. Weed management\n' +
+    '8. Major pests and diseases as a Markdown table: Problem | Signs | Organic control | When to escalate\n' +
+    '9. Harvest: signs of maturity, typical yield range per acre, grading and storage\n' +
+    (exo ? '10. Market, investment and risks: who buys and how to sell, approximate first-year cost per acre, subsidy schemes by name only (e.g. MIDH/NHM — no amounts unless sure), main risks and how to start small\n11. Ways to cut cost and raise profit\n'
+         : '10. Ways to cut cost and raise profit (intercropping, value addition, selling tips)\n') +
+    'End with one line advising to confirm locally with the KVK or agriculture officer.';
   S.guides[key] = {text: '', busy: true}; softRender();
   ctl.guide = new AbortController();
-  S.sample(prompt, {signal: ctl.guide.signal, cache: regen ? {gcTime: 86400000, refresh: true} : {gcTime: 86400000}, onText: function(u){ S.guides[key].text = u.text; patchGuide(key); }})
+  S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.guide.signal, cache: regen ? {gcTime: 86400000, refresh: true} : {gcTime: 86400000}, onText: function(u){ S.guides[key].text = u.text; patchGuide(key); }})
    .then(function(r){ S.guides[key] = {text: r.text}; softRender(); })
    .catch(function(e){ var g = S.guides[key]; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
@@ -278,13 +350,13 @@ function vPlanner(){
     '<label class="f">' + esc(t('state')) + '<select class="inp" data-act="state">' + STATES.map(function(s){ return '<option' + (s === S.state ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label>' +
     '<label class="f">' + esc(t('district')) + (DISTRICTS[S.state] ? '<select class="inp" data-act="district"><option value="">' + esc(t('select')) + '</option>' + DISTRICTS[S.state].map(function(d){ return '<option' + (d === S.district ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') + '</select>' : '<input class="inp" data-act="district-t" value="' + esc(S.district) + '" placeholder="' + esc(t('type_district')) + '">') + '</label>' +
     '<label class="f">' + esc(t('season')) + '<select class="inp" data-act="plseason">' + ['kharif','rabi','zaid'].map(function(s){ return '<option value="' + s + '"' + (s === se ? ' selected' : '') + '>' + esc(t(s)) + '</option>'; }).join('') + '</select></label></div>' +
-    '<div class="row wrap" style="margin-top:16px;justify-content:space-between"><div><div class="sm mu" style="margin-bottom:6px;font-weight:500">' + esc(t('land')) + '</div><div class="seg" role="group">' + [['low','irr_rainfed'],['medium','irr_sprinkler'],['high','irr_flood']].map(function(x){ return '<button type="button" data-act="plwater" data-v="' + x[0] + '" aria-pressed="' + (w === x[0]) + '">' + esc(t(x[0])) + '</button>'; }).join('') + '</div></div>' +
+    '<div class="row wrap" style="margin-top:16px;justify-content:space-between"><div><div class="sm mu" style="margin-bottom:6px;font-weight:500">' + esc(t('land')) + '</div><div class="seg" role="group">' + [['low','irr_rainfed'],['medium','irr_sprinkler'],['high','irr_flood']].map(function(x){ return '<button type="button" data-act="plwater" data-v="' + x[0] + '" aria-pressed="' + (w === x[0]) + '">' + esc(t(x[0])) + '</button>'; }).join('') + '</div><label class="check" style="margin-top:12px"><input type="checkbox" data-act="plexotic"' + (S.plExotic ? ' checked' : '') + '><span>' + esc(t('planner_exotic')) + '</span></label></div>' +
     (S.sampleReady && !S.sample ? '<div class="note">' + I('info') + esc(t('ai_off')) + '</div>' : '<button class="btn bp" data-act="reco"' + ((S.reco && S.reco.busy) || !S.sampleReady ? ' disabled' : '') + '>' + I('spark') + esc(t('get_reco')) + '</button>') + '</div></div>';
   var r = S.reco;
   if(r && r.busy) h += '<div class="card pad" style="margin-top:16px"><div class="load"><span class="spin"></span>' + esc(t('thinking')) + '</div></div>';
   if(r && r.err) h += '<div class="note r" style="margin-top:16px">' + I('alert') + esc(r.err) + '</div>';
   if(r && r.data && r.data.crops){
-    h += '<div class="h-sec"><h2>' + esc(place()) + ' · ' + esc(t(r.season)) + '</h2></div><div class="grid g2">' + r.data.crops.map(function(x, i){ var c = crop(String(x.id || '')); return '<div class="card pad" style="display:flex;flex-direction:column;gap:10px"><div class="row"><span class="cbig" style="background:' + (c ? CATCOL[c.cat] : '#2F7D4F') + ';width:44px;height:44px;font-size:18px">' + (i + 1) + '</span><div style="flex:1"><h3 style="font-size:19px">' + esc(x.name) + '</h3><div class="row wrap" style="gap:6px;margin-top:4px">' + (x.duration ? '<span class="chip">' + esc(x.duration) + '</span>' : '') + (x.water ? '<span class="chip b">' + esc(t(String(x.water)) ) + '</span>' : '') + '</div></div></div><p style="margin:0"><b>' + esc(t('reco_why')) + ':</b> ' + esc(x.why) + '</p>' + (x.tip ? '<p class="sm" style="margin:0;color:var(--g2);background:var(--gl);padding:10px 12px;border-radius:10px"><b>' + esc(t('reco_tip')) + ':</b> ' + esc(x.tip) + '</p>' : '') + (c ? '<a class="btn bg bsm" style="align-self:flex-start;padding-left:0" href="#crop-' + c.id + '">' + esc(t('t_lib')) + ' →</a>' : '') + '</div>'; }).join('') + '</div>' + (r.data.note ? '<div class="note g" style="margin-top:14px">' + I('info') + esc(r.data.note) + '</div>' : '') + '<p class="xs mu2" style="margin-top:12px">' + esc(t('disclaimer')) + '</p>';
+    h += '<div class="h-sec"><h2>' + esc(place()) + ' · ' + esc(t(r.season)) + '</h2>' + dlBtn('reco') + '</div><div class="grid g2">' + r.data.crops.map(function(x, i){ var c = crop(String(x.id || '')); return '<div class="card pad" style="display:flex;flex-direction:column;gap:10px"><div class="row"><span class="cbig" style="background:' + (c ? CATCOL[c.cat] : '#2F7D4F') + ';width:44px;height:44px;font-size:18px">' + (i + 1) + '</span><div style="flex:1"><h3 style="font-size:19px">' + esc(x.name) + '</h3><div class="row wrap" style="gap:6px;margin-top:4px">' + (x.duration ? '<span class="chip">' + esc(x.duration) + '</span>' : '') + (x.water ? '<span class="chip b">' + esc(t('water')) + ': ' + esc(t(String(x.water))) + '</span>' : '') + (x.profit ? '<span class="chip g">' + esc(t('profit')) + ': ' + esc(lvlT(x.profit)) + '</span>' : '') + (x.risk ? '<span class="chip ' + (lvl(x.risk) === 'h' ? 'r' : 's') + '">' + esc(t('risk')) + ': ' + esc(lvlT(x.risk)) + '</span>' : '') + (c && c.cat === 'exotic' ? '<span class="chip x">' + esc(t('cat_exotic')) + '</span>' : '') + '</div></div></div><p style="margin:0"><b>' + esc(t('reco_why')) + ':</b> ' + esc(x.why) + '</p>' + (x.tip ? '<p class="sm" style="margin:0;color:var(--g2);background:var(--gl);padding:10px 12px;border-radius:10px"><b>' + esc(t('reco_tip')) + ':</b> ' + esc(x.tip) + '</p>' : '') + (c ? '<a class="btn bg bsm" style="align-self:flex-start;padding-left:0" href="#crop-' + c.id + '">' + esc(t('t_lib')) + ' →</a>' : '') + '</div>'; }).join('') + '</div>' + (r.data.note ? '<div class="note g" style="margin-top:14px">' + I('info') + esc(r.data.note) + '</div>' : '') + '<p class="xs mu2" style="margin-top:12px">' + esc(t('disclaimer')) + '</p>';
   }
   var stat = CROPS.filter(function(c){ return c.s.indexOf(se) > -1; });
   h += '<div class="h-sec"><h2>' + esc(t('reco_static', {s: t(se)})) + '</h2></div><div class="cgrid">' + cropCards(stat) + '</div>';
@@ -293,69 +365,72 @@ function vPlanner(){
 function runReco(){
   var se = S.plSeason || seasonNow(), w = S.plWater || 'medium';
   S.reco = {busy: true, season: se}; softRender();
-  var ids = CROPS.map(function(c){ return c.id + '=' + c.n.en; }).join(', ');
-  var prompt = 'You are an Indian agronomist. Recommend the 6 most suitable crops for a farmer.\n' + ctxRule() + '\nTarget season: ' + T.en[se] + '. Water availability: ' + w + ' (low = rainfed, medium = limited irrigation, high = assured irrigation).\nConsider the typical soil, rainfall and markets of this district. Prefer profitable, low-risk options and mention intercropping where useful.\n' + aiLangRule() + '\nReply with ONLY JSON: {"crops":[{"id":"<id from this list or empty>","name":"<crop name in the answer language>","why":"<1-2 sentences>","duration":"<e.g. 100–120 days, in the answer language>","water":"low|medium|high","tip":"<one practical tip>"}],"note":"<one short caution or general advice>"}\nKnown ids: ' + ids;
-  S.sample.json(prompt, {cache: {gcTime: 86400000}}).then(function(d){ S.reco = {data: d && d.crops ? d : {crops: []}, season: se}; softRender(); }).catch(function(e){ S.reco = {err: aiMsg(e), season: se}; softRender(); });
+  var ids = CROPS.filter(function(c){ return S.plExotic || c.cat !== 'exotic'; }).map(function(c){ return c.id + '=' + c.n.en + (c.cat === 'exotic' ? ' [exotic]' : ''); }).join(', ');
+  var prompt = 'TASK: Recommend the 6 most suitable crops for this farmer for the ' + T.en[se] + ' season.\n' +
+    'Water availability: ' + w + ' (low = rainfed only, medium = limited irrigation / protective watering, high = assured irrigation).\n' +
+    'Think about: the usual soil, rainfall and temperature of this district in that season; water need; market demand and price risk; input cost; and crop rotation. Prefer profitable, low-risk choices; mention intercropping where useful.' + (S.soils[0] ? ' Use the soil test in the context.' : '') + '\n' +
+    (S.plExotic ? 'Include 1–2 high-value foreign crops (ids marked [exotic]) ONLY if they realistically suit this location and season; say in "tip" if polyhouse / shade net / contract buyer is needed.\n' : 'Do not suggest foreign / exotic crops.\n') +
+    'Reply with ONLY JSON: {"crops":[{"id":"<id from the list or empty>","name":"<crop name in the answer language>","why":"<1-2 sentences specific to this district>","duration":"<e.g. 100–120 days, in the answer language>","water":"low|medium|high","profit":"low|medium|high","risk":"low|medium|high","tip":"<one practical tip>"}],"note":"<one short caution or general advice>"}\n' +
+    'Keep JSON keys and the low|medium|high values in English; write all other values in the answer language.\nKnown ids: ' + ids;
+  S.sample.json(prompt, {system: sysPrompt(), task: 'json', cache: {gcTime: 86400000}}).then(function(d){ S.reco = {data: d && d.crops ? d : {crops: []}, season: se}; softRender(); }).catch(function(e){ S.reco = {err: aiMsg(e), season: se}; softRender(); });
 }
 
 /* scan */
 function vScan(){
-  var m = S.scanMode, res = S.scanRes[m];
-  var h = '<div class="ph"><h1>' + esc(t('scan_title')) + '</h1></div><div class="seg" role="group" style="margin-bottom:18px"><button type="button" data-act="scanmode" data-v="leaf" aria-pressed="' + (m === 'leaf') + '">' + esc(t('scan_leaf')) + '</button><button type="button" data-act="scanmode" data-v="insect" aria-pressed="' + (m === 'insect') + '">' + esc(t('scan_insect')) + '</button></div>';
-  h += '<div class="scanwrap"><div class="card pad" style="display:flex;flex-direction:column;gap:14px"><h2 style="font-size:20px">' + esc(t(m === 'leaf' ? 'leaf_h' : 'insect_h')) + '</h2>';
+  var res = S.scanRes.one;
+  var h = '<div class="ph"><h1>' + esc(t('t_doctor')) + '</h1><p>' + esc(t('doctor_d')) + '</p></div>';
+  h += '<div class="scanwrap"><div class="card pad" style="display:flex;flex-direction:column;gap:14px">';
   if(S.sampleReady && (!S.sample || !S.imgOk)) h += '<div class="note">' + I('info') + esc(t('ai_off')) + '</div>';
-  h += '<label class="drop" id="drop">' + (S.scanUrl ? '<img src="' + S.scanUrl + '" alt="">' + '<span class="btn bs bsm">' + I('camera') + esc(t('change_photo')) + '</span>' : '<span class="ico g" style="width:64px;height:64px;border-radius:20px">' + I('camera') + '</span><b>' + esc(t('upload')) + '</b><span class="sm mu">' + esc(t(m === 'leaf' ? 'tips_leaf' : 'tips_insect')) + '</span>') + '<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-act="scanfile" aria-label="' + esc(t('upload')) + '"></label>';
-  h += '<label class="f">' + esc(t('crop_opt')) + '<select class="inp" id="scancrop"><option value="">—</option>' + CROPS.map(function(c){ return '<option value="' + c.id + '"' + (S.scanCrop === c.id ? ' selected' : '') + '>' + esc(L(c.n)) + '</option>'; }).join('') + '</select></label>';
-  h += '<label class="f">' + esc(t('notes_opt')) + '<input class="inp" id="scannote" value="' + esc(S.scanNote || '') + '"></label>';
+  h += '<label class="drop" id="drop">' + (S.scanUrl ? '<img src="' + S.scanUrl + '" alt="">' + '<span class="btn bs bsm">' + I('camera') + esc(t('change_photo')) + '</span>' : '<span class="ico g" style="width:64px;height:64px;border-radius:20px">' + I('camera') + '</span><b>' + esc(t('upload')) + '</b><span class="sm mu">' + esc(t('tips_doctor')) + '</span>') + '<input type="file" accept="image/jpeg,image/png,image/webp,image/*" id="scanfile" data-act="scanfile" aria-label="' + esc(t('upload')) + '"></label>';
+  h += '<label class="f">' + esc(t('crop_opt')) + '<select class="inp" id="scancrop"><option value="">—</option>' + cropOptions(S.scanCrop) + '</select></label>';
+  h += '<label class="f">' + esc(t('notes_opt')) + '<input class="inp" id="scannote" value="' + esc(S.scanNote || '') + '" placeholder="' + esc(t('notes_ph')) + '"></label>';
   h += '<button class="btn bp" data-act="analyze"' + (!S.scanFile || (res && res.busy) || !S.imgOk ? ' disabled' : '') + '>' + I('spark') + esc(t('analyze')) + '</button><p class="xs mu2" style="margin:0">' + esc(t('disclaimer')) + '</p></div>';
-  h += '<div class="result" id="scanres">' + scanResult(m, res) + '</div></div>';
+  h += '<div class="result" id="scanres">' + scanResult('one', res) + '</div></div>';
   return h;
 }
 function lvl(v){ v = String(v || '').toLowerCase(); return v.indexOf('high') > -1 ? 'h' : (v.indexOf('med') > -1 ? 'm' : 'l'); }
 function lvlT(v){ var k = lvl(v); return t(k === 'h' ? 'high' : (k === 'm' ? 'medium' : 'low')); }
 function liList(a){ a = Array.isArray(a) ? a : (a ? [a] : []); return a.length ? '<ul>' + a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : ''; }
+var STATUS_LOOK = {healthy: ['g', 'check', 'healthy'], disease: ['r', 'alert', 'st_disease'], pest_damage: ['r', 'bug', 'st_pest'], harmful_insect: ['r', 'bug', 'harmful'], beneficial_insect: ['g', 'bug', 'beneficial'], nutrient_deficiency: ['s', 'leaf', 'st_nutrient'], abiotic: ['s', 'sun', 'st_abiotic'], unclear: ['s', 'info', 'unclear']};
 function scanResult(m, r){
-  if(!r) return '<div class="card empty"><span class="ico ' + (m === 'leaf' ? 'g' : 'r') + '">' + I(m === 'leaf' ? 'leaf' : 'bug') + '</span><p style="margin:0">' + esc(t(m === 'leaf' ? 't_doctor_d' : 't_pest_d')) + '</p></div>';
+  if(!r) return '<div class="card empty"><span class="ico g">' + I('scan') + '</span><p style="margin:0">' + esc(t('t_doctor_d')) + '</p></div>';
   if(r.busy) return '<div class="card pad"><div class="load"><span class="spin"></span>' + esc(t('analyzing')) + '</div></div>';
   if(r.err) return '<div class="note r">' + I('alert') + esc(r.err) + '</div>';
-  var d = r.data || {}, sid = 'scan' + m, h = '';
+  var d = r.data || {}, sid = 'scanone', h = '';
   if(d.imageOk === false){ return '<div class="rhead"><span class="ico s">' + I('camera') + '</span><div><h2>' + esc(t('retake')) + '</h2><p class="mu" style="margin:6px 0 0">' + esc(d.retake || '') + '</p></div></div>'; }
-  if(m === 'leaf'){
-    var healthy = String(d.status || '').toLowerCase() === 'healthy';
-    h += '<div class="rhead"><span class="ico ' + (healthy ? 'g' : 'r') + '">' + I(healthy ? 'check' : 'alert') + '</span><div style="flex:1"><div class="xs mu2" style="font-weight:600;text-transform:uppercase;letter-spacing:.04em">' + esc(t('r_problem')) + (d.plant ? ' · ' + esc(d.plant) : '') + '</div><h2>' + esc(healthy ? t('healthy') : (d.problem || '—')) + '</h2>' + (d.problem_en && S.lang !== 'en' ? '<div class="sub">' + esc(d.problem_en) + '</div>' : '') +
-      '<div class="row wrap" style="margin-top:10px;gap:18px"><span class="sm">' + esc(t('r_conf')) + ' <span class="meter ' + lvl(d.confidence) + '" style="display:inline-flex;vertical-align:middle;margin-left:6px"><i></i><i></i><i></i></span> ' + esc(lvlT(d.confidence)) + '</span>' + (!healthy ? '<span class="sm">' + esc(t('r_sev')) + ' <span class="meter sev ' + lvl(d.severity) + '" style="display:inline-flex;vertical-align:middle;margin-left:6px"><i></i><i></i><i></i></span> ' + esc(lvlT(d.severity)) + '</span>' : '') + '</div></div>' + speakBtn(sid) + '</div>';
-    if(d.observed && d.observed.length) h += '<div class="rsec"><h3>' + I('scan') + esc(t('r_observed')) + '</h3>' + liList(d.observed) + '</div>';
-    if(d.cause) h += '<div class="rsec"><h3>' + I('info') + esc(t('r_cause')) + '</h3><p style="margin:0">' + esc(d.cause) + '</p></div>';
-    if(d.organic && d.organic.length) h += '<div class="rsec g"><h3>' + I('leaf') + esc(t('r_organic')) + '</h3>' + liList(d.organic).replace('<ul>', '<ol>').replace('</ul>', '</ol>') + '</div>';
-    if(d.prevention && d.prevention.length) h += '<div class="rsec"><h3>' + I('shield') + esc(t('r_prev')) + '</h3>' + liList(d.prevention) + '</div>';
-    if(d.chemical) h += '<div class="rsec s"><h3>' + I('flask') + esc(t('r_chem')) + '</h3><p style="margin:0">' + esc(d.chemical) + '</p></div>';
-    if(d.expert) h += '<div class="rsec"><h3>' + I('user') + esc(t('r_expert')) + '</h3><p style="margin:0">' + esc(d.expert) + '</p></div>';
-  } else {
-    var ty = String(d.type || 'unclear').toLowerCase(); if(['harmful','beneficial','neutral','unclear'].indexOf(ty) < 0) ty = 'unclear';
-    var tc = ty === 'harmful' ? 'r' : (ty === 'beneficial' ? 'g' : 's');
-    h += '<div class="rhead"><span class="ico ' + tc + '">' + I('bug') + '</span><div style="flex:1"><span class="chip ' + tc + '">' + esc(t(ty)) + '</span><h2 style="margin-top:8px">' + esc(d.name || '—') + '</h2>' + (d.scientific ? '<div class="sub">' + esc(d.scientific) + '</div>' : '') + '<div class="sm" style="margin-top:10px">' + esc(t('r_conf')) + ' <span class="meter ' + lvl(d.confidence) + '" style="display:inline-flex;vertical-align:middle;margin-left:6px"><i></i><i></i><i></i></span> ' + esc(lvlT(d.confidence)) + '</div></div>' + speakBtn(sid) + '</div>';
-    if(d.crops && d.crops.length) h += '<div class="rsec"><h3>' + I('sprout') + esc(t('r_crops')) + '</h3><div class="row wrap" style="gap:6px">' + (Array.isArray(d.crops) ? d.crops : [d.crops]).map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div></div>';
-    if(d.damage) h += '<div class="rsec"><h3>' + I('alert') + esc(t('r_damage')) + '</h3><p style="margin:0">' + esc(d.damage) + '</p></div>';
-    if(d.lifecycle) h += '<div class="rsec"><h3>' + I('refresh') + esc(t('r_life')) + '</h3><p style="margin:0">' + esc(d.lifecycle) + '</p></div>';
-    if(d.threshold) h += '<div class="rsec"><h3>' + I('info') + esc(t('r_threshold')) + '</h3><p style="margin:0">' + esc(d.threshold) + '</p></div>';
-    if(d.organic && d.organic.length) h += '<div class="rsec g"><h3>' + I('leaf') + esc(t('r_organic')) + '</h3>' + liList(d.organic).replace('<ul>', '<ol>').replace('</ul>', '</ol>') + '</div>';
-    if(d.natural_enemies && d.natural_enemies.length) h += '<div class="rsec"><h3>' + I('shield') + esc(t('r_enemies')) + '</h3>' + liList(d.natural_enemies) + '</div>';
-    if(d.chemical) h += '<div class="rsec s"><h3>' + I('flask') + esc(t('r_chem')) + '</h3><p style="margin:0">' + esc(d.chemical) + '</p></div>';
-  }
+  var st = String(d.status || 'unclear').toLowerCase(); if(!STATUS_LOOK[st]) st = 'unclear';
+  var lk = STATUS_LOOK[st], healthy = st === 'healthy', friend = st === 'beneficial_insect';
+  h += '<div class="rhead"><span class="ico ' + lk[0] + '">' + I(lk[1]) + '</span><div style="flex:1"><span class="chip ' + lk[0] + '">' + esc(t(lk[2])) + '</span>' + (d.plant ? ' <span class="chip">' + esc(d.plant) + '</span>' : '') +
+    '<h2 style="margin-top:8px">' + esc(healthy ? t('healthy') : (d.problem || '—')) + '</h2>' + (d.problem_en && S.lang !== 'en' && !healthy ? '<div class="sub">' + esc(d.problem_en) + '</div>' : '') + (d.scientific ? '<div class="sub"><i>' + esc(d.scientific) + '</i></div>' : '') +
+    '<div class="row wrap" style="margin-top:10px;gap:18px"><span class="sm">' + esc(t('r_conf')) + ' <span class="meter ' + lvl(d.confidence) + '" style="display:inline-flex;vertical-align:middle;margin-left:6px"><i></i><i></i><i></i></span> ' + esc(lvlT(d.confidence)) + '</span>' +
+    (!healthy && !friend && d.severity ? '<span class="sm">' + esc(t('r_sev')) + ' <span class="meter sev ' + lvl(d.severity) + '" style="display:inline-flex;vertical-align:middle;margin-left:6px"><i></i><i></i><i></i></span> ' + esc(lvlT(d.severity)) + '</span>' : '') + '</div></div>' + speakBtn(sid) + '</div>';
+  if(friend) h += '<div class="note g">' + I('check') + esc(t('friend_note')) + '</div>';
+  if(lvl(d.confidence) === 'l' && !healthy) h += '<div class="note">' + I('info') + esc(t('low_conf')) + '</div>';
+  if(d.observed && d.observed.length) h += '<div class="rsec"><h3>' + I('scan') + esc(t('r_observed')) + '</h3>' + liList(d.observed) + '</div>';
+  if(d.cause) h += '<div class="rsec"><h3>' + I('info') + esc(t('r_cause')) + '</h3><p style="margin:0">' + esc(d.cause) + '</p></div>';
+  if(d.threshold) h += '<div class="rsec"><h3>' + I('alert') + esc(t('r_threshold')) + '</h3><p style="margin:0">' + esc(d.threshold) + '</p></div>';
+  if(d.organic && d.organic.length) h += '<div class="rsec g"><h3>' + I('leaf') + esc(t('r_organic')) + '</h3>' + liList(d.organic).replace('<ul>', '<ol>').replace('</ul>', '</ol>') + '</div>';
+  if(d.natural_enemies && d.natural_enemies.length) h += '<div class="rsec"><h3>' + I('shield') + esc(t('r_enemies')) + '</h3>' + liList(d.natural_enemies) + '</div>';
+  if(d.prevention && d.prevention.length) h += '<div class="rsec"><h3>' + I('shield') + esc(t('r_prev')) + '</h3>' + liList(d.prevention) + '</div>';
+  if(d.chemical && !friend) h += '<div class="rsec s"><h3>' + I('flask') + esc(t('r_chem')) + '</h3><p style="margin:0">' + esc(d.chemical) + '</p></div>';
+  if(d.expert) h += '<div class="rsec"><h3>' + I('user') + esc(t('r_expert')) + '</h3><p style="margin:0">' + esc(d.expert) + '</p></div>';
   if(S.cycles.length){
     h += '<div class="rsec"><h3>' + I('book') + esc(t('save_diary')) + '</h3><div class="row wrap"><select class="inp" id="diarycyc" style="flex:1;min-width:180px">' + S.cycles.map(function(c){ var cr = crop(c.crop); return '<option value="' + c.id + '">' + esc((cr ? L(cr.n) : c.crop) + (c.plot ? ' · ' + c.plot : '')) + '</option>'; }).join('') + '</select><button class="btn bs" data-act="scansave">' + I(r.saved ? 'check' : 'plus') + esc(r.saved ? t('saved') : t('save_diary')) + '</button></div></div>';
   }
   return h;
 }
-function scanSpeech(m){ var d = (S.scanRes[m] || {}).data || {}; var parts = m === 'leaf' ? [d.problem, d.cause, (d.organic || []).join('. '), (d.prevention || []).join('. ')] : [d.name, d.damage, (d.organic || []).join('. ')]; return parts.filter(Boolean).join('. '); }
+function scanSpeech(){ var d = (S.scanRes.one || {}).data || {}; return [d.problem, d.cause, (d.organic || []).join('. '), (d.prevention || []).join('. ')].filter(Boolean).join('. '); }
 function runScan(){
-  var m = S.scanMode, cr = crop(S.scanCrop || ''), note = S.scanNote || '';
-  S.scanRes[m] = {busy: true}; softRender();
-  var common = ctxRule() + '\n' + (cr ? 'Crop (as told by the farmer): ' + cr.n.en + '.\n' : '') + (note ? 'Farmer note: ' + note + '\n' : '') + aiLangRule() + ' Keep JSON keys in English; write all values in the answer language.\nPrefer organic/natural methods (Neemastra, Dashparni, Trichoderma, traps, cultural practices). Mention a chemical option only as a last resort, as an active ingredient name with "follow label dose", never invent dose numbers.\nIf the photo is not a plant/insect or too unclear to judge, set "imageOk": false and explain how to retake it in "retake".\n';
-  var prompt = m === 'leaf'
-    ? 'You are a plant pathologist helping an Indian farmer. Look at the attached photo of a plant leaf/part and diagnose its health.\n' + common + 'Reply with ONLY JSON: {"imageOk":true,"retake":"","plant":"<plant name>","status":"healthy|disease|pest_damage|nutrient_deficiency|abiotic|unclear","problem":"<problem name in answer language>","problem_en":"<common English name>","confidence":"low|medium|high","severity":"low|medium|high","observed":["<visible symptom>"],"cause":"<pathogen/cause in simple words>","organic":["<step-by-step organic treatment>"],"prevention":["<prevention>"],"chemical":"<last-resort option or empty>","expert":"<when to contact KVK/agri officer>"}'
-    : 'You are an agricultural entomologist helping an Indian farmer. Identify the insect (or pest) in the attached photo.\n' + common + 'Many insects are friendly (ladybird beetles, lacewings, spiders, wasps, bees) — say so clearly if beneficial and advise not to spray.\nReply with ONLY JSON: {"imageOk":true,"retake":"","name":"<common name in answer language>","scientific":"<scientific name if confident, else empty>","type":"harmful|beneficial|neutral|unclear","confidence":"low|medium|high","crops":["<crops it affects>"],"damage":"<how it damages>","lifecycle":"<short life cycle>","threshold":"<when to act>","organic":["<organic control steps>"],"natural_enemies":["<natural enemies>"],"chemical":"<last-resort option or empty>"}';
-  S.sample.json(prompt, {images: [S.scanFile]}).then(function(d){ S.scanRes[m] = {data: d || {}}; softRender(); }).catch(function(e){ S.scanRes[m] = {err: aiMsg(e)}; softRender(); });
+  var cr = crop(S.scanCrop || ''), note = S.scanNote || '';
+  S.scanRes.one = {busy: true}; softRender();
+  var prompt = 'TASK: You are an expert plant doctor (plant pathologist + entomologist + soil-nutrition specialist). Look at the attached photo and find out what is wrong with the crop — or identify the insect in it.\n' +
+    (cr ? 'Crop (as told by the farmer): ' + cr.n.en + '.\n' : '') + (note ? 'Farmer note: ' + note + '\n' : '') +
+    'METHOD: First decide what the photo shows: a plant part (leaf, stem, fruit, root) or an insect/mite. Then study it carefully — colour changes, the shape, colour and edge of spots (yellow halo, concentric rings, water-soaked, powdery coating, rusty pustules, mosaic pattern), which leaves are affected (old or young), insects, eggs, webbing, droppings, holes, mining tunnels. Consider all causes: fungal / bacterial / viral disease, insect or mite damage, nutrient deficiency (N, P, K, Mg, Fe, Zn, B), herbicide injury, sun scorch, water stress or cold. Choose the single most likely cause. Use "high" confidence only when signs are clear and typical; if two causes are close, mention the second one in "observed" and lower the confidence.\n' +
+    'Many insects are friends of the farmer (ladybird beetles, lacewings, spiders, syrphid flies, parasitic wasps, bees, praying mantis, ground beetles) — if so, set status "beneficial_insect" and advise NOT to spray.\n' +
+    'TREATMENT: Organic / biological steps first, in the order to do them, each with the amount per 15-litre pump and how often to repeat. Give a chemical option only as a last resort (active ingredient only, "follow the label dose", protective clothing, waiting period before harvest).\n' +
+    'If the photo is not a plant or insect, or is too blurred/dark to judge, set "imageOk": false and explain in "retake" exactly how to take a better photo.\n' +
+    'Reply with ONLY JSON: {"imageOk":true,"retake":"","plant":"<plant name or empty>","status":"healthy|disease|pest_damage|nutrient_deficiency|abiotic|harmful_insect|beneficial_insect|unclear","problem":"<problem or insect name in answer language>","problem_en":"<common English name>","scientific":"<scientific name if confident, else empty>","confidence":"low|medium|high","severity":"low|medium|high","observed":["<what you can see>"],"cause":"<cause in simple words and how it spreads>","threshold":"<for pests: when action is needed; else empty>","organic":["<step-by-step organic treatment with dose per 15 L>"],"natural_enemies":["<for pests: natural enemies to protect>"],"prevention":["<prevention for next time>"],"chemical":"<last-resort option or empty>","expert":"<when to contact KVK / agriculture officer>"}';
+  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only. Keep JSON keys and the fixed option values (healthy, disease, low, high…) in English; write every other value in the answer language.'), task: 'vision', images: [S.scanFile]}).then(function(d){ S.scanRes.one = {data: d || {}}; softRender(); }).catch(function(e){ S.scanRes.one = {err: aiMsg(e)}; softRender(); });
 }
 
 /* farm */
@@ -367,11 +442,16 @@ function vFarm(){
     return '<a class="cyc" href="#cycle-' + c.id + '"><div class="hd">' + cropDot(x.cr, true) + '<div style="flex:1;min-width:0"><h3>' + esc(L(x.cr.n)) + '</h3><div class="sm mu">' + esc((c.plot || '') + (c.plot ? ' · ' : '') + num(c.area) + ' ' + t('acres_short')) + '</div></div></div><div><div class="row" style="justify-content:space-between;font-size:14px;margin-bottom:6px"><span>' + esc(stTxt) + '</span><span class="mu2">' + Math.round(x.pct) + '%</span></div><div class="prog"><i style="width:' + x.pct + '%"></i></div></div><div class="row" style="justify-content:space-between;font-size:14px"><span class="mu">' + esc(t('spent')) + ' <b style="color:var(--ink)">' + rs(x.spent) + '</b></span><span class="mu">' + esc(t('exp_harvest')) + ' <b style="color:var(--ink)">' + esc(fmtDs(x.h1)) + '</b></span></div></a>'; }).join('') + '</div>';
   return h;
 }
+var CATORDER = ['cereal','pulse','oil','veg','leafy','fruit','spice','cash','flower','fodder','exotic'];
+function cropOptions(sel){
+  function o(x){ return '<option value="' + x.id + '"' + (x.id === sel ? ' selected' : '') + '>' + esc(L(x.n)) + '</option>'; }
+  return CATORDER.map(function(k){ var l = CROPS.filter(function(x){ return x.cat === k; }); l.sort(function(a, b){ return L(a.n).localeCompare(L(b.n)); }); return l.length ? '<optgroup label="' + esc(t('cat_' + k)) + '">' + l.map(o).join('') + '</optgroup>' : ''; }).join('');
+}
 function cycleForm(c, cropId){
   c = c || {crop: cropId || (CROPS[0].id), plot: '', area: 1, unit: 'acre', sow: isoDate(today0()), variety: '', budget: '', irr: 'rainfed'};
   var areaDisp = c.unit === 'guntha' ? c.area * 40 : (c.unit === 'hectare' ? +(c.area / 2.471).toFixed(2) : c.area);
   return '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mh"><div class="box"><h2 id="mh">' + esc(c.id ? t('edit') : t('add_crop')) + '</h2><form id="cform" class="formgrid">' +
-    '<label class="f full">' + esc(t('f_crop')) + '<select class="inp" name="crop">' + CROPS.map(function(x){ return '<option value="' + x.id + '"' + (x.id === c.crop ? ' selected' : '') + '>' + esc(L(x.n)) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f full">' + esc(t('f_crop')) + '<select class="inp" name="crop">' + cropOptions(c.crop) + '</select></label>' +
     '<label class="f">' + esc(t('f_plot')) + '<input class="inp" name="plot" value="' + esc(c.plot) + '" maxlength="40"></label>' +
     '<label class="f">' + esc(t('f_sow')) + '<input class="inp" type="date" name="sow" value="' + esc(c.sow) + '" required></label>' +
     '<label class="f">' + esc(t('f_area')) + '<input class="inp" type="number" name="area" min="0.01" step="0.01" value="' + esc(areaDisp) + '" required></label>' +
@@ -423,10 +503,12 @@ function runReview(id){
   var c = cyc(id), x = cycInfo(c);
   var sum = {crop: x.cr.n.en, plot: c.plot, area_acres: c.area, variety: c.variety, irrigation: c.irr, sowing_date: c.sow, day_after_sowing: x.day, current_stage: x.cur ? T.en['st_' + x.cur.k] : 'not sown', expected_harvest: isoDate(x.h1) + ' to ' + isoDate(x.h2), budget_rs: c.budget || null, spent_rs: x.spent, income_rs: x.inc,
     expenses_by_category: (c.exp || []).reduce(function(a, e){ a[e.cat] = (a[e.cat] || 0) + (+e.amt || 0); return a; }, {}), recent_diary: (c.log || []).slice(-12).map(function(e){ return e.date + ' ' + e.act + (e.note ? ': ' + e.note.slice(0, 160) : ''); })};
-  var prompt = 'You are a friendly, practical farm advisor. Review this farmer\'s crop record and give personalised advice.\n' + ctxRule() + '\n' + aiLangRule() + '\nCrop record (JSON): ' + JSON.stringify(sum) + '\nWrite Markdown with ## sections: 1) What to do in the next 2 weeks for this exact stage (organic-first), 2) Pests/diseases to watch for now, 3) Cost review — where money can be saved, budget status, 4) Harvest & selling preparation if near harvest. Be specific and brief. Don\'t invent numbers you were not given; give ranges when estimating.';
+  var prompt = 'TASK: Review this farmer\'s crop record and give personalised advice for exactly where the crop is now.\nCrop record (JSON): ' + JSON.stringify(sum) + '\n' +
+    'Write Markdown with these ## sections, short and specific:\n1. Next 14 days — what to do now (day-wise or week-wise; organic first, with amounts per acre / per 15-L pump)\n2. Pests and diseases to watch at this stage, and the first sign to look for\n3. Cost review — where money can be saved; budget status' + (c.budget ? '' : ' (no budget was set)') + '\n4. Harvest and selling — only if harvest is within about 45 days: maturity signs, grading, where to sell\n' +
+    'Use the diary to avoid repeating work already done. Do not invent numbers you were not given; give ranges when estimating.';
   S.reviews[id] = {text: '', busy: true}; softRender();
   ctl.review = new AbortController();
-  S.sample(prompt, {cache: false, signal: ctl.review.signal, onText: function(u){ S.reviews[id].text = u.text; var el = $('#review-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
+  S.sample(prompt, {system: sysPrompt(), task: 'guide', cache: false, signal: ctl.review.signal, onText: function(u){ S.reviews[id].text = u.text; var el = $('#review-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
    .then(function(r){ S.reviews[id] = {text: r.text}; softRender(); })
    .catch(function(e){ var g = S.reviews[id]; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
@@ -462,20 +544,545 @@ function vAI(){
 }
 function chatRules(){
   var mine = S.cycles.slice(0, 6).map(function(c){ var x = cycInfo(c); return x.cr.n.en + ' (' + c.area + ' acre, day ' + x.day + ', stage ' + (x.cur ? T.en['st_' + x.cur.k] : 'not sown') + ', spent ₹' + Math.round(x.spent) + ')'; }).join('; ');
-  return 'You are "Ankurit", a warm, expert farming assistant for Indian farmers. ' + ctxRule() + (mine ? ' The farmer is currently growing: ' + mine + '.' : '') + '\n' + aiLangRule() + ' Always reply in that language even if the farmer writes in another.\nGive practical, step-by-step answers. Prefer organic and natural-farming methods (Jeevamrut, Beejamrut, Neemastra, Dashparni, traps, crop rotation); mention chemicals only as a last resort with "follow label dose". Never invent statistics, prices, scheme amounts or dates. You cannot see live mandi prices or weather: if asked, say so and suggest agmarknet.gov.in / IMD or the Kisan Call Centre (1800-180-1551). Keep answers concise; use short Markdown lists. For serious problems advise contacting the local Krishi Vigyan Kendra.';
+  return sysPrompt((mine ? 'The farmer is currently growing: ' + mine + '.\n' : '') +
+    'Always reply in the language above, even if the farmer writes in another language or in Roman script.\n' +
+    'ANSWER STYLE: Start with a 1–2 line direct answer. Then short numbered steps or bullets with quantities and timing (days after sowing / crop stage). Use a small table only when comparing options. Keep it under about 250 words unless the farmer asks for detail. If key information is missing (crop, stage, symptoms, area), first give the most likely answer, then ask ONE short follow-up question at the end. Do not repeat the question back.\n' +
+    (S.webSearch ? 'LIVE DATA: You may use Google Search for current prices, weather, scheme news and dates — mention the source and date, and keep it short.' : 'LIVE DATA: You cannot see live mandi prices, weather forecasts or the latest scheme news. If asked, say so briefly and suggest agmarknet.gov.in / eNAM, the IMD Meghdoot app, or the Kisan Call Centre 1800-180-1551 — then still give useful general advice.'));
 }
 function sendChat(text){
   text = String(text || '').trim(); if(!text || !S.sample) return;
   S.draft = ''; S.chat.push({role: 'user', content: text}); var a = {role: 'assistant', content: '', busy: true}; S.chat.push(a); softRender(); scrollChat();
-  var hist = S.chat.filter(function(m){ return m !== a && !m.err; }).slice(-12).map(function(m){ return {role: m.role, content: m.content || '…'}; });
+  var hist = S.chat.filter(function(m){ return m !== a && !m.err; }).slice(-14).map(function(m){ return {role: m.role, content: m.content || '…'}; });
   while(hist.length && hist[0].role !== 'user') hist.shift();
-  var turns = [{role: 'user', content: chatRules()}].concat(hist);
   ctl.chat = new AbortController();
-  S.sample(turns, {cache: false, signal: ctl.chat.signal, onText: function(u){ a.content = u.text; var el = $$('#msgs .msg.a'); el = el[el.length - 1]; if(el && route().v === 'ai'){ $('.md', el).innerHTML = md(u.text); scrollChat(); } }})
+  S.sample(hist, {system: chatRules(), task: 'chat', cache: false, signal: ctl.chat.signal, onText: function(u){ a.content = u.text; var el = $$('#msgs .msg.a'); el = el[el.length - 1]; if(el && route().v === 'ai'){ $('.md', el).innerHTML = md(u.text); scrollChat(); } }})
    .then(function(r){ a.content = r.text; a.busy = false; softRender(); scrollChat(); })
    .catch(function(e){ a.busy = false; a.content = e.text || a.content; if(e.code !== 'cancelled') a.err = aiMsg(e); if(!a.content && !a.err) S.chat.splice(S.chat.indexOf(a), 1); softRender(); });
 }
 function scrollChat(){ var m = $('#msgs'); if(m) m.scrollTop = m.scrollHeight; }
+
+/* ================= FOREIGN / HIGH-VALUE CROPS ================= */
+function exoUnit(c){ return c.x.yu === 'bag' ? t('per_100bags') : t('per_acre_s'); }
+function exoEcon(c){
+  var x = c.x, f = exoticFit(c, S.state), u = exoUnit(c);
+  return '<div class="card pad econ" style="margin-top:16px"><div class="row wrap" style="justify-content:space-between;margin-bottom:12px"><h2 style="font-size:19px">' + esc(t('x_econ')) + '</h2>' + fitChip(c) + '</div>' +
+    '<div class="econgrid">' +
+    '<div><small>' + esc(t('x_yield')) + '</small><b>' + num(x.yld[0]) + '–' + num(x.yld[1]) + ' ' + esc(UNITS.kg[S.lang]) + esc(u) + '</b></div>' +
+    '<div><small>' + esc(t('x_price')) + '</small><b>' + moneyR(x.price[0], x.price[1]) + '/' + esc(UNITS.kg[S.lang]) + '</b></div>' +
+    '<div class="hi"><small>' + esc(t('x_income')) + '</small><b>' + moneyR(x.yld[0] * x.price[0], x.yld[1] * x.price[1]) + esc(u) + '</b></div>' +
+    '<div><small>' + esc(t('x_invest')) + '</small><b>' + moneyR(x.inv[0], x.inv[1]) + esc(u) + '</b></div>' +
+    '<div><small>' + esc(t('x_first')) + '</small><b>' + num(x.first) + ' ' + esc(t('months')) + '</b></div>' +
+    '<div><small>' + esc(t('x_grow')) + '</small><b>' + esc(t('prot_' + x.prot)) + '</b></div></div>' +
+    '<p style="margin:14px 0 0"><b>' + esc(t('x_why')) + ':</b> ' + esc(L(x.note)) + '</p>' +
+    (f === 'ok' ? '<div class="note" style="margin-top:12px">' + I('info') + esc(t('x_ok_note')) + '</div>' : '') +
+    '<p class="xs mu2" style="margin:12px 0 0">' + esc(t('x_origin')) + ': ' + esc(L(x.origin)) + ' · ' + esc(t('exotic_warn')) + '</p></div>';
+}
+/* ================= FARM NEWS ================= */
+function loadNews(force){
+  if(S.newsBusy) return;
+  var had = !!(S.news && S.news.items && S.news.items.length);
+  S.newsBusy = true; S.newsErr = null; if(route().v === 'news' && (force || !had)) patchNews();
+  use('news').then(function(fn){
+    if(!fn) throw new Error('no news');
+    return fn(force);
+  }).then(function(d){ S.news = {items: (d && d.items) || [], updated: (d && d.updated) || Date.now(), at: Date.now()}; S.newsErr = null; })
+    .catch(function(){ S.newsErr = t('news_err'); })
+    .then(function(){ S.newsBusy = false; var v = route().v; if(v === 'news' && (force || !had)) render(); if(v === 'home'){ var hn = $('#homenews'); if(hn) hn.innerHTML = homeNews(); } });
+}
+function newsNeeded(){ return !S.news || Date.now() - S.news.at > 10 * 60000; }
+function newsList(){
+  var items = (S.news && S.news.items) || [];
+  return items.filter(function(n){ return (S.newsCat === 'all' || n.cat === S.newsCat) && (S.newsLang === 'all' || n.lang === S.newsLang); });
+}
+function newsImg(n, cls){
+  var col = NEWSCOL[n.cat] || NEWSCOL.other, ph = '<div class="nph" style="background:' + col + '">' + I(n.cat === 'weather' ? 'sun' : (n.cat === 'market' ? 'rupee' : (n.cat === 'livestock' ? 'drop' : (n.cat === 'tech' ? 'spark' : 'news')))) + '<span>' + esc(n.source) + '</span></div>';
+  if(!n.image) return '<div class="' + cls + '">' + ph + '</div>';
+  return '<div class="' + cls + '"><img src="' + esc(n.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + ph + '</div>';
+}
+function newsChip(n){ return '<span class="nchip" style="--c:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '">' + esc(t('nc_' + n.cat)) + '</span>'; }
+function newsCard(n){
+  var ai = S.newsAI[n.id];
+  return '<article class="ncard" id="n-' + esc(n.id) + '">' + newsImg(n, 'nimg') + '<div class="nbody"><div class="nmeta">' + newsChip(n) + '<span>' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</span></div>' +
+    '<h3><a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.title) + '</a></h3>' + (n.summary ? '<p class="clamp3">' + esc(n.summary) + '</p>' : '') + '</div>' +
+    '<div class="nbody nfoot"><div class="nact"><a class="btn bs bsm" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('news_read')) + I('ext') + '</a>' +
+    (S.sample ? '<button class="btn bg bsm" data-act="newsai" data-v="' + esc(n.id) + '"' + (ai && ai.busy ? ' disabled' : '') + '>' + I('spark') + esc(t('news_ai')) + '</button>' : '') + '</div>' +
+    (ai ? '<div class="naibox md">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:6px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div>' : '') + (!ai.busy && ai.text ? '<p class="xs mu2" style="margin:8px 0 0">' + esc(t('news_ai_note')) + '</p>' : '') + '</div>' : '') +
+    '</div></article>';
+}
+function homeNews(){
+  if(newsNeeded() && !S.newsBusy) setTimeout(function(){ loadNews(false); }, 0);
+  var items = ((S.news && S.news.items) || []).slice(0, 10);
+  if(!items.length){
+    if(S.newsErr) return '<div class="note">' + I('info') + esc(S.newsErr) + '</div>';
+    return '<div class="nstrip">' + [0, 1, 2, 3].map(function(){ return '<div class="nmini skel"><div class="nimg"></div><div class="nbody"><i></i><i></i></div></div>'; }).join('') + '</div>';
+  }
+  return '<div class="nstrip">' + items.map(function(n){ return '<a class="nmini" href="#news" data-act="newsopen" data-v="' + esc(n.id) + '">' + newsImg(n, 'nimg') + '<div class="nbody">' + newsChip(n) + '<b class="clamp3">' + esc(n.title) + '</b><small>' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</small></div></a>'; }).join('') + '</div>';
+}
+function vNews(){
+  if(newsNeeded() && !S.newsBusy) setTimeout(function(){ loadNews(false); }, 0);
+  var all = (S.news && S.news.items) || [];
+  var counts = {}; all.forEach(function(n){ if(S.newsLang === 'all' || n.lang === S.newsLang) counts[n.cat] = (counts[n.cat] || 0) + 1; });
+  var total = Object.keys(counts).reduce(function(a, k){ return a + counts[k]; }, 0);
+  /* category bar — always visible at the top of the news screen */
+  var h = '<div class="nbar"><div class="ncats2" role="tablist" aria-label="' + esc(t('news_cat')) + '">' + NEWSCATS.filter(function(c){ return c === 'all' || counts[c]; }).map(function(c){ var on = S.newsCat === c;
+      return '<button type="button" role="tab" data-act="newscat" data-v="' + c + '" aria-selected="' + on + '" style="--c:' + (NEWSCOL[c] || '#13201A') + '">' + (c === 'all' ? '' : '<i></i>') + esc(t('nc_' + c)) + '<small>' + num(c === 'all' ? total : counts[c], 0) + '</small></button>'; }).join('') + '</div>' +
+    '<button type="button" class="nfilt" data-act="newsfilter" aria-label="' + esc(t('news_lang')) + '" title="' + esc(t('news_lang')) + '">' + I('globe') + (S.newsLang === 'all' ? '' : '<em>' + esc(({mr: 'मरा', hi: 'हिं', en: 'EN'})[S.newsLang]) + '</em>') + '</button></div>';
+  h += '<div class="reels" id="reels">' + reelsBody() + '</div>';
+  return h;
+}
+function reelsBody(){
+  var all = (S.news && S.news.items) || [];
+  if(!all.length){
+    if(S.newsErr) return '<div class="rempty"><span class="ico r">' + I('alert') + '</span><p>' + esc(S.newsErr) + '</p><button class="btn bp" data-act="newsref">' + I('refresh') + esc(t('news_refresh')) + '</button></div>';
+    return '<div class="rempty"><span class="spin"></span><p>' + esc(t('news_loading')) + '</p></div>';
+  }
+  var list = newsList();
+  if(!list.length) return '<div class="rempty"><span class="ico b">' + I('news') + '</span><p>' + esc(t('news_empty')) + '</p><button class="btn bs" data-act="newscat" data-v="all">' + esc(t('nc_all')) + '</button></div>';
+  S.reelN = Math.min(list.length, Math.max(S.reelN || 0, 25));
+  return list.slice(0, S.reelN).map(function(n, i){ return reelItem(n, i, list.length); }).join('');
+}
+function reelItem(n, i, total){
+  var ai = S.newsAI[n.id];
+  return '<article class="reel" id="n-' + esc(n.id) + '" data-i="' + i + '">' + newsImg(n, 'rimg') +
+    '<div class="rbody"><div class="nmeta">' + newsChip(n) + '<span>' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</span></div>' +
+    '<h2>' + esc(n.title) + '</h2>' +
+    '<div class="rtext">' + (ai ? '<div class="naibox md">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:6px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div>' : '') + (!ai.busy && ai.text ? '<p class="xs mu2" style="margin:8px 0 0">' + esc(t('news_ai_note')) + '</p>' : '') + '</div>' : '') +
+      (n.summary ? '<p>' + esc(n.summary) + '</p>' : '<p class="mu">' + esc(t('news_nosum')) + '</p>') + '</div>' +
+    '<div class="ract"><a class="btn bp" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('news_full')) + I('ext') + '</a>' +
+      (S.sample ? '<button class="btn bs" data-act="newsai" data-v="' + esc(n.id) + '"' + (ai && ai.busy ? ' disabled' : '') + '>' + I('spark') + esc(t('news_ai_s')) + '</button>' : '') +
+      '<button class="btn bs ricon" data-act="newsshare" data-v="' + esc(n.id) + '" aria-label="' + esc(t('share')) + '">' + I('share') + '</button>' +
+      (ai && ai.text && !ai.busy ? '<button class="btn bs ricon" data-act="download" data-v="news' + esc(n.id) + '" aria-label="' + esc(t('download')) + '">' + I('download') + '</button>' : '') + '</div>' +
+    '<div class="rfoot"><span>' + num(i + 1, 0) + ' / ' + num(total, 0) + '</span>' + (i < total - 1 ? '<span class="rhint">' + I('chev', 'up') + esc(t('news_swipe')) + '</span>' : '<span class="rhint">' + esc(t('news_end')) + '</span>') + '<button class="rnav" data-act="reelnext" data-v="' + (i + 1) + '" aria-label="' + esc(t('news_next')) + '">' + I('chev') + '</button></div></div></article>';
+}
+function sizeReels(){
+  var r = $('#reels'); if(!r) return;
+  var bn = document.querySelector('.bnav'), bnh = bn && getComputedStyle(bn).display !== 'none' ? bn.getBoundingClientRect().height : 0;
+  var hgt = Math.max(420, window.innerHeight - r.getBoundingClientRect().top - bnh - (bnh ? 0 : 16));
+  r.style.height = hgt + 'px';
+}
+var reelObs = null;
+function setupReels(){
+  sizeReels();
+  var r = $('#reels'); if(!r) return;
+  if(reelObs){ reelObs.disconnect(); reelObs = null; }
+  var last = r.querySelector('.reel:last-child');
+  if(last && 'IntersectionObserver' in window){
+    reelObs = new IntersectionObserver(function(en){ if(en[0].isIntersecting){ reelObs.disconnect(); var list = newsList(); if(S.reelN < list.length){ var from = S.reelN; S.reelN = Math.min(list.length, S.reelN + 20); var tmp = document.createElement('div'); tmp.innerHTML = list.slice(from, S.reelN).map(function(n, i){ return reelItem(n, from + i, list.length); }).join(''); while(tmp.firstChild) r.appendChild(tmp.firstChild); setupReels(); } } }, {root: r, rootMargin: '0px 0px 200% 0px'});
+    reelObs.observe(last);
+  }
+}
+function reelIndex(){ var r = $('#reels'); return r ? Math.round(r.scrollTop / Math.max(1, r.clientHeight)) : 0; }
+function reelScrollTo(i){ var r = $('#reels'); if(r) r.scrollTo({top: i * r.clientHeight, behavior: 'smooth'}); }
+function patchNews(){ var b = $('#reels'); if(b){ b.innerHTML = reelsBody(); b.scrollTop = 0; setupReels(); } }
+function watchMore(){ setupReels(); }
+function openNewsFilter(){
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:420px"><div class="mhead" style="padding:0 0 12px"><h2>' + esc(t('news_lang')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<div class="langpick">' + [['all', t('lang_all')], ['mr', 'मराठी'], ['hi', 'हिंदी'], ['en', 'English']].map(function(l){ return '<button type="button" data-act="newslangpick" data-v="' + l[0] + '" aria-pressed="' + (S.newsLang === l[0]) + '">' + esc(l[1]) + '</button>'; }).join('') + '</div>' +
+    '<button class="btn bs" style="width:100%;margin-top:14px" data-act="newsref">' + I('refresh') + esc(t('news_refresh')) + '</button><p class="xs mu2" style="margin:10px 0 0;text-align:center">' + (S.news ? esc(t('news_updated', {t: ago(S.news.updated)})) : '') + '</p></div></div>');
+}
+function shareNews(id){
+  var n = newsById(id); if(!n) return;
+  if(navigator.share){ navigator.share({title: n.title, text: n.title, url: n.url}).catch(function(){}); return; }
+  var txt = n.title + '\n' + n.url;
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast(t('copied')); }); else window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+function toast(msg){ var d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2200); }
+
+/* ================= DOWNLOAD AI REPORTS (PDF via the phone's "Save as PDF") ================= */
+function reportFor(sid){
+  var c, x;
+  if(sid.indexOf('guide') === 0){ c = crop(sid.slice(5)); var g = S.guides[sid.slice(5) + '|' + S.lang + '|' + place()]; return g && g.text ? {title: t('ai_guide') + ' — ' + (c ? L(c.n) : ''), md: g.text} : null; }
+  if(sid.indexOf('review') === 0){ var cy = cyc(sid.slice(6)), rv = S.reviews[sid.slice(6)]; if(!rv || !rv.text) return null; c = cy && crop(cy.crop); return {title: t('ai_review_h') + ' — ' + (c ? L(c.n) : '') + (cy && cy.plot ? ' · ' + cy.plot : ''), md: rv.text}; }
+  if(sid === 'scanone'){ var d = (S.scanRes.one || {}).data; if(!d) return null; var st = String(d.status || '').toLowerCase();
+    var m = '## ' + (st === 'healthy' ? t('healthy') : (d.problem || '—')) + (d.problem_en && S.lang !== 'en' ? ' (' + d.problem_en + ')' : '') + '\n' + (d.plant ? '**' + t('crop') + ':** ' + d.plant + '  \n' : '') + '**' + t('r_conf') + ':** ' + lvlT(d.confidence) + (d.severity ? ' · **' + t('r_sev') + ':** ' + lvlT(d.severity) : '') + '\n';
+    function sec(k, v, ol){ if(!v || (Array.isArray(v) && !v.length)) return ''; return '\n### ' + t(k) + '\n' + (Array.isArray(v) ? v.map(function(s, i){ return (ol ? (i + 1) + '. ' : '- ') + s; }).join('\n') : v) + '\n'; }
+    m += sec('r_observed', d.observed) + sec('r_cause', d.cause) + sec('r_threshold', d.threshold) + sec('r_organic', d.organic, true) + sec('r_enemies', d.natural_enemies) + sec('r_prev', d.prevention) + sec('r_chem', d.chemical) + sec('r_expert', d.expert);
+    return {title: t('t_doctor'), md: m, img: S.scanUrl}; }
+  if(sid === 'soilplan' && S.soilPlan && S.soilPlan.text){ var v = soilRates(S.soilForm, S.soilForm._pu || 'p');
+    var tbl = v.length ? '| ' + t('soil_result') + ' | | |\n|---|---|---|\n' + v.map(function(x){ return '| ' + t('sp_' + x.p.k) + ' | ' + x.v + ' ' + x.p.u + ' | ' + t(x.r.lv) + ' |'; }).join('\n') + '\n\n' : '';
+    return {title: t('soil_plan'), md: tbl + S.soilPlan.text}; }
+  if(sid === 'soilhome' && S.soilHome && S.soilHome.text) return {title: t('soil_home_ask'), md: S.soilHome.text};
+  if(sid === 'wx' && S.wxAI && S.wxAI.text){ var w = wxFresh(); return {title: t('wx_ai') + ' — ' + wxPlace(), md: (w ? '**' + t('wx_now') + ':** ' + Math.round(w.current.temperature_2m) + '°C, ' + t(wmo(w.current.weather_code)[0]) + '\n\n' : '') + S.wxAI.text}; }
+  if(sid === 'reco' && S.reco && S.reco.data){ var se = S.reco.season;
+    return {title: t('planner_h') + ' — ' + t(se), md: S.reco.data.crops.map(function(r, i){ return '### ' + (i + 1) + '. ' + (r.name || '') + '\n' + (r.why || '') + '\n\n- ' + t('duration') + ': ' + (r.duration || '—') + '\n- ' + t('water') + ': ' + lvlT(r.water) + (r.profit ? '\n- ' + t('profit') + ': ' + lvlT(r.profit) : '') + (r.risk ? '\n- ' + t('risk') + ': ' + lvlT(r.risk) : '') + (r.tip ? '\n- 💡 ' + r.tip : ''); }).join('\n\n') + (S.reco.data.note ? '\n\n> ' + S.reco.data.note : '')}; }
+  if(sid.indexOf('news') === 0){ var n = newsById(sid.slice(4)), a = S.newsAI[sid.slice(4)]; return n && a && a.text ? {title: n.title, md: a.text + '\n\n' + t('news_read') + ': ' + n.url} : null; }
+  if(sid.indexOf('chat') === 0){ var cm = S.chat[+sid.slice(4)]; return cm && cm.content ? {title: t('ai_h'), md: cm.content} : null; }
+  return null;
+}
+function dlBtn(sid){ return '<button class="btn bs bsm" data-act="download" data-v="' + esc(sid) + '">' + I('download') + esc(t('download')) + '</button>'; }
+function downloadReport(sid){
+  var r = reportFor(sid); if(!r || !r.md) return;
+  var now = new Date(), when = fmtD(now) + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  var html = '<!DOCTYPE html><html lang="' + S.lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(t('app') + ' — ' + r.title) + '</title><style>' +
+    '@page{margin:16mm}body{font-family:"Mukta","Noto Sans Devanagari",system-ui,sans-serif;color:#13201A;max-width:760px;margin:0 auto;padding:20px;line-height:1.6;font-size:15px}' +
+    '.bar{display:flex;gap:10px;justify-content:center;margin-bottom:18px}.bar button{font:inherit;font-weight:700;padding:10px 18px;border-radius:10px;border:1px solid #1D6F42;background:#1D6F42;color:#fff}.bar button.s{background:#fff;color:#1D6F42}' +
+    'header{display:flex;align-items:center;gap:12px;border-bottom:3px solid #1D6F42;padding-bottom:12px;margin-bottom:16px}header .mk{width:44px;height:44px;border-radius:12px;background:#1D6F42;display:grid;place-items:center}' +
+    'header b{font-size:20px;color:#14532F}header small{display:block;color:#56635B;font-size:12.5px}h1{font-size:22px;margin:0 0 6px}.meta{color:#56635B;font-size:13px;margin-bottom:16px}' +
+    'h2{font-size:18px;color:#14532F;margin:18px 0 6px}h3{font-size:16px;margin:14px 0 4px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #D3D9CC;padding:6px 8px;text-align:left;vertical-align:top}th{background:#E6F2EA}' +
+    'blockquote{margin:10px 0;padding:8px 12px;background:#FCF1D8;border-left:4px solid #D9920E}img.ph{max-width:240px;border-radius:12px;margin:6px 0 10px}footer{margin-top:24px;border-top:1px solid #D3D9CC;padding-top:10px;font-size:12px;color:#6F7A73}' +
+    '@media print{.bar{display:none}body{padding:0}}</style></head><body>' +
+    '<div class="bar"><button onclick="window.print()">' + esc(t('save_pdf')) + '</button><button class="s" onclick="window.close()">' + esc(t('close')) + '</button></div>' +
+    '<header><span class="mk">' + MARK + '</span><div><b>' + esc(t('app')) + '</b><small>' + esc(t('tagline')) + '</small></div></header>' +
+    '<h1>' + esc(r.title) + '</h1><div class="meta">' + esc(place()) + ' · ' + esc(when) + '</div>' + (r.img ? '<img class="ph" src="' + r.img + '" alt="">' : '') + '<div class="content">' + md(r.md) + '</div>' +
+    '<footer>' + esc(t('disclaimer')) + '<br>' + esc(t('helpline')) + ': 1800-180-1551</footer>' +
+    '<script>window.addEventListener("load",function(){setTimeout(function(){try{window.print()}catch(e){}},500)});<\/script></body></html>';
+  var w = null; try{ w = window.open('', '_blank'); }catch(e){}
+  if(w && w.document){ w.document.open(); w.document.write(html); w.document.close(); return; }
+  /* pop-up blocked: download as a file the phone can open and save as PDF */
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], {type: 'text/html'})); a.download = (t('app') + ' - ' + r.title).replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 80) + '.html'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function newsById(id){ var it = (S.news && S.news.items) || []; for(var i = 0; i < it.length; i++) if(it[i].id === id) return it[i]; return null; }
+function runNewsAI(id){
+  var n = newsById(id); if(!n || !S.sample) return;
+  S.newsAI[id] = {text: '', busy: true}; patchCard(id);
+  var ctrl = new AbortController(); setTimeout(function(){ ctrl.abort(); }, 9000);
+  fetch('/api/article?url=' + encodeURIComponent(n.url), {signal: ctrl.signal}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(a){
+    var full = String((a && a.text) || '').slice(0, 5000);
+    var prompt = 'TASK: Explain this farm news to a farmer in very simple words.\nHeadline: ' + n.title + '\nSource: ' + n.source + ', ' + new Date(n.date).toDateString() + '\n' +
+      (full.length > 200 ? 'Full article text:\n<<<\n' + full + '\n>>>\n' : 'Summary: ' + (n.summary || '(no summary available)') + '\n') +
+      'Write 3-5 short bullet points: what happened (with the important numbers, places and dates from the text), who it affects, and what a farmer should do or check now. Then one line starting with "👉" with the most useful practical tip.\n' +
+      'Use ONLY facts from the text given — do not invent numbers, dates or claims. Do not tell the farmer to "read the full news"; explain what is known. If the text is very short, explain what the headline means for farmers and what to watch for.';
+    S.sample(prompt, {system: EXPERT + '\n' + aiLangRule(), task: 'short', onText: function(u){ S.newsAI[id].text = u.text; patchCard(id); }})
+      .then(function(r){ S.newsAI[id] = {text: r.text}; patchCard(id); })
+      .catch(function(e){ S.newsAI[id] = {err: aiMsg(e), text: e.text || ''}; patchCard(id); });
+  });
+}
+function patchCard(id){ var el = document.getElementById('n-' + id), n = newsById(id); if(!el || !n) return; var list = newsList(), i = +el.getAttribute('data-i'); var d = document.createElement('div'); d.innerHTML = reelItem(n, i, list.length); el.replaceWith(d.firstChild); }
+
+/* ================= SOIL TEST ================= */
+function soilP(k){ for(var i = 0; i < SOILP.length; i++) if(SOILP[i].k === k) return SOILP[i]; return null; }
+/* value used for rating (P given as P2O5 is converted to P) */
+function soilVal(v, k, pu){ var x = v[k]; if(x === '' || x == null || isNaN(+x)) return null; x = +x; if(k === 'p' && pu === 'p2o5') x = x / 2.29; return x; }
+function soilRates(v, pu){ var out = []; SOILP.forEach(function(p){ var x = soilVal(v, p.k, pu); if(x == null) return; out.push({p: p, v: +v[p.k], r: soilRate(p, x)}); }); return out; }
+function soilSummaryEn(v, pu){
+  var names = {ph: 'pH', ec: 'EC', oc: 'organic carbon', n: 'N', p: 'P', k: 'K', s: 'S', zn: 'Zn', fe: 'Fe', mn: 'Mn', cu: 'Cu', b: 'B'};
+  return soilRates(v, pu).map(function(x){ var lv = x.r.lv.replace(/^(ph|ec)_/, ''); lv = {acid: 'acidic', sacid: 'slightly acidic', neutral: 'neutral', salk: 'slightly alkaline', alk: 'strongly alkaline', normal: 'normal', mod: 'some salts', high: 'high'}[lv] || lv;
+    return names[x.p.k] + ' ' + x.v + (x.p.u ? ' ' + (x.p.k === 'p' && pu === 'p2o5' ? 'kg/ha as P2O5' : x.p.u) : '') + ' (' + lv + ')'; }).join(', ');
+}
+function soilAdvice(x){
+  var k = x.p.k, lv = x.r.lv;
+  if(x.r.tone === 'g') return null;
+  var key = k === 'ph' ? 'sa_' + lv : (k === 'ec' ? 'sa_' + lv : 'sa_' + k + '_' + lv);
+  return T.en[key] ? t(key) : null;
+}
+function soilBar(x){
+  var p = x.p, v = x.v, lo, hi, max, pos, grad;
+  if(p.ph){ lo = 4; max = 10; pos = (Math.min(max, Math.max(lo, v)) - lo) / (max - lo) * 100; grad = 'linear-gradient(90deg,var(--red) 0 25%,var(--sun) 25% 41.6%,var(--g3) 41.6% 58.3%,var(--sun) 58.3% 75%,var(--red) 75%)'; }
+  else { var r = p.r; hi = p.k === 'p' && S.soilForm._pu === 'p2o5' ? r[1] * 2.29 : r[1]; var l0 = p.k === 'p' && S.soilForm._pu === 'p2o5' ? r[0] * 2.29 : r[0]; max = hi * 2; pos = Math.min(100, v / max * 100); var a = l0 / max * 100, b = 50;
+    grad = p.ec ? 'linear-gradient(90deg,var(--g3) 0 ' + a + '%,var(--sun) ' + a + '% ' + b + '%,var(--red) ' + b + '%)' : 'linear-gradient(90deg,var(--red) 0 ' + a + '%,var(--sun) ' + a + '% ' + b + '%,var(--g3) ' + b + '%)'; }
+  return '<span class="sbar" style="background:' + grad + '"><i style="left:' + pos + '%"></i></span>';
+}
+function soilReport(){
+  var v = S.soilForm, pu = v._pu || 'p', rs_ = soilRates(v, pu);
+  if(!rs_.length) return '<div class="card empty"><span class="ico o">' + I('layers') + '</span><p style="margin:0">' + esc(t('soil_fill')) + '</p></div>';
+  var sc = rs_.reduce(function(a, x){ return a + (x.r.tone === 'g' ? 1 : (x.r.tone === 's' ? 0.5 : 0)); }, 0) / rs_.length;
+  var lvk = sc >= 0.75 ? 'good' : (sc >= 0.5 ? 'fair' : 'poor'), tone = sc >= 0.75 ? 'g' : (sc >= 0.5 ? 's' : 'r');
+  var h = '<div class="card pad"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="font-size:20px">' + esc(t('soil_result')) + '</h2><span class="score ' + tone + '"><b>' + num(Math.round(sc * 100), 0) + '</b><small>/100</small></span></div><p class="sm" style="margin:0 0 14px"><span class="chip ' + tone + '">' + esc(t('soil_score')) + ': ' + esc(t('soil_' + lvk)) + '</span></p>';
+  h += '<div class="srows">' + rs_.map(function(x){ return '<div class="srow"><span class="nm">' + esc(t('sp_' + x.p.k)) + '</span><span class="vl">' + num(x.v) + ' <small>' + esc(x.p.k === 'p' && pu === 'p2o5' ? 'P₂O₅ kg/ha' : x.p.u) + '</small></span><span class="chip ' + x.r.tone + '">' + esc(t(x.r.lv)) + '</span>' + soilBar(x) + '</div>'; }).join('') + '</div></div>';
+  var adv = rs_.map(function(x){ var a = soilAdvice(x); return a ? {x: x, a: a} : null; }).filter(Boolean);
+  if(adv.length) h += '<div class="rsec g" style="margin-top:14px"><h3>' + I('leaf') + esc(t('soil_quick')) + '</h3><ul>' + adv.map(function(o){ return '<li><b>' + esc(t('sp_' + o.x.p.k)) + ':</b> ' + esc(o.a) + '</li>'; }).join('') + '</ul></div>';
+  else h += '<div class="note g" style="margin-top:14px">' + I('check') + esc(t('sa_ok')) + '</div>';
+  return h;
+}
+function patchSoil(){ var el = $('#soilreport'); if(el) el.innerHTML = soilReport(); }
+function soilField(p){
+  var v = S.soilForm[p.k];
+  var unit = p.k === 'p' ? '<select class="inp unitsel" data-act="soilpu" aria-label="' + esc(t('p_unit')) + '"><option value="p"' + ((S.soilForm._pu || 'p') === 'p' ? ' selected' : '') + '>P kg/ha</option><option value="p2o5"' + (S.soilForm._pu === 'p2o5' ? ' selected' : '') + '>P₂O₅ kg/ha</option></select>' : (p.u ? '<span class="u">' + esc(p.u) + '</span>' : '');
+  return '<label class="f sf">' + esc(t('sp_' + p.k)) + '<span class="inwrap"><input class="inp" type="number" inputmode="decimal" min="' + p.min + '" max="' + p.max + '" step="' + p.step + '" data-act="soilv" data-k="' + p.k + '" id="sv-' + p.k + '" value="' + esc(v == null ? '' : v) + '" placeholder="' + (p.ph ? '7.0' : '') + '">' + unit + '</span></label>';
+}
+function vSoil(){
+  var tab = S.soilTab;
+  var h = '<div class="ph"><h1>' + esc(t('soil_h')) + '</h1><p>' + esc(t('soil_d')) + '</p></div>';
+  h += '<div class="tabs" role="tablist" style="margin-top:0">' + [['card', 'soil_tab_card'], ['home', 'soil_tab_home'], ['saved', 'soil_tab_saved']].map(function(k){ return '<button type="button" role="tab" data-act="soiltab" data-v="' + k[0] + '" aria-selected="' + (tab === k[0]) + '">' + esc(t(k[1])) + (k[0] === 'saved' && S.soils.length ? ' (' + num(S.soils.length, 0) + ')' : '') + '</button>'; }).join('') + '</div>';
+  if(tab === 'card') h += soilCardTab();
+  if(tab === 'home') h += soilHomeTab();
+  if(tab === 'saved') h += soilSavedTab();
+  return h;
+}
+function soilCardTab(){
+  var f = S.soilForm, rd = S.soilRead, vis = S.sampleReady && S.sample && S.imgOk;
+  var h = '<div class="grid g2" style="align-items:start"><div class="card pad" style="display:flex;flex-direction:column;gap:16px">';
+  if(vis) h += '<label class="scanbtn"><span class="ico g">' + I('camera') + '</span><span style="flex:1"><b>' + esc(t('soil_scan')) + ' <span class="ai-dot">AI</span></b><small>' + esc(t('soil_scan_d')) + '</small></span><input type="file" accept="image/*" data-act="soilscan" aria-label="' + esc(t('soil_scan')) + '"></label>';
+  if(rd) h += rd.busy ? '<div class="load" style="padding:0"><span class="spin"></span>' + esc(t('soil_reading')) + '</div>' : '<div class="note ' + (rd.ok ? 'g' : 'r') + '">' + I(rd.ok ? 'check' : 'alert') + esc(rd.ok ? t('soil_read_ok') : t('soil_read_fail')) + '</div>';
+  h += '<div><h3 class="sh">' + esc(t('soil_main')) + '</h3><div class="sgrid">' + SOILP.filter(function(p){ return !p.micro; }).map(soilField).join('') + '</div></div>';
+  var anyMicro = SOILP.some(function(p){ return p.micro && f[p.k] != null && f[p.k] !== ''; });
+  h += '<details class="micro"' + (anyMicro ? ' open' : '') + '><summary>' + esc(t('soil_micro')) + I('chev', 'chev') + '</summary><div class="sgrid" style="margin-top:12px">' + SOILP.filter(function(p){ return p.micro; }).map(soilField).join('') + '</div></details>';
+  h += '<div class="sgrid"><label class="f">' + esc(t('soil_plot')) + '<input class="inp" data-act="soilmeta" data-k="_plot" id="sv-plot" maxlength="40" value="' + esc(f._plot || '') + '"></label><label class="f">' + esc(t('soil_date')) + '<input class="inp" type="date" data-act="soilmeta" data-k="_date" id="sv-date" value="' + esc(f._date || isoDate(today0())) + '"></label></div>';
+  h += '<div class="row wrap"><button class="btn bp" data-act="soilsave">' + I(S.soilJustSaved ? 'check' : 'plus') + esc(S.soilJustSaved ? t('soil_saved') : t('soil_save')) + '</button><button class="btn bs" data-act="soilclear">' + I('x') + esc(t('soil_clear')) + '</button></div>';
+  h += '<a class="sm" href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener" style="display:inline-flex;gap:6px;align-items:center;font-weight:600">' + esc(t('soil_labs')) + I('ext').replace('<svg', '<svg width="15" height="15" stroke="currentColor"') + '</a></div>';
+  h += '<div><div id="soilreport">' + soilReport() + '</div>' + soilPlanBox() + '</div></div>';
+  return h;
+}
+function soilPlanBox(){
+  var pl = S.soilPlan, f = S.soilForm;
+  var h = '<div class="aibox" style="margin-top:16px"><div style="display:flex;gap:12px;align-items:flex-start"><span class="ico s">' + I('spark') + '</span><div><h2 style="font-size:19px">' + esc(t('soil_plan')) + '</h2><p class="sm mu" style="margin:4px 0 0">' + esc(t('soil_plan_d')) + '</p></div></div>';
+  if(S.sampleReady && !S.sample) return h + '<div class="note" style="margin-top:12px">' + I('info') + esc(t('ai_off')) + '</div></div>';
+  h += '<div class="grid g3" style="margin-top:14px;align-items:end"><label class="f">' + esc(t('soil_crop')) + '<select class="inp" id="spcrop">' + cropOptions(f._crop || (S.cycles[0] && S.cycles[0].crop) || 'wheat') + '</select></label>' +
+    '<label class="f">' + esc(t('f_area')) + '<input class="inp" type="number" min="0.1" step="0.1" id="sparea" value="' + esc(f._area || 1) + '"></label><label class="f">&nbsp;<select class="inp" id="spunit">' + ['acre', 'guntha', 'hectare'].map(function(u){ return '<option value="' + u + '"' + ((f._unit || 'acre') === u ? ' selected' : '') + '>' + esc(t(u)) + '</option>'; }).join('') + '</select></label></div>';
+  h += '<div class="row" style="margin-top:12px">' + (pl && pl.busy ? '<button class="btn bs" data-act="ai-stop" data-k="soil">' + I('stop') + esc(t('stop_gen')) + '</button>' : '<button class="btn bp" data-act="soilplan"' + (S.sampleReady ? '' : ' disabled') + '>' + I('spark') + esc(t('soil_get_plan')) + '</button>' + (pl && pl.text ? speakBtn('soilplan') : '')) + '</div>';
+  h += '<div class="md" id="soilplan-out" style="margin-top:' + (pl ? '14px' : '0') + '">' + (pl ? (pl.text ? md(pl.text) : '') + (pl.busy ? '<div class="load"><span class="spin"></span>' + esc(pl.text ? '' : t('thinking')) + '</div>' : '') + (pl.err ? '<div class="note r">' + I('alert') + esc(pl.err) + '</div>' : '') : '') + '</div>' + (pl && pl.text && !pl.busy ? '<p class="xs mu2" style="margin:12px 0 0">' + esc(t('disclaimer')) + '</p>' : '') + '</div>';
+  return h;
+}
+function soilHomeTab(){
+  var q = S.soilHomeQ, r = S.soilHome;
+  var h = '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">' + HOMETESTS.map(function(x){ var open = S.openTest === x.id;
+    return '<div class="rcard' + (open ? ' open' : '') + '"><button type="button" data-act="hometest" data-v="' + x.id + '" aria-expanded="' + open + '"><span class="ico o">' + I(x.id === 'ph' ? 'flask' : (x.id === 'drain' ? 'drop' : (x.id === 'worm' ? 'sprout' : 'jar'))) + '</span><span class="tx"><b>' + esc(L(x.n)) + '</b></span>' + I('chev', 'chev') + '</button><div class="body">' + (open ? '<div class="grid g2" style="margin-top:16px;align-items:start"><div><h3 style="font-size:16px;margin-bottom:8px">' + esc(t('method')) + '</h3><ol class="steps">' + L(x.m).map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('') + '</ol></div><div class="note g" style="align-self:start">' + I('info') + '<span>' + esc(L(x.read)) + '</span></div></div>' : '') + '</div></div>'; }).join('') + '</div>';
+  function sel(k, opts){ return '<label class="f">' + esc(t('hq_' + k)) + '<select class="inp" data-act="soilq" data-k="' + k + '"><option value="">' + esc(t('o_unknown')) + '</option>' + opts.map(function(o){ return '<option value="' + o + '"' + (q[k] === o ? ' selected' : '') + '>' + esc(t('o_' + o)) + '</option>'; }).join('') + '</select></label>'; }
+  h += '<div class="aibox"><div style="display:flex;gap:12px;align-items:flex-start"><span class="ico s">' + I('spark') + '</span><div><h2 style="font-size:19px">' + esc(t('soil_home_ask')) + '</h2><p class="sm mu" style="margin:4px 0 0">' + esc(t('soil_home_d')) + '</p></div></div>';
+  h += '<div class="grid g3" style="margin-top:14px">' + sel('color', ['black', 'red', 'brown', 'yellow', 'white']) + sel('texture', ['sandy', 'loam', 'clay']) + sel('drain', ['fast', 'good', 'slow']) + sel('worms', ['many', 'few', 'vfew']) + sel('fizz', ['vinegar', 'soda', 'none']) + '<label class="f">' + esc(t('hq_crop')) + '<input class="inp" data-act="soilq" data-k="crop" id="hq-crop" maxlength="120" value="' + esc(q.crop || '') + '"></label></div>';
+  if(S.sampleReady && !S.sample) h += '<div class="note" style="margin-top:12px">' + I('info') + esc(t('ai_off')) + '</div>';
+  else h += '<div class="row" style="margin-top:14px">' + (r && r.busy ? '<button class="btn bs" data-act="ai-stop" data-k="soilhome">' + I('stop') + esc(t('stop_gen')) + '</button>' : '<button class="btn bp" data-act="soilhome"' + (S.sampleReady ? '' : ' disabled') + '>' + I('spark') + esc(t('soil_home_btn')) + '</button>' + (r && r.text ? speakBtn('soilhome') : '')) + '</div>';
+  h += '<div class="md" id="soilhome-out" style="margin-top:' + (r ? '14px' : '0') + '">' + (r ? (r.text ? md(r.text) : '') + (r.busy ? '<div class="load"><span class="spin"></span>' + esc(r.text ? '' : t('thinking')) + '</div>' : '') + (r.err ? '<div class="note r">' + I('alert') + esc(r.err) + '</div>' : '') : '') + '</div></div>';
+  return h;
+}
+function soilSavedTab(){
+  if(!S.soils.length) return '<div class="card empty"><span class="ico o">' + I('layers') + '</span><p style="margin:0">' + esc(t('soil_none')) + '</p></div>';
+  return '<div class="card lst">' + S.soils.map(function(r){ var rs_ = soilRates(r.v, r.pu); var bad = rs_.filter(function(x){ return x.r.tone === 'r'; });
+    return '<div class="li" style="align-items:flex-start"><span class="ico o" style="width:40px;height:40px;border-radius:12px">' + I('layers') + '</span><div class="tx"><b>' + esc((r.plot || t('soil_tab_card')) + ' · ' + fmtD(parseD(r.date))) + '</b><div class="row wrap" style="gap:6px;margin-top:6px">' + rs_.slice(0, 6).map(function(x){ return '<span class="chip ' + x.r.tone + '">' + esc(t('sp_' + x.p.k).split(' (')[0]) + ': ' + esc(t(x.r.lv)) + '</span>'; }).join('') + '</div>' + (bad.length ? '' : '') + '</div><button class="btn bs bsm" data-act="soilopen" data-v="' + r.id + '">' + esc(t('soil_open')) + '</button><button class="xbtn" data-act="soildel" data-v="' + r.id + '" aria-label="' + esc(t('delete')) + '">' + I('trash') + '</button></div>'; }).join('') + '</div>';
+}
+function saveSoilDraft(){ lsSet('soilDraft', S.soilForm); }
+function soilValues(){ var o = {}; SOILP.forEach(function(p){ var x = S.soilForm[p.k]; if(x !== '' && x != null && !isNaN(+x)) o[p.k] = +x; }); return o; }
+function saveSoil(){
+  var v = soilValues(); if(!Object.keys(v).length){ patchSoil(); return; }
+  var f = S.soilForm, rec = {id: uid('s'), date: f._date || isoDate(today0()), plot: String(f._plot || '').trim().slice(0, 40), v: v, pu: f._pu || 'p', created: Date.now()};
+  S.soils = [rec].concat(S.soils.filter(function(r){ return !(r.date === rec.date && r.plot === rec.plot); })).slice(0, 30);
+  S.soils.sort(function(a, b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : b.created - a.created); });
+  lsSet('soils', S.soils); S.soilJustSaved = true; render(); setTimeout(function(){ S.soilJustSaved = false; if(route().v === 'soil') softRender(); }, 2500);
+}
+function runSoilRead(file){
+  if(!S.sample || !file) return;
+  S.soilRead = {busy: true}; softRender();
+  var prompt = 'TASK: This is a photo of an Indian Soil Health Card or soil test report. Read the soil test RESULT values (not the "normal level" / reference columns).\n' +
+    'Reply with ONLY JSON: {"ok":true,"ph":null,"ec":null,"oc":null,"n":null,"p":null,"p_unit":"P|P2O5","k":null,"s":null,"zn":null,"fe":null,"mn":null,"cu":null,"b":null,"plot":"<survey / field no. if printed, else empty>","date":"<YYYY-MM-DD if printed, else empty>"}\n' +
+    'Rules: numbers only (no units). EC in dS/m. Organic carbon in % (if it is given in g/kg divide by 10). N, P, K in kg/ha (if given in kg/acre multiply by 2.47). If phosphorus is reported as P2O5 set "p_unit":"P2O5". S and micronutrients in ppm (mg/kg). Use null for any value you cannot read clearly — never guess. If the image is not a soil report, set "ok": false.';
+  S.sample.json(prompt, {system: 'You read documents accurately and reply with JSON only.', task: 'vision', images: [file]}).then(function(d){
+    var n = 0;
+    if(d && d.ok !== false) SOILP.forEach(function(p){ var x = d[p.k]; if(x != null && x !== '' && !isNaN(parseFloat(x))){ S.soilForm[p.k] = parseFloat(x); n++; } });
+    if(d && /p2o5/i.test(String(d.p_unit || ''))) S.soilForm._pu = 'p2o5';
+    if(d && d.plot && !S.soilForm._plot) S.soilForm._plot = String(d.plot).slice(0, 40);
+    if(d && /^\d{4}-\d{2}-\d{2}$/.test(String(d.date || ''))) S.soilForm._date = d.date;
+    saveSoilDraft(); S.soilRead = {ok: n > 0}; softRender();
+  }).catch(function(){ S.soilRead = {ok: false}; softRender(); });
+}
+function runSoilPlan(){
+  var v = soilValues(), f = S.soilForm;
+  f._crop = ($('#spcrop') || {}).value || f._crop; f._area = parseFloat(($('#sparea') || {}).value) || 1; f._unit = ($('#spunit') || {}).value || 'acre'; saveSoilDraft();
+  var c = crop(f._crop) || CROPS[0], acres = f._unit === 'guntha' ? f._area / 40 : (f._unit === 'hectare' ? f._area * 2.471 : f._area);
+  var soil = Object.keys(v).length ? soilSummaryEn(v, f._pu || 'p') : 'NO SOIL TEST VALUES — give a general plan and strongly advise getting a soil test.';
+  var prompt = 'TASK: Make a soil-test-based soil improvement and fertilizer plan.\nCrop: ' + c.n.en + (c.x ? ' (high-value foreign crop)' : '') + '. Area: ' + f._area + ' ' + f._unit + ' (= ' + (Math.round(acres * 100) / 100) + ' acre).\nSoil test (kg/ha for N, P, K; ppm for S and micronutrients): ' + soil + '.\n' +
+    'Rating limits used: OC % low <0.5, high >0.75; N kg/ha low <280, high >560; P kg/ha low <10, high >25; K kg/ha low <120, high >280.\n' +
+    'Write Markdown with these ## sections:\n' +
+    '1. Soil in short — 2–3 lines on what is good and what is the main problem\n' +
+    '2. Correct the soil before sowing — amendments (lime / gypsum / organic matter) with quantity for ' + (Math.round(acres * 100) / 100) + ' acre, only if needed\n' +
+    '3. Organic nutrition — FYM/compost, Ghanjeevamrut, Jeevamrut schedule, biofertilizers (Azotobacter/Rhizobium, PSB, KMB) with quantities for this area\n' +
+    '4. Fertilizer plan — first state the general recommended N-P2O5-K2O dose for ' + c.n.en + ' in ' + S.state + ' (kg per acre), then adjust it using the soil test (low → about 25% more, high → about 25% less, medium → normal). Then give a Markdown table: When (stage / days after sowing) | Fertilizer | Per acre | For ' + f._area + ' ' + f._unit + '. Convert to common fertilizers: Urea 46% N, DAP 18-46-0, SSP 16% P2O5, MOP 60% K2O (count the N supplied by DAP). Also show the number of 50-kg bags for the whole area. Add micronutrients only if the test shows a deficiency.\n' +
+    '5. Long-term soil care — 3–4 practical points\n' +
+    'Do the arithmetic carefully and round to practical amounts. End with one line: compare with the recommendation printed on your Soil Health Card / ask the KVK.';
+  S.soilPlan = {text: '', busy: true}; softRender();
+  ctl.soil = new AbortController();
+  S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.soil.signal, onText: function(u){ S.soilPlan.text = u.text; var el = $('#soilplan-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
+    .then(function(r){ S.soilPlan = {text: r.text}; softRender(); })
+    .catch(function(e){ var g = S.soilPlan; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
+}
+function runSoilHome(){
+  var q = S.soilHomeQ, en = {color: 'soil colour', texture: 'jar test (texture)', drain: 'drainage test: water went down in', worms: 'earthworms in a 30x30x20 cm block', fizz: 'vinegar / baking-soda test'};
+  var ans = Object.keys(en).map(function(k){ return q[k] ? '- ' + en[k] + ': ' + T.en['o_' + q[k]] : ''; }).filter(Boolean).join('\n');
+  var prompt = 'TASK: A farmer did simple home soil tests (no lab). Give a simple soil assessment.\nResults:\n' + (ans || '- (no tests done)') + (q.crop ? '\nProblem seen in crops: ' + q.crop : '') + '\n' +
+    'Write Markdown with ## sections: 1) What your soil is probably like (texture, pH tendency, organic matter, drainage) — say clearly these are rough home tests, 2) What to add / do this season with quantities per acre (organic first), 3) Crops that suit this soil in ' + place() + ', 4) Why and where to get a proper lab soil test (Soil Health Card, KVK). Keep it short.';
+  S.soilHome = {text: '', busy: true}; softRender();
+  ctl.soilhome = new AbortController();
+  S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.soilhome.signal, onText: function(u){ S.soilHome.text = u.text; var el = $('#soilhome-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
+    .then(function(r){ S.soilHome = {text: r.text}; softRender(); })
+    .catch(function(e){ var g = S.soilHome; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
+}
+
+var WEEKDAYS = {en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], hi:['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'], mr:['रवि','सोम','मंगळ','बुध','गुरु','शुक्र','शनि']};
+/* ================= WEATHER (Open-Meteo through our server) ================= */
+var STATE_CITY = {'Andhra Pradesh':'Vijayawada','Arunachal Pradesh':'Itanagar','Assam':'Guwahati','Bihar':'Patna','Chhattisgarh':'Raipur','Goa':'Panaji','Gujarat':'Ahmedabad','Haryana':'Hisar','Himachal Pradesh':'Shimla','Jharkhand':'Ranchi','Karnataka':'Bengaluru','Kerala':'Thiruvananthapuram','Madhya Pradesh':'Bhopal','Maharashtra':'Pune','Manipur':'Imphal','Meghalaya':'Shillong','Mizoram':'Aizawl','Nagaland':'Kohima','Odisha':'Bhubaneswar','Punjab':'Ludhiana','Rajasthan':'Jaipur','Sikkim':'Gangtok','Tamil Nadu':'Chennai','Telangana':'Hyderabad','Tripura':'Agartala','Uttar Pradesh':'Lucknow','Uttarakhand':'Dehradun','West Bengal':'Kolkata','Delhi':'New Delhi','Jammu and Kashmir':'Srinagar','Ladakh':'Leh','Puducherry':'Puducherry','Chandigarh':'Chandigarh','Andaman and Nicobar Islands':'Port Blair','Lakshadweep':'Kavaratti','Dadra and Nagar Haveli and Daman and Diu':'Daman'};
+function wmo(c){ c = +c;
+  if(c === 0) return ['wc_clear', 'sun']; if(c === 1) return ['wc_mainly', 'sun']; if(c === 2) return ['wc_partly', 'cloudsun']; if(c === 3) return ['wc_cloudy', 'cloud'];
+  if(c === 45 || c === 48) return ['wc_fog', 'cloud']; if(c >= 51 && c <= 57) return ['wc_drizzle', 'rain']; if(c === 61 || c === 80) return ['wc_lightrain', 'rain'];
+  if(c === 63 || c === 81 || c === 66) return ['wc_rain', 'rain']; if(c === 65 || c === 82 || c === 67) return ['wc_heavyrain', 'rain']; if(c >= 95) return ['wc_storm', 'storm']; if(c >= 71 && c <= 86) return ['wc_snow', 'cloud'];
+  return ['wc_cloudy', 'cloud']; }
+function wxPlace(){ return S.gps ? (gpsName() || t('my_location')) : (S.district || STATE_CITY[S.state] || S.state); }
+function wxQuery(){ return S.gps ? 'lat=' + S.gps.lat.toFixed(3) + '&lon=' + S.gps.lon.toFixed(3) : 'q=' + encodeURIComponent((S.district || STATE_CITY[S.state] || S.state) + ',' + S.state); }
+function loadWx(force){
+  var q = wxQuery();
+  if(!force && S.wx && S.wx.q === q && Date.now() - S.wx.got < 30 * 60000) return;
+  if(S.wxBusy) return;
+  S.wxBusy = true; S.wxErr = null;
+  fetch('/api/weather?' + q).then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
+    .then(function(j){ j.q = q; j.got = Date.now(); S.wx = j; lsSet('wx', j); })
+    .catch(function(e){ S.wxErr = String(e.message || e) === 'location_not_found' ? t('wx_noloc') : t('wx_err'); })
+    .then(function(){ S.wxBusy = false; patchWx(); });
+}
+function patchWx(){
+  var v = route().v;
+  if(v === 'home'){ var w = $('#wxw'); if(w) w.outerHTML = wxWidget(seasonNow()); var p = $('#wxpanel'); if(p) p.innerHTML = wxDetail(true); }
+  if(v === 'weather'){ var b = $('#wxbody'); if(b) b.innerHTML = wxDetail(false); }
+}
+function wxFresh(){ return S.wx && S.wx.current && S.wx.q === wxQuery() ? S.wx : null; }
+function hourIndex(w){ var h = w.hourly && w.hourly.time; if(!h) return 0; var now = String(w.current.time || '').slice(0, 13); for(var i = 0; i < h.length; i++) if(h[i].slice(0, 13) >= now) return i; return 0; }
+function wxNext(w, hours, key, fn){ var i0 = hourIndex(w), a = (w.hourly[key] || []).slice(i0, i0 + hours).filter(function(x){ return x != null; }); return a.length ? fn(a) : 0; }
+function maxOf(a){ return Math.max.apply(null, a); } function sumOf(a){ return a.reduce(function(x, y){ return x + y; }, 0); }
+function wxAdvice(w){
+  var out = [], c = w.current, d = w.daily;
+  var rain6 = wxNext(w, 6, 'precipitation_probability', maxOf), rain12 = wxNext(w, 12, 'precipitation_probability', maxOf);
+  var wind = c.wind_speed_10m || 0, rain3d = sumOf((d.precipitation_sum || []).slice(0, 3).map(function(x){ return x || 0; }));
+  var tmax = maxOf((d.temperature_2m_max || []).slice(0, 3)), tmin = Math.min.apply(null, (d.temperature_2m_min || []).slice(0, 3));
+  var heavy = (d.precipitation_sum || []).slice(0, 3).some(function(x){ return x >= 50; });
+  var hum = c.relative_humidity_2m || 0, temp = c.temperature_2m || 0;
+  if(c.precipitation > 0.2 || rain12 >= 50) out.push(['r', 'rain', t('adv_spray_rain', {p: num(rain12, 0)})]);
+  else if(wind >= 15) out.push(['s', 'wind', t('adv_spray_wind', {n: num(Math.round(wind), 0)})]);
+  else if(rain6 < 30) out.push(['g', 'check', t('adv_spray_ok')]);
+  if(heavy) out.push(['r', 'storm', t('adv_heavy')]);
+  if(rain3d >= 10) out.push(['b', 'drop', t('adv_irr_skip', {mm: num(Math.round(rain3d), 0)})]);
+  else if(tmax >= 35) out.push(['s', 'drop', t('adv_irr_hot')]);
+  if(rain3d >= 20 || heavy) out.push(['s', 'flask', t('adv_urea')]);
+  if(tmax >= 40) out.push(['r', 'thermo', t('adv_heat', {n: num(Math.round(tmax), 0)})]);
+  if(tmin <= 4) out.push(['r', 'thermo', t('adv_frost', {n: num(Math.round(tmin), 0)})]);
+  else if(tmin <= 8) out.push(['b', 'thermo', t('adv_cold', {n: num(Math.round(tmin), 0)})]);
+  if(hum >= 85 && temp >= 18 && temp <= 32) out.push(['s', 'alert', t('adv_fungal')]);
+  return out;
+}
+function wxWidget(se){
+  var w = wxFresh() || (S.wx && S.wx.current ? S.wx : null);
+  var inner;
+  if(!w){ inner = '<span class="wxi">' + I(S.wxBusy ? 'refresh' : 'cloudsun') + '</span><span class="wxt"><b>' + esc(S.wxErr || (S.wxBusy ? t('wx_loading') : t('wx_h'))) + '</b><small>' + esc(wxPlace()) + '</small></span>'; }
+  else { var c = w.current, k = wmo(c.weather_code);
+    inner = '<span class="wxi">' + I(k[1]) + '</span><span class="wxt"><b>' + num(Math.round(c.temperature_2m), 0) + '°<em>' + esc(t(k[0])) + '</em></b><small>' + I('pin') + esc(wxPlace()) + ' · ' + esc(t('humidity')) + ' ' + num(c.relative_humidity_2m, 0) + '%</small></span>'; }
+  return '<button type="button" class="wxw" id="wxw" data-act="wxtoggle" aria-expanded="' + S.wxOpen + '">' + inner + '<span class="wxs"><small>' + esc(t('season_now')) + '</small><b>' + esc(t(se)) + '</b></span><span class="wxc">' + I('chev') + '</span></button>';
+}
+function dayName(iso, i){ if(i === 0) return t('today'); if(i === 1) return t('tomorrow'); var d = parseD(iso); return WEEKDAYS[S.lang][d.getDay()]; }
+function wxDetail(compact){
+  var w = wxFresh();
+  if(!w){
+    if(S.wxErr) return '<div class="card pad"><div class="note r">' + I('alert') + esc(S.wxErr) + '</div><div class="row wrap" style="margin-top:12px"><button class="btn bs bsm" data-act="wxretry">' + I('refresh') + esc(t('news_refresh')) + '</button><button class="btn bs bsm" data-act="menu">' + I('pin') + esc(t('wx_setloc')) + '</button></div></div>';
+    return '<div class="card pad"><div class="load"><span class="spin"></span>' + esc(t('wx_loading')) + '</div></div>';
+  }
+  var c = w.current, d = w.daily, k = wmo(c.weather_code), i0 = hourIndex(w), adv = wxAdvice(w);
+  var h = '<div class="card wxcard"><div class="wxnow"><span class="wxbig">' + I(k[1]) + '</span><div style="flex:1;min-width:150px"><div class="xs mu2" style="font-weight:600">' + I('pin').replace('<svg', '<svg width="14" height="14" stroke="currentColor" style="vertical-align:-2px"') + ' ' + esc(wxPlace()) + ' · ' + esc(t('wx_now')) + '</div><div class="wxtemp">' + num(Math.round(c.temperature_2m), 0) + '°C</div><div style="font-weight:600">' + esc(t(k[0])) + '</div><div class="sm mu">' + esc(t('feels', {n: num(Math.round(c.apparent_temperature), 0)})) + '</div></div>' +
+    '<div class="wxstats"><div>' + I('drop') + '<small>' + esc(t('humidity')) + '</small><b>' + num(c.relative_humidity_2m, 0) + '%</b></div><div>' + I('wind') + '<small>' + esc(t('wind')) + '</small><b>' + num(Math.round(c.wind_speed_10m), 0) + ' km/h</b></div><div>' + I('rain') + '<small>' + esc(t('rain_today')) + '</small><b>' + num(d.precipitation_sum[0] || 0, 1) + ' mm</b></div><div>' + I('sun') + '<small>UV</small><b>' + num(d.uv_index_max ? d.uv_index_max[0] : 0, 0) + '</b></div></div></div>';
+  if(adv.length) h += '<div class="wxadv"><h3>' + I('sprout') + esc(t('wx_farm')) + '</h3>' + adv.map(function(a){ return '<div class="advi ' + a[0] + '">' + I(a[1]) + '<span>' + esc(a[2]) + '</span></div>'; }).join('') + '</div>';
+  var hrs = [];
+  for(var i = i0; i < Math.min(i0 + 24, w.hourly.time.length); i += (compact ? 3 : 2)) hrs.push(i);
+  h += '<div class="wxsec"><h3>' + esc(t('wx_hourly')) + '</h3><div class="wxhours">' + hrs.map(function(i){ var kk = wmo(w.hourly.weather_code[i]), pp = w.hourly.precipitation_probability[i] || 0; return '<div class="wxh"><small>' + esc(w.hourly.time[i].slice(11, 16)) + '</small>' + I(kk[1]) + '<b>' + num(Math.round(w.hourly.temperature_2m[i]), 0) + '°</b><span class="pp' + (pp >= 50 ? ' hi' : '') + '">' + I('drop') + num(pp, 0) + '%</span></div>'; }).join('') + '</div></div>';
+  h += '<div class="wxsec"><h3>' + esc(t('wx_7day')) + '</h3><div class="wxdays">' + d.time.map(function(day, i){ var kk = wmo(d.weather_code[i]), pp = d.precipitation_probability_max ? d.precipitation_probability_max[i] || 0 : 0;
+    return '<div class="wxd"><b class="dn">' + esc(dayName(day, i)) + '</b><span class="di">' + I(kk[1]) + '<span>' + esc(t(kk[0])) + '</span></span><span class="dr' + (pp >= 50 ? ' hi' : '') + '">' + I('drop') + num(pp, 0) + '%' + (d.precipitation_sum[i] >= 0.5 ? ' · ' + num(d.precipitation_sum[i], 1) + ' mm' : '') + '</span><span class="dt"><b>' + num(Math.round(d.temperature_2m_max[i]), 0) + '°</b> / ' + num(Math.round(d.temperature_2m_min[i]), 0) + '°</span></div>'; }).join('') + '</div></div>';
+  var ai = S.wxAI;
+  h += '<div class="wxsec wxai">' + (S.sampleReady && !S.sample ? '' : (ai && ai.busy ? '<button class="btn bs bsm" data-act="ai-stop" data-k="wx">' + I('stop') + esc(t('stop_gen')) + '</button>' : '<button class="btn bp bsm" data-act="wxai"' + (S.sampleReady ? '' : ' disabled') + '>' + I('spark') + esc(t('wx_ai')) + '</button>')) +
+    (ai && ai.text && !ai.busy ? dlBtn('wx') : '') + '<button class="btn bs bsm" data-act="menu">' + I('pin') + esc(t('wx_change')) + '</button>' + (compact ? '<a class="btn bg bsm" href="#weather">' + esc(t('wx_full')) + ' →</a>' : '') + '</div>';
+  if(ai) h += '<div class="wxsec md" id="wxai-out">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load"><span class="spin"></span>' + esc(ai.text ? '' : t('thinking')) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div>' : '') + '</div>';
+  h += '<p class="xs mu2 wxsrc">' + esc(t('wx_src')) + ' · ' + esc(t('news_updated', {t: ago(w.got || w.at || Date.now())})) + '</p></div>';
+  return h;
+}
+function vWeather(){
+  loadWx(false);
+  return '<div class="ph"><h1>' + esc(t('wx_h')) + '</h1><p>' + esc(t('wx_d')) + '</p></div><div id="wxbody">' + wxDetail(false) + '</div>';
+}
+function wxSummaryEn(w){
+  var c = w.current, d = w.daily, k = wmo(c.weather_code);
+  return 'Now ' + Math.round(c.temperature_2m) + '°C, ' + T.en[k[0]].toLowerCase() + ', humidity ' + c.relative_humidity_2m + '%, wind ' + Math.round(c.wind_speed_10m) + ' km/h. Forecast: ' +
+    d.time.slice(0, 5).map(function(day, i){ return day + ' ' + Math.round(d.temperature_2m_max[i]) + '/' + Math.round(d.temperature_2m_min[i]) + '°C, rain ' + (d.precipitation_sum[i] || 0) + ' mm (' + (d.precipitation_probability_max ? d.precipitation_probability_max[i] : '?') + '%)'; }).join('; ');
+}
+function wxCtx(){ var w = wxFresh(); return w && Date.now() - w.got < 6 * 3600000 ? ' Local weather (' + wxPlace() + '): ' + wxSummaryEn(w) + '.' : ''; }
+function runWxAI(){
+  var w = wxFresh(); if(!w || !S.sample) return;
+  var mine = S.cycles.slice(0, 6).map(function(c){ var x = cycInfo(c); return x.cr.n.en + ' (' + (x.cur ? T.en['st_' + x.cur.k] : 'not sown') + ')'; }).join(', ');
+  var prompt = 'TASK: Give farm work advice for the next 5 days based on this weather forecast.\n' + (mine ? 'Crops the farmer is growing now: ' + mine + '.\n' : 'The farmer has not added crops — give advice for the main crops of this district in this season.\n') +
+    'Write Markdown: ## Next 5 days — a short day-wise plan (spraying, irrigation, fertilizer, sowing/harvest timing); ## Risks to watch — pests/diseases favoured by this weather and early signs; ## Protect crops and animals — only if there is heat, cold, heavy rain or strong wind. Keep it short and practical; base everything on the forecast given in the context.';
+  S.wxAI = {text: '', busy: true}; patchWx();
+  ctl.wx = new AbortController();
+  S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.wx.signal, onText: function(u){ S.wxAI.text = u.text; var el = $('#wxai-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
+    .then(function(r){ S.wxAI = {text: r.text}; patchWx(); })
+    .catch(function(e){ var g = S.wxAI; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); patchWx(); });
+}
+
+/* ================= PRECISE LOCATION (GPS → village, taluka, district) ================= */
+function normName(s){ return String(s || '').toLowerCase().replace(/district|जिल्हा|ज़िला|जिला/g, '').replace(/[^a-zऀ-ॿ]/g, ''); }
+function matchState(name){ var n = normName(name); for(var i = 0; i < STATES.length; i++) if(normName(STATES[i]) === n) return STATES[i]; return ''; }
+function matchDistrict(state, name){
+  var list = DISTRICTS[state] || [], n = normName(name); if(!n) return '';
+  for(var i = 0; i < list.length; i++){ var parts = list[i].split(/[()]/).map(normName).filter(Boolean); if(parts.indexOf(n) > -1) return list[i]; }
+  for(var j = 0; j < list.length; j++){ var m = normName(list[j]); if(m.indexOf(n) > -1 || n.indexOf(m.split('(')[0]) > -1) return list[j]; }
+  return list.length ? '' : name;
+}
+function gpsName(){ var g = S.gps; if(!g) return ''; var l = (g.local && g.local.place) ? g.local : (g.en || {}); return l.place || ''; }
+function gpsLabel(){ var g = S.gps; if(!g) return ''; var l = (g.local && g.local.place) ? g.local : (g.en || {}); return [l.place, l.taluka && l.taluka !== l.place ? l.taluka : '', l.district, l.state].filter(Boolean).filter(function(x, i, a){ return a.indexOf(x) === i; }).join(', '); }
+function applyPlace(g){
+  S.gps = g; lsSet('gps', g);
+  var st = matchState(g.en && g.en.state); if(st){ S.state = st; lsSet('state', st); }
+  var d = matchDistrict(S.state, g.en && g.en.district); if(d){ S.district = d; lsSet('district', d); }
+  S.reco = null; S.locBusy = false; S.locErr = null;
+  loadWx(true); refreshMenu(); softRender();
+  toast('📍 ' + (gpsLabel() || t('my_location')));
+}
+function locateMe(){
+  if(!navigator.geolocation){ S.locErr = t('gps_fail'); refreshMenu(); return; }
+  if(window.isSecureContext === false){ S.locErr = t('gps_https'); refreshMenu(); return; }
+  S.locBusy = true; S.locErr = null; refreshMenu();
+  var best = null, done = false, wid = null;
+  function finish(){
+    if(done) return; done = true; if(wid != null) navigator.geolocation.clearWatch(wid);
+    if(!best){ S.locBusy = false; S.locErr = S.locErr || t('gps_fail'); refreshMenu(); return; }
+    var lat = best.coords.latitude, lon = best.coords.longitude, acc = Math.round(best.coords.accuracy || 0);
+    fetch('/api/revgeo?lat=' + lat.toFixed(5) + '&lon=' + lon.toFixed(5) + '&lang=' + S.lang).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
+      .then(function(j){ applyPlace({lat: lat, lon: lon, acc: acc, en: (j && j.en) || {}, local: (j && j.local) || {}, src: 'gps', at: Date.now()}); });
+  }
+  /* watch for up to 12 s and keep the most accurate fix (stop early when within 50 m) */
+  wid = navigator.geolocation.watchPosition(function(p){ if(!best || p.coords.accuracy < best.coords.accuracy) best = p; if(p.coords.accuracy <= 50) finish(); },
+    function(err){ if(err.code === 1){ S.locErr = t('gps_denied'); best = null; finish(); } },
+    {enableHighAccuracy: true, timeout: 20000, maximumAge: 0});
+  setTimeout(finish, 12000);
+}
+function searchPlace(q){
+  q = String(q || '').trim(); if(q.length < 2) return;
+  S.placeRes = {busy: true}; refreshMenu();
+  fetch('/api/geosearch?lang=' + S.lang + '&q=' + encodeURIComponent(q)).then(function(r){ return r.json(); })
+    .then(function(j){ S.placeRes = {list: (j && j.results) || []}; refreshMenu(); })
+    .catch(function(){ S.placeRes = {list: [], err: true}; refreshMenu(); });
+}
+function pickPlace(i){
+  var r = S.placeRes && S.placeRes.list && S.placeRes.list[i]; if(!r) return;
+  S.placeRes = null;
+  fetch('/api/revgeo?lat=' + r.lat.toFixed(5) + '&lon=' + r.lon.toFixed(5) + '&lang=' + S.lang).then(function(x){ return x.ok ? x.json() : null; }).catch(function(){ return null; })
+    .then(function(j){ var e = (j && j.en) || {place: r.name, district: r.district, state: r.state}; if(!e.place) e.place = r.name; applyPlace({lat: r.lat, lon: r.lon, acc: null, en: e, local: (j && j.local && j.local.place) ? j.local : {place: r.name, taluka: r.taluka, district: r.district, state: r.state}, src: 'search', at: Date.now()}); });
+}
+function locSection(){
+  var h = '<div class="msec"><h3>' + I('pin') + esc(t('location')) + '</h3>';
+  if(S.gps){ h += '<div class="curloc">' + I(S.gps.src === 'search' ? 'pin' : 'gps') + '<div><b>' + esc(gpsLabel() || (S.gps.lat.toFixed(4) + ', ' + S.gps.lon.toFixed(4))) + '</b>' + (S.gps.acc ? '<small>' + esc(t('accuracy', {m: num(S.gps.acc, 0)})) + '</small>' : '') + '</div><button class="btn bg bsm" data-act="gpsoff">' + esc(t('remove')) + '</button></div>'; }
+  h += '<button class="btn bp locbtn" data-act="gps"' + (S.locBusy ? ' disabled' : '') + '>' + (S.locBusy ? '<span class="spin" style="width:16px;height:16px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>' + esc(t('gps_finding')) : I('gps') + esc(S.gps && S.gps.src === 'gps' ? t('gps_update') : t('use_gps'))) + '</button>';
+  if(S.locErr) h += '<div class="note r" style="margin-top:10px">' + I('alert') + esc(S.locErr) + '</div>';
+  h += '<div class="psearch"><input class="inp" id="placeq" placeholder="' + esc(t('place_search_ph')) + '" enterkeyhint="search"><button class="btn bs" data-act="placesearch" aria-label="' + esc(t('place_search')) + '">' + I('search') + '</button></div>';
+  var pr = S.placeRes;
+  if(pr){ h += '<div class="presults">' + (pr.busy ? '<div class="load" style="padding:8px"><span class="spin"></span></div>' : (pr.list.length ? pr.list.map(function(r, i){ return '<button class="mrow" data-act="placepick" data-v="' + i + '">' + I('pin') + '<span><b>' + esc(r.name) + '</b><small>' + esc([r.taluka, r.district, r.state].filter(Boolean).join(', ')) + '</small></span></button>'; }).join('') : '<p class="sm mu" style="margin:8px 4px">' + esc(t('place_none')) + '</p>')) + '</div>'; }
+  var ds = DISTRICTS[S.state];
+  h += '<details class="manual"' + (S.gps ? '' : ' open') + '><summary>' + esc(t('choose_manual')) + I('chev', 'chev') + '</summary><div class="grid g2" style="gap:10px;margin-top:10px"><label class="f">' + esc(t('state')) + '<select class="inp" data-act="state">' + STATES.map(function(s){ return '<option' + (s === S.state ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">' + esc(t('district')) + (ds ? '<select class="inp" data-act="district"><option value="">' + esc(t('select')) + '</option>' + ds.map(function(d){ return '<option' + (d === S.district ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') + '</select>' : '<input class="inp" data-act="district-t" value="' + esc(S.district) + '" placeholder="' + esc(t('type_district')) + '">') + '</label></div></details>';
+  h += '<p class="xs mu2" style="margin:10px 0 0">' + esc(t('loc_why')) + '</p></div>';
+  return h;
+}
+
+/* ================= SETTINGS MENU (⋮) ================= */
+function openMenu(){ modal('<div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(t('menu')) + '"><div class="box menu">' + menuBody() + '</div></div>'); }
+function refreshMenu(){ var m = $('#modalwrap .menu'); if(m) m.innerHTML = menuBody(); }
+function menuBody(){
+  var ds = DISTRICTS[S.state];
+  var h = '<div class="mhead"><h2>' + esc(t('menu')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>';
+  h += locSection();
+  h += '<div class="msec"><h3>' + I('globe') + esc(t('language')) + '</h3><div class="seg" role="group">' + [['mr','मराठी'],['hi','हिंदी'],['en','English']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div></div>';
+  h += '<div class="msec"><a class="mrow" href="#weather" data-act="close">' + I('cloudsun') + '<span><b>' + esc(t('wx_h')) + '</b><small>' + esc(t('t_wx_d')) + '</small></span>' + I('chev', 'chev') + '</a>' +
+    '<label class="mrow">' + I('text') + '<span><b>' + esc(t('big_text')) + '</b><small>' + esc(t('big_text_d')) + '</small></span><input type="checkbox" class="sw" data-act="bigtext"' + (S.bigText ? ' checked' : '') + '></label>' +
+    '<a class="mrow" href="tel:18001801551">' + I('phone') + '<span><b>' + esc(t('helpline')) + ' · 1800-180-1551</b><small>' + esc(t('helpline_d')) + '</small></span></a>' +
+    '<a class="mrow" href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_mandi')) + '</b></span>' + I('ext') + '</a>' +
+    '<a class="mrow" href="https://enam.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_enam')) + '</b></span>' + I('ext') + '</a>' +
+    '<a class="mrow" href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + I('layers') + '<span><b>' + esc(t('link_shc')) + '</b></span>' + I('ext') + '</a></div>';
+  h += '<div class="msec"><button class="mrow danger" data-act="cleardata">' + I('trash') + '<span><b>' + esc(t('clear_data')) + '</b><small>' + esc(t('clear_data_d')) + '</small></span></button>' +
+    '<p class="xs mu2" style="margin:12px 4px 0">' + esc(t('about_d')) + '</p></div>';
+  return h;
+}
+function applyBigText(){ document.documentElement.classList.toggle('bigtext', !!S.bigText); }
 
 /* ---------- render ---------- */
 var lastShellKey = '';
@@ -488,10 +1095,14 @@ function render(){
   switch(r.v){
     case 'crops': html = vCrops(); break; case 'crop': html = vCrop(r.id); break; case 'planner': html = vPlanner(); break;
     case 'scan': html = vScan(); break; case 'farm': html = vFarm(); break; case 'cycle': html = vCycle(r.id); break;
-    case 'organic': html = vOrganic(); break; case 'ai': html = vAI(); break; default: html = vHome();
+    case 'organic': html = vOrganic(); break; case 'ai': html = vAI(); break;
+    case 'news': html = vNews(); break; case 'soil': html = vSoil(); break; case 'weather': html = vWeather(); break; default: html = vHome();
   }
   v.innerHTML = html;
+  refreshMenu();
   if(r.v === 'ai') scrollChat();
+  document.body.classList.toggle('newsmode', r.v === 'news');
+  if(r.v === 'news'){ setupReels(); if(S.newsFocus){ var fe = document.getElementById('n-' + S.newsFocus); S.newsFocus = null; if(fe){ var rr = $('#reels'); rr.scrollTop = (+fe.getAttribute('data-i')) * rr.clientHeight; } } }
 }
 function softRender(){
   var act = document.activeElement, id = act && act.id, sel = null, asel = null;
@@ -525,6 +1136,15 @@ document.addEventListener('click', function(e){
     case 'newcycle': e.preventDefault(); modal(cycleForm(null, v)); break;
     case 'editcycle': modal(cycleForm(cyc(v))); break;
     case 'close': closeModal(); break;
+    case 'menu': openMenu(); break;
+    case 'wxtoggle': S.wxOpen = !S.wxOpen; loadWx(false); render(); break;
+    case 'wxretry': loadWx(true); patchWx(); break;
+    case 'wxai': runWxAI(); break;
+    case 'gps': locateMe(); break;
+    case 'placesearch': searchPlace(($('#placeq') || {}).value); break;
+    case 'placepick': pickPlace(+v); break;
+    case 'gpsoff': S.gps = null; S.placeRes = null; lsSet('gps', null); loadWx(true); refreshMenu(); softRender(); break;
+    case 'cleardata': if(!S.clearArm){ S.clearArm = true; el.querySelector('b').textContent = t('clear_confirm'); setTimeout(function(){ S.clearArm = false; }, 5000); } else { try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf('ank') === 0 || k.indexOf('shetimitra') === 0) localStorage.removeItem(k); }); }catch(_){} location.hash = '#home'; location.reload(); } break;
     case 'savecycle': saveCycleForm(v); break;
     case 'delcycle': confirmDelete(v); break;
     case 'cyctab': S.cycTab = v; render(); break;
@@ -537,20 +1157,50 @@ document.addEventListener('click', function(e){
     case 'newchat': if(ctl.chat) ctl.chat.abort(); S.chat = []; render(); break;
     case 'mic': toggleMic(); break;
     case 'confirmdel': removeCycle(v); closeModal(); location.hash = '#farm'; break;
+    case 'exofit': S.exoFit = v === '1'; render(); break;
+    case 'newscat': S.newsCat = v; S.reelN = 0; $$('[data-act="newscat"]').forEach(function(b){ b.setAttribute('aria-selected', b.getAttribute('data-v') === v); }); patchNews(); el.scrollIntoView && el.scrollIntoView({inline: 'center', block: 'nearest', behavior: 'smooth'}); break;
+    case 'newsref': closeModal(); loadNews(true); break;
+    case 'newsmore': S.newsShown += 12; patchNews(); break;
+    case 'newsai': runNewsAI(v); break;
+    case 'newsshare': shareNews(v); break;
+    case 'newsfilter': openNewsFilter(); break;
+    case 'newslangpick': S.newsLang = v; S.reelN = 0; closeModal(); render(); break;
+    case 'reelnext': reelScrollTo(+v); break;
+    case 'download': downloadReport(v); break;
+    case 'newsopen': S.newsCat = 'all'; S.newsLang = 'all'; S.newsFocus = v; var ix = newsList().findIndex(function(n){ return n.id === v; }); if(ix >= (S.reelN || 25)) S.reelN = ix + 5; break;
+    case 'soiltab': S.soilTab = v; render(); break;
+    case 'soilsave': saveSoil(); break;
+    case 'soilclear': S.soilForm = {_pu: S.soilForm._pu}; S.soilRead = null; S.soilPlan = null; saveSoilDraft(); render(); break;
+    case 'soilopen': var sr = S.soils.filter(function(x){ return x.id === v; })[0]; if(sr){ S.soilForm = Object.assign({}, sr.v, {_pu: sr.pu, _plot: sr.plot, _date: sr.date}); S.soilPlan = null; S.soilRead = null; saveSoilDraft(); S.soilTab = 'card'; render(); window.scrollTo(0, 0); } break;
+    case 'soildel': S.soils = S.soils.filter(function(x){ return x.id !== v; }); lsSet('soils', S.soils); render(); break;
+    case 'soilplan': runSoilPlan(); break;
+    case 'soilhome': S.soilHomeQ.crop = ($('#hq-crop') || {}).value || S.soilHomeQ.crop; runSoilHome(); break;
+    case 'hometest': S.openTest = S.openTest === v ? null : v; render(); break;
   }
 });
 document.addEventListener('change', function(e){
   var el = e.target, a = el.getAttribute('data-act'); if(!a) return;
-  if(a === 'state'){ S.state = el.value; S.district = ''; lsSet('state', S.state); lsSet('district', ''); S.reco = null; softRender(); }
-  if(a === 'district'){ S.district = el.value; lsSet('district', S.district); S.reco = null; softRender(); }
+  if(a === 'state'){ S.state = el.value; S.district = ''; lsSet('state', S.state); lsSet('district', ''); S.reco = null; if(!S.gps) loadWx(true); refreshMenu(); softRender(); }
+  if(a === 'district'){ S.district = el.value; lsSet('district', S.district); S.reco = null; if(!S.gps) loadWx(true); refreshMenu(); softRender(); }
+  if(a === 'district-t'){ if(!S.gps) loadWx(true); }
+  if(a === 'bigtext'){ S.bigText = el.checked; lsSet('bigText', S.bigText); applyBigText(); }
   if(a === 'district-t'){ S.district = el.value.trim().slice(0, 60); lsSet('district', S.district); S.reco = null; }
   if(a === 'plseason'){ S.plSeason = el.value; S.reco = null; render(); }
+  if(a === 'plexotic'){ S.plExotic = el.checked; S.reco = null; }
+  if(a === 'newslang'){ S.newsLang = el.value; S.newsShown = 12; patchNews(); }
+  if(a === 'soilpu'){ S.soilForm._pu = el.value; saveSoilDraft(); patchSoil(); }
+  if(a === 'soilscan'){ var sf = el.files && el.files[0]; if(sf) runSoilRead(sf); el.value = ''; }
+  if(a === 'soilq'){ S.soilHomeQ[el.getAttribute('data-k')] = el.value; }
+  if(a === 'soilmeta'){ S.soilForm[el.getAttribute('data-k')] = el.value; saveSoilDraft(); }
   if(a === 'calc'){ var id = el.getAttribute('data-v'), k = el.getAttribute('data-k'); S.calc[id] = S.calc[id] || (RECIPES.filter(function(r){ return r.id === id; })[0].base === 'acre' ? {a: 1, u: 'acre'} : {a: 100}); S.calc[id][k] = k === 'u' ? el.value : Math.max(0, parseFloat(el.value) || 0); softRender(); }
-  if(a === 'scanfile'){ var f = el.files && el.files[0]; if(f){ if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes[S.scanMode] = null; S.scanCrop = $('#scancrop') && $('#scancrop').value; S.scanNote = $('#scannote') && $('#scannote').value; render(); } }
+  if(a === 'scanfile'){ var f = el.files && el.files[0]; if(f){ if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes.one = null; S.scanCrop = $('#scancrop') && $('#scancrop').value; S.scanNote = $('#scannote') && $('#scannote').value; render(); } }
 });
 document.addEventListener('input', function(e){
   var el = e.target, a = el.getAttribute('data-act');
   if(a === 'libq'){ S.libQ = el.value; updLib(); }
+  if(a === 'soilv'){ var sk = el.getAttribute('data-k'); S.soilForm[sk] = el.value === '' ? '' : parseFloat(el.value); S.soilRead = null; saveSoilDraft(); clearTimeout(S.soilT); S.soilT = setTimeout(patchSoil, 200); }
+  if(a === 'soilmeta'){ S.soilForm[el.getAttribute('data-k')] = el.value; saveSoilDraft(); }
+  if(a === 'soilq' && el.tagName === 'INPUT'){ S.soilHomeQ[el.getAttribute('data-k')] = el.value; }
   if(a === 'calc'){ var id = el.getAttribute('data-v'), k = el.getAttribute('data-k'); if(k === 'a' && el.value !== ''){ S.calc[id] = S.calc[id] || (RECIPES.filter(function(r){ return r.id === id; })[0].base === 'acre' ? {a: 1, u: 'acre'} : {a: 100}); S.calc[id].a = Math.max(0, parseFloat(el.value) || 0); clearTimeout(S.calcT); S.calcT = setTimeout(softRender, 350); } }
   if(el.id === 'chatin'){ S.draft = el.value; el.style.height = 'auto'; el.style.height = Math.min(160, el.scrollHeight) + 'px'; }
 });
@@ -564,13 +1214,13 @@ document.addEventListener('keydown', function(e){
 });
 document.addEventListener('dragover', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d){ e.preventDefault(); d.classList.add('over'); } });
 document.addEventListener('dragleave', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d) d.classList.remove('over'); });
-document.addEventListener('drop', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d && e.dataTransfer.files[0]){ e.preventDefault(); var f = e.dataTransfer.files[0]; if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes[S.scanMode] = null; render(); } });
+document.addEventListener('drop', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d && e.dataTransfer.files[0]){ e.preventDefault(); var f = e.dataTransfer.files[0]; if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes.one = null; render(); } });
 window.addEventListener('hashchange', function(){ closeModal(); S.cycTab = route().v === 'cycle' ? S.cycTab : 'overview'; render(); window.scrollTo(0, 0); });
 window.addEventListener('scroll', function(){ var tp = $('#top'); if(tp) tp.classList.toggle('sc', window.scrollY > 4); }, {passive: true});
 
 function updLib(){
-  var q = S.libQ.toLowerCase(), g = $('#cgrid'); if(!g) return;
-  g.innerHTML = cropCards(CROPS.filter(function(c){ return (S.libCat === 'all' || c.cat === S.libCat || c.s.indexOf(S.libCat) > -1) && (!q || (c.n.en + ' ' + c.n.hi + ' ' + c.n.mr).toLowerCase().indexOf(q) > -1); }));
+  var g = $('#cgrid'); if(!g) return;
+  g.innerHTML = cropCards(libList());
 }
 function saveCycleForm(id){
   var f = $('#cform'); if(!f) return; var fd = new FormData(f);
@@ -596,8 +1246,8 @@ function addRow(id, kind){
 }
 function delRow(id, kind, rid){ var c = clone(cyc(id)); c[kind] = (c[kind] || []).filter(function(r){ return r.id !== rid; }); writeCycle(c); render(); }
 function saveScanToDiary(){
-  var m = S.scanMode, r = S.scanRes[m]; if(!r || !r.data) return; var id = $('#diarycyc').value, c = clone(cyc(id)); if(!c) return; var d = r.data;
-  var note = m === 'leaf' ? ((d.problem || '') + (d.organic && d.organic.length ? '\n• ' + d.organic.slice(0, 4).join('\n• ') : '')) : ((d.name || '') + ' (' + t(d.type || 'unclear') + ')' + (d.organic && d.organic.length ? '\n• ' + d.organic.slice(0, 4).join('\n• ') : ''));
+  var r = S.scanRes.one; if(!r || !r.data) return; var id = $('#diarycyc').value, c = clone(cyc(id)); if(!c) return; var d = r.data;
+  var note = (d.problem || t('healthy')) + (d.organic && d.organic.length ? '\n• ' + d.organic.slice(0, 4).join('\n• ') : '');
   c.log = (c.log || []).concat([{id: uid('r'), date: isoDate(today0()), act: 'scan', note: note.slice(0, 600)}]); writeCycle(c); r.saved = true; render();
 }
 
@@ -607,6 +1257,8 @@ function speechText(sid){
   if(sid.indexOf('review') === 0){ var r = S.reviews[sid.slice(6)]; return r ? r.text : ''; }
   if(sid.indexOf('scan') === 0) return scanSpeech(sid.slice(4));
   if(sid.indexOf('chat') === 0){ var m = S.chat[+sid.slice(4)]; return m ? m.content : ''; }
+  if(sid === 'soilplan') return S.soilPlan ? S.soilPlan.text : '';
+  if(sid === 'soilhome') return S.soilHome ? S.soilHome.text : '';
   return '';
 }
 function stopSpeak(){ if(S.tts && S.speakingId){ try{ S.tts.stop(); }catch(e){} } S.speakingId = null; }
@@ -638,4 +1290,9 @@ function toggleMic(){
 S.calc = {};
 render();
 initCaps();
+window.addEventListener('resize', function(){ if(route().v === 'news'){ var rr = $('#reels'), i = reelIndex(); sizeReels(); if(rr) rr.scrollTop = i * rr.clientHeight; } });
+document.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.target && e.target.id === 'placeq'){ e.preventDefault(); searchPlace(e.target.value); return; } if(route().v !== 'news' || $('#modalwrap') || /INPUT|SELECT|TEXTAREA/.test((e.target || {}).tagName || '')) return; if(e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'j'){ e.preventDefault(); reelScrollTo(reelIndex() + 1); } if(e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'k'){ e.preventDefault(); reelScrollTo(Math.max(0, reelIndex() - 1)); } });
+loadCropImgs();
+applyBigText();
+loadWx(false);
 })();

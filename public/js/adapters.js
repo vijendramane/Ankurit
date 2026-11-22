@@ -33,7 +33,7 @@
     for(var f of listImages(opts.images)){ var s = await shrink(f); images.push({mime: s.type || 'image/jpeg', data: await toB64(s)}); }
     var res;
     try{
-      res = await fetch('/api/ai', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({messages: messages, images: images, json: !!json}), signal: opts.signal});
+      res = await fetch('/api/ai', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({messages: messages, images: images, json: !!json, system: opts.system || undefined, task: opts.task || undefined}), signal: opts.signal});
     }catch(e){ if(e && e.name === 'AbortError') throw err('cancelled'); throw err('upstream_error', String(e)); }
     if(!res.ok){ var j = {}; try{ j = await res.json(); }catch(e){} throw err(j.code || (res.status === 429 ? 'rate_limited' : 'upstream_error'), j.message); }
     var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', text = '';
@@ -67,7 +67,16 @@
     throw err('invalid_json', 'Could not read the AI reply', t);
   }
   function sample(input, opts){ return call(input, opts, false); }
-  sample.json = function(input, opts){ return call(input, opts, true).then(function(r){ return parseJSON(r.text); }); };
+  /* JSON answers: if the model returns broken JSON, ask once more strictly. */
+  sample.json = function(input, opts){
+    opts = Object.assign({task: (opts && opts.images) ? 'vision' : 'json'}, opts || {});
+    return call(input, opts, true).then(function(r){ return parseJSON(r.text); }).catch(function(e){
+      if(!e || e.code !== 'invalid_json') throw e;
+      var again = typeof input === 'string' ? input + '\n\nIMPORTANT: Your previous reply was not valid JSON. Reply again with ONLY one valid JSON object, no extra text.' : input.concat([{role: 'user', content: 'Reply again with ONLY one valid JSON object, no extra text.'}]);
+      return call(again, opts, true).then(function(r){ return parseJSON(r.text); });
+    });
+  };
+  sample.status = getStatus;
   sample.limits = function(){
     return getStatus().then(function(s){
       var out = {maxPromptBytes: 262144};
@@ -139,7 +148,13 @@
     };
   }
 
+  /* Farm news from our own server (/api/news). */
+  function news(force){
+    return fetch('/api/news' + (force ? '?refresh=1' : ''), {cache: force ? 'no-store' : 'default'}).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  }
+
   window.ANK = {
+    news: function(){ return news; },
     sample: function(){ return getStatus().then(function(s){ return s.ai ? sample : null; }); },
     tts: function(){ return makeTTS(); },
     dictation: function(){ return makeDictation(); }
