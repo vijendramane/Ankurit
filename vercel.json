@@ -8,7 +8,7 @@
   "functions": {
     "api/*.js": {
       "maxDuration": 120,
-      "includeFiles": "public/img/crops/**"
+      "includeFiles": "public/img/**"
     }
   },
   "headers": [

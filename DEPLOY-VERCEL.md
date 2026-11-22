@@ -31,6 +31,8 @@ Vercel dashboard → your project → **Settings**:
 | `MISTRAL_API_KEY` | optional free backup |
 | `OPENROUTER_API_KEY` + `OPENROUTER_MODEL` | optional |
 | `AI_WEB_SEARCH` | optional, `true` |
+| `DATA_GOV_API_KEY` | needed for **बाजारभाव** (free from data.gov.in → My Account → API key) |
+| `AI_FAST` | optional, `groq` = chat answers from Groq first (fastest) |
 
 Do **not** set `PORT` on Vercel.
 

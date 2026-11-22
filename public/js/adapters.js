@@ -112,7 +112,7 @@
             if(idx >= list.length) return res();
             var u = new SpeechSynthesisUtterance(list[idx++]);
             if(voice){ u.voice = voice; u.lang = voice.lang; } else u.lang = {mr: 'mr-IN', hi: 'hi-IN', en: 'en-IN'}[lang] || 'en-IN';
-            u.rate = 0.95; u.onend = next; u.onerror = function(){ rej({code: 'error'}); };
+            u.rate = 0.95; u.onend = next; u.onerror = function(ev){ rej({code: stopped || (ev && (ev.error === 'interrupted' || ev.error === 'canceled')) ? 'viewer_stopped' : 'error'}); };
             synth.speak(u);
           }
           next();

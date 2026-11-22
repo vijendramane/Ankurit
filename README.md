@@ -175,6 +175,16 @@ After `npm start`, open **http://localhost:3000/api/ai-check** in your browser. 
 
 See **DEPLOY-VERCEL.md** — the project includes `vercel.json` and an `api/` folder so the AI, news, weather, location and photo services run as Vercel Functions (Mumbai region). Add your keys as Environment Variables in Vercel, push to GitHub, then open `/api/ai-check`.
 
+## What's new in v5
+- **News (full-photo reels):** one story per screen with the photo filling the screen, the headline and summary on it, and buttons on the right (सोपे / ऐका / शेअर / उघडा). The first tab, **🔥 मुख्य बातम्या**, shows the top headlines. The **अA** button changes the news language. The "simple words" answer opens in a sheet over the story; it stays there until the app is closed and is not saved in My reports. No bottom bar on News and on the full-screen chat.
+- **बाजारभाव (Market prices):** daily mandi prices from Agmarknet (data.gov.in): nearest mandi first, the most common/min/max price, the change from the last report, a 7-day trend and nearby mandis by distance. It uses your current location by default (change it with **बदला**). Needs `DATA_GOV_API_KEY`.
+- **अंकुर AI:** a round assistant button on the home page only. A greeting appears next to it, and tapping it opens the chat as a popup (⤢ for full screen).
+- **My reports (⋮ → माझे अहवाल):** Crop Doctor, soil plans, crop guides, crop review, the planner and the weather plan are saved automatically, with a popup to open or rename. Chat answers have a "जतन करा" button. Each report can be opened, listened to, renamed, saved as PDF or deleted.
+- **Upcoming farm tasks** are grouped crop by crop (plot, area, day, stage, progress).
+- **Weather pill** is smaller, with no arrow; tapping it opens the Weather page.
+- **Crop photos:** ⋮ → पिकांचे फोटो तपासा shows several real photos for each crop. Tap the right one. To show your choices to everyone, download `crop-photos.json`, put it in `public/img/` and push.
+- **Fixes:** Listen → Stop now really stops. The AI is faster: no "thinking" delay for chat and quick answers, the fastest model goes first for quick answers, Groq goes first when it is set, and repeated questions are answered instantly from memory.
+
 ## What's new in v4.1
 
 - **Several AI keys + free backups**: put 2–5 Gemini keys (`GEMINI_API_KEY=key1,key2` or `GEMINI_API_KEY_2…`). When a key's free limit is used up, the next key answers. If every Gemini key/model is busy, free backups take over in this order: **Groq → Mistral → OpenRouter → custom**. Groq and Mistral can also read crop photos. Check them all at **/api/ai-check** — it tests every key and backup separately.

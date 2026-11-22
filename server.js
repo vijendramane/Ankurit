@@ -139,7 +139,7 @@ async function pickGeminiModel(){ const l = await listGeminiModels(); return l[0
 function thinkingFor(model, task){
   /* Gemini 2.5 models "think" before answering. Limit it so answers start quickly. */
   if(!/(2\.5-flash(?!-lite)|^gemini-flash-latest$|gemini-3[\w.-]*flash(?!-lite))/.test(model)) return null;
-  return {thinkingBudget: {short: 0, chat: 1024, json: 1024, vision: 2048, guide: 2048}[task] || 1024};
+  return {thinkingBudget: {short: 0, chat: 0, json: 512, vision: 1536, guide: 1024}[task] || 512};
 }
 const badKeys = new Set(), keyRest = new Map();   /* key|model → time */
 function keyTag(k){ return 'key #' + (GEMINI_KEYS.indexOf(k) + 1); }
@@ -190,7 +190,8 @@ async function geminiProvider(body, onDelta, state){
   const tools = WEB_SEARCH && taskOf(body) === 'chat' && !body.json;
   const all = (await listGeminiModels()).filter(function(m){ return !badModels.has(m); });
   const now = Date.now();
-  const order = all.filter(function(m){ return !(resting.get(m) > now); }).concat(all.filter(function(m){ return resting.get(m) > now; }));
+  let order = all.filter(function(m){ return !(resting.get(m) > now); }).concat(all.filter(function(m){ return resting.get(m) > now; }));
+  if(taskOf(body) === 'short'){ const lite = order.filter(function(m){ return /lite/.test(m); }); order = lite.concat(order.filter(function(m){ return lite.indexOf(m) < 0; })); }   /* quick answers: fastest model first */
   let lastErr = null;
   state.t0 = state.t0 || Date.now();
   for(const model of order){
@@ -281,6 +282,12 @@ function upstreamError(provider, status, text, model){
 }
 
 /* ---------- /api/ai ---------- */
+const aiCache = new Map(), AI_CACHE_MS = 6 * 3600000;
+const FAST_CHAT = /^groq$/i.test((process.env.AI_FAST || '').trim());
+function aiCacheKey(body){
+  const t = taskOf(body); if(t === 'chat' && body.messages.length > 1) return '';   /* follow-up chat depends on the conversation */
+  return require('crypto').createHash('sha1').update(JSON.stringify([t, body.system || '', body.messages, !!body.json])).digest('hex');
+}
 async function handleAI(req, res){
   if(!rateOk(clientIp(req), 'ai', RATE_PER_MIN)) return sendJSON(res, 429, {code: 'rate_limited', message: 'Too many requests'});
   if(!ANY_AI) return sendJSON(res, 503, {code: 'not_granted', message: 'No API key configured'});
@@ -292,11 +299,19 @@ async function handleAI(req, res){
   res.writeHead(200, {'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no'});
   const state = {sent: 0, closed: false};
   res.on('close', function(){ state.closed = true; });
-  const onDelta = function(t){ if(state.closed) return; state.sent += t.length; res.write('data: ' + JSON.stringify({delta: t}) + '\n\n'); };
+  let onDelta = function(t){ if(state.closed) return; state.sent += t.length; res.write('data: ' + JSON.stringify({delta: t}) + '\n\n'); };
 
+  /* identical question asked again (same text, language, task) → answer instantly from memory */
+  const ckey = hasImages ? '' : aiCacheKey(body), hit = ckey && aiCache.get(ckey);
+  if(hit && Date.now() - hit.at < AI_CACHE_MS){ onDelta(hit.text); res.end(); return; }
+  if(ckey){ const orig = onDelta; state.all = ''; onDelta = function(t){ state.all += t; orig(t); }; }
   const order = [];
+  const backups = BACKUPS.filter(function(bk){ return !hasImages || bk.vision; }).map(function(bk){ return function(b, d, st){ return openaiProvider(b, d, st, bk); }; });
+  /* quick answers (news in simple words, short replies) and — if AI_FAST=groq — chat go to Groq first: it starts answering in under a second */
+  const fastFirst = !hasImages && BACKUPS.length && BACKUPS[0].name === 'Groq' && (taskOf(body) === 'short' || (FAST_CHAT && taskOf(body) === 'chat'));
+  if(fastFirst) order.push(backups.shift());
   if(GEMINI_KEYS.length) order.push(geminiProvider);
-  BACKUPS.forEach(function(bk){ if(!hasImages || bk.vision) order.push(function(b, d, st){ return openaiProvider(b, d, st, bk); }); });
+  backups.forEach(function(f){ order.push(f); });
   let lastErr = null;
   outer:
   for(const fn of order){
@@ -310,6 +325,7 @@ async function handleAI(req, res){
       }
     }
   }
+  if(!lastErr && ckey && state.all && state.all.length > 20){ aiCache.set(ckey, {at: Date.now(), text: state.all}); if(aiCache.size > 300) aiCache.delete(aiCache.keys().next().value); }
   if(lastErr && !state.closed) res.write('data: ' + JSON.stringify({error: {code: lastErr.code || 'upstream_error', message: lastErr.message}}) + '\n\n');
   if(!state.closed) res.end();
 }
@@ -578,7 +594,7 @@ const COMMONS_BASE = (process.env.COMMONS_BASE_URL || 'https://commons.wikimedia
 const FRUIT_IDS = 'banana pomegranate mango lime chiku guava custardapple grapes orange mosambi fig cashew coconut jackfruit kokum jamun ber amla tamarind watermelon muskmelon dragonfruit avocado strawberry kiwi blueberry passionfruit papaya datepalm cherrytomato'.split(' ');
 const FLOWER_IDS = 'marigold rose shevanti tuberose mogra aster saffron'.split(' ');
 const PHOTO_Q = {rice:'paddy field rice India', wheat:'wheat field', jowar:'sorghum field', bajra:'pearl millet field', maize:'maize field', ragi:'finger millet field', vari:'little millet', tur:'pigeon pea pods plant', chana:'chickpea plant pods', moong:'mung bean plant', urad:'black gram plant', matki:'moth bean plant', chavali:'cowpea pods', kulith:'horse gram plant', masoor:'lentil plant', pavta:'lablab beans pods', rajma:'kidney bean plant', soybean:'soybean field', groundnut:'peanut plant field', mustard:'mustard field flowers', sunflower:'sunflower field', safflower:'safflower field', sesame:'sesame plant flowers', niger:'Guizotia abyssinica field', linseed:'flax field', castor:'castor plant', cotton:'cotton field bolls', sugarcane:'sugarcane field', mulberry:'mulberry plantation sericulture', betel:'betel leaf vine', arecanut:'areca nut palm', turmeric:'turmeric plant field', chilli:'chilli plant green chillies', garlic:'garlic bulbs field', ginger:'ginger plant', blackpepper:'black pepper vine berries', onion:'onion field', tomato:'tomato plant fruits', potato:'potato field', brinjal:'brinjal plant', okra:'okra plant', cabbage:'cabbage field', cauliflower:'cauliflower field', capsicum:'capsicum plant', cucumber:'cucumber plant', bottlegourd:'bottle gourd vine', bittergourd:'bitter gourd vine', ridgegourd:'ridge gourd vine', spongegourd:'sponge gourd vine', snakegourd:'snake gourd', pumpkin:'pumpkin field', ivygourd:'ivy gourd tindora', drumstick:'moringa pods tree', clusterbean:'cluster bean guar plant', frenchbean:'green beans plant', ghevada:'hyacinth bean pods', peas:'green peas pods plant', carrot:'carrot harvest', radish:'radish harvest', beetroot:'beetroot harvest', sweetpotato:'sweet potato tubers', colocasia:'taro colocasia leaves', suran:'elephant foot yam', methi:'fenugreek leaves', palak:'spinach plants', kothimbir:'coriander leaves plant', shepu:'dill plant', lalmath:'red amaranth leaves', ambadi:'roselle plant leaves', mint:'mint plant', curryleaf:'curry leaves plant', lucerne:'alfalfa field', napier:'napier grass', broccoli:'broccoli plant', zucchini:'zucchini plant', lettuce:'iceberg lettuce field', quinoa:'quinoa field', chia:'chia plant', mushroom:'oyster mushroom', sweetcorn:'sweet corn cob', ccapsicum:'red yellow bell peppers'};
-const BAD_PHOTO = /(\bmaps?\b|diagram|illustration|drawing|\bplate\b|herbarium|köhler|kohler|\blogo|\bstamp|\bicon|\bchart|botanical|engraving|painting|sketch|\bseal\b|\bflag\b|coat of arms|\.svg|\.gif|\.tiff?$)/i;
+const BAD_PHOTO = /(\bdish\b|curry|recipe|cooked|\bsoup\b|thali|\bsweets?\b|\bcake\b|\bjuice\b|\bpowder\b|\bflour\b|\bpickle|\bmenu\b|\bshop\b|packet|\bbottle|\bmaps?\b|diagram|illustration|drawing|\bplate\b|herbarium|köhler|kohler|\blogo|\bstamp|\bicon|\bchart|botanical|engraving|painting|sketch|\bseal\b|\bflag\b|coat of arms|\.svg|\.gif|\.tiff?$)/i;
 function photoQuery(id){ if(PHOTO_Q[id]) return PHOTO_Q[id]; const t = CROP_WIKI[id] || id; return FLOWER_IDS.indexOf(id) > -1 ? t + ' flower' : (FRUIT_IDS.indexOf(id) > -1 ? t + ' fruit' : t + ' plant'); }
 async function commonsPhoto(id){
   const url = COMMONS_BASE + '/w/api.php?action=query&format=json&formatversion=2&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime|size&iiurlwidth=480&gsrsearch=' + encodeURIComponent(photoQuery(id) + ' filetype:bitmap');
@@ -590,6 +606,29 @@ async function commonsPhoto(id){
     return ii.thumburl || ii.url;
   }
   return '';
+}
+/* Photos picked by you on the in-app photo review page (#photos) and saved in public/img/crop-photos.json */
+let chosenCache = null;
+function chosenPhotos(){
+  if(chosenCache && Date.now() - chosenCache.at < 60000) return chosenCache.map;
+  let map = {}; try{ const j = JSON.parse(fs.readFileSync(path.join(PUBLIC_DIR, 'img', 'crop-photos.json'), 'utf8')); Object.keys(j).forEach(function(k){ if(/^[a-z]+$/.test(k) && /^https:\/\/upload\.wikimedia\.org\//.test(String(j[k]))) map[k] = j[k]; }); }catch(e){}
+  chosenCache = {at: Date.now(), map: map}; return map;
+}
+async function photoCandidates(id){
+  const base = CROP_WIKI[id] || id, qs = [photoQuery(id), base + ' field', base + ' crop farm'];
+  const out = [], seen = new Set();
+  for(const q of qs){
+    const url = COMMONS_BASE + '/w/api.php?action=query&format=json&formatversion=2&generator=search&gsrnamespace=6&gsrlimit=15&prop=imageinfo&iiprop=url|mime|size&iiurlwidth=480&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap');
+    let j = {}; try{ j = JSON.parse(await getText(url)); }catch(e){ continue; }
+    ((j.query || {}).pages || []).sort(function(a, b){ return (a.index || 0) - (b.index || 0); }).forEach(function(pg){
+      const ii = (pg.imageinfo || [])[0]; if(!ii) return;
+      if(!/jpeg/.test(ii.mime || '') || BAD_PHOTO.test(pg.title || '') || (ii.width || 0) < 500 || (ii.height || 0) < 300) return;
+      const u = ii.thumburl || ii.url; if(seen.has(u)) return; seen.add(u);
+      out.push({url: u, title: String(pg.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '')});
+    });
+    if(out.length >= 12) break;
+  }
+  return out.slice(0, 12);
 }
 function ownPhotos(){
   const dir = path.join(PUBLIC_DIR, 'img', 'crops'), map = {};
@@ -751,6 +790,95 @@ async function handleArticle(req, res){
 
 /* ---------- static files ---------- */
 const MIME = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.json': 'application/json', '.webmanifest': 'application/manifest+json'};
+/* =====================================================================
+   MARKET PRICES (बाजारभाव) — Agmarknet daily mandi prices via data.gov.in
+   Needs a free key: DATA_GOV_API_KEY (data.gov.in → My Account → API key)
+   ===================================================================== */
+const DG_KEY = (process.env.DATA_GOV_API_KEY || '').trim();
+const DG_BASE = (process.env.DATA_GOV_BASE_URL || 'https://api.data.gov.in').replace(/\/$/, '');
+const DG_TODAY = '9ef84268-d588-465a-a308-a864a43d0070';          /* Current daily price of various commodities from various markets (Mandi) */
+const DG_HIST = '35985678-0d79-46b4-9ed6-6f13308a1d24';           /* Variety-wise daily market prices (history, for the 7-day trend) */
+const COMMODITY = {
+  rice: ['Paddy(Dhan)(Common)', 'Rice'], wheat: ['Wheat'], jowar: ['Jowar(Sorghum)'], bajra: ['Bajra(Pearl Millet/Cumbu)'], maize: ['Maize'], ragi: ['Ragi (Finger Millet)'],
+  tur: ['Arhar (Tur/Red Gram)(Whole)'], chana: ['Bengal Gram(Gram)(Whole)'], moong: ['Green Gram (Moong)(Whole)'], urad: ['Black Gram (Urd Beans)(Whole)'], soybean: ['Soyabean'],
+  groundnut: ['Groundnut'], mustard: ['Mustard'], sunflower: ['Sunflower'], cotton: ['Cotton'], sugarcane: ['Sugarcane'], turmeric: ['Turmeric'], onion: ['Onion'], tomato: ['Tomato'],
+  potato: ['Potato'], brinjal: ['Brinjal'], chilli: ['Green Chilli', 'Dry Chillies'], okra: ['Bhindi(Ladies Finger)'], banana: ['Banana', 'Banana - Green'], pomegranate: ['Pomegranate'],
+  matki: ['Moath Dal'], chavali: ['Cowpea(Lobia/Karamani)', 'Cowpea (Veg)'], kulith: ['Kulthi(Horse Gram)'], masoor: ['Lentil (Masur)(Whole)'], safflower: ['Safflower'],
+  sesame: ['Sesamum(Sesame,Gingelly,Til)'], niger: ['Niger Seed (Ramtil)'], linseed: ['Linseed'], castor: ['Castor Seed'], betel: ['Betal Leaves'], arecanut: ['Arecanut(Betelnut/Supari)'],
+  garlic: ['Garlic'], ginger: ['Ginger(Green)', 'Ginger(Dry)'], blackpepper: ['Black pepper'], cabbage: ['Cabbage'], cauliflower: ['Cauliflower'], capsicum: ['Capsicum'],
+  cucumber: ['Cucumbar(Kheera)'], bottlegourd: ['Bottle gourd'], bittergourd: ['Bitter gourd'], ridgegourd: ['Ridgeguard(Tori)'], spongegourd: ['Sponge gourd'], snakegourd: ['Snakeguard'],
+  pumpkin: ['Pumpkin'], ivygourd: ['Little gourd (Kundru)'], drumstick: ['Drumstick'], clusterbean: ['Cluster beans'], frenchbean: ['French Beans (Frasbean)'], ghevada: ['Indian Beans (Seam)'],
+  peas: ['Green Peas', 'Peas Wet'], carrot: ['Carrot'], radish: ['Raddish'], beetroot: ['Beetroot'], sweetpotato: ['Sweet Potato'], colocasia: ['Colacasia'], suran: ['Elephant Yam (Suran)'],
+  methi: ['Methi(Leaves)'], palak: ['Spinach'], kothimbir: ['Coriander(Leaves)'], lalmath: ['Amaranthus'], mint: ['Mint(Pudina)'], curryleaf: ['Curry Leaf'],
+  mango: ['Mango', 'Mango (Raw-Ripe)'], lime: ['Lime', 'Lemon'], chiku: ['Chikoos(Sapota)'], guava: ['Guava'], custardapple: ['Custard Apple (Sharifa)'], grapes: ['Grapes'], orange: ['Orange'],
+  mosambi: ['Mousambi(Sweet Lime)'], fig: ['Fig(Anjura/Anjeer)'], coconut: ['Coconut'], jackfruit: ['Jack Fruit'], ber: ['Ber(Zizyphus/Borehannu)'], amla: ['Amla(Nelli Kai)'],
+  tamarind: ['Tamarind Fruit'], watermelon: ['Water Melon'], muskmelon: ['Karbuja(Musk Melon)'], marigold: ['Marigold(Calcutta)', 'Marigold(loose)'], rose: ['Rose(Loose))'],
+  shevanti: ['Chrysanthemum(Loose)'], tuberose: ['Tube Rose(Loose)'], mogra: ['Jasmine'], aster: ['Aster']
+};
+const mandiCache = new Map();
+function dmy2iso(s){ const m = String(s || '').match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/); if(m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0'); const m2 = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m2 ? m2[0] : ''; }
+function kmBetween(a, b){ const R = 6371, r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lon - a.lon) * r; const x = Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
+async function dgGet(resource, filters, limit){
+  let u = DG_BASE + '/resource/' + resource + '?api-key=' + encodeURIComponent(DG_KEY) + '&format=json&limit=' + (limit || 1000);
+  Object.keys(filters).forEach(function(k){ u += '&filters[' + encodeURIComponent(k) + ']=' + encodeURIComponent(filters[k]); });
+  const r = await fetch(u, {headers: {'User-Agent': UA, 'Accept': 'application/json'}, signal: AbortSignal.timeout(15000)});
+  const txt = await r.text(); let j = {}; try{ j = JSON.parse(txt); }catch(e){}
+  if(!r.ok){ const err = new Error('data.gov.in HTTP ' + r.status + ' ' + (j.message || txt.slice(0, 120))); err.status = r.status; throw err; }
+  return j.records || [];
+}
+function normRec(x){
+  const g = function(){ for(let i = 0; i < arguments.length; i++){ const v = x[arguments[i]]; if(v != null && v !== '') return v; } return ''; };
+  return {state: g('state', 'State'), district: g('district', 'District'), market: String(g('market', 'Market')).trim(), commodity: g('commodity', 'Commodity'), variety: g('variety', 'Variety'),
+    date: dmy2iso(g('arrival_date', 'Arrival_Date')), min: +g('min_price', 'Min_Price') || 0, max: +g('max_price', 'Max_Price') || 0, modal: +g('modal_price', 'Modal_Price') || 0};
+}
+function cleanMarket(m){ return String(m).replace(/\(.*?\)/g, ' ').replace(/\b(APMC|A\.P\.M\.C|Market|Yard|Mandi|Sub Yard|F&V|Veg)\b/gi, ' ').replace(/\s+/g, ' ').trim(); }
+async function marketPoint(m){
+  try{ const p = await geocode(cleanMarket(m.market) + ', ' + m.state); if(p) return p; }catch(e){}
+  try{ return await geocode(m.district + ', ' + m.state); }catch(e){ return null; }
+}
+async function handleMandi(req, res){
+  const q = new URL(req.url, 'http://x').searchParams;
+  const crop = String(q.get('crop') || '').toLowerCase().replace(/[^a-z]/g, ''), state = String(q.get('state') || 'Maharashtra').slice(0, 60), district = String(q.get('district') || '').slice(0, 60);
+  if(!DG_KEY) return sendJSON(res, 503, {error: 'Market prices are not set up (DATA_GOV_API_KEY missing).', code: 'no_key'});
+  const names = COMMODITY[crop]; if(!names) return sendJSON(res, 400, {error: 'Unknown crop'});
+  const key = crop + '|' + state;
+  let base = mandiCache.get(key);
+  if(!base || Date.now() - base.at > 30 * 60000){
+    let recs = [], commodity = names[0], hist = [];
+    for(const n of names){
+      try{ recs = (await dgGet(DG_TODAY, {'state.keyword': state, 'commodity': n})).map(normRec); }catch(e){ if(e.status === 401 || e.status === 403) return sendJSON(res, 502, {error: 'data.gov.in rejected the API key. Check DATA_GOV_API_KEY.', code: 'bad_key'}); recs = []; }
+      if(recs.length){ commodity = n; break; }
+    }
+    try{ hist = (await dgGet(DG_HIST, {'State.keyword': state, 'Commodity.keyword': commodity}, 2000)).map(normRec); }catch(e){ hist = []; }
+    base = {at: Date.now(), commodity: commodity, recs: recs, hist: hist};
+    mandiCache.set(key, base);
+  }
+  /* latest record per market (+ trend from history) */
+  const all = base.recs.concat(base.hist).filter(function(r){ return r.market && r.modal > 0 && r.date; });
+  const byM = new Map();
+  all.forEach(function(r){ const k = r.market.toLowerCase(); if(!byM.has(k)) byM.set(k, []); byM.get(k).push(r); });
+  const cut = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
+  let markets = [];
+  byM.forEach(function(rs){
+    const days = new Map();    /* one modal price per day (median over varieties) */
+    rs.forEach(function(r){ if(!days.has(r.date)) days.set(r.date, []); days.get(r.date).push(r); });
+    const ds = Array.from(days.keys()).sort();
+    const last = ds[ds.length - 1]; if(!last || last < cut) return;
+    const pick = function(list){ list = list.slice().sort(function(a, b){ return a.modal - b.modal; }); return list[Math.floor((list.length - 1) / 2)]; };
+    const cur = pick(days.get(last)), prevD = ds[ds.length - 2];
+    markets.push({market: cur.market, district: cur.district, state: cur.state, variety: cur.variety, date: last, min: cur.min, max: cur.max, modal: cur.modal,
+      prev: prevD ? pick(days.get(prevD)).modal : null, trend: ds.slice(-7).map(function(d){ return {d: d, p: pick(days.get(d)).modal}; })});
+  });
+  /* distance from the farmer */
+  let me = null; const lat = parseFloat(q.get('lat')), lon = parseFloat(q.get('lon'));
+  if(isFinite(lat) && isFinite(lon)) me = {lat: lat, lon: lon}; else if(district){ try{ me = await geocode(district + ', ' + state); }catch(e){} }
+  if(me){
+    await pool(markets.slice(0, 60), 6, async function(m){ const p = await marketPoint(m); if(p) m.km = Math.round(kmBetween(me, p)); });
+    markets.sort(function(a, b){ return (a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km); });
+  } else markets.sort(function(a, b){ return b.date.localeCompare(a.date); });
+  sendJSON(res, 200, {crop: crop, commodity: base.commodity, state: state, at: base.at, markets: markets.slice(0, 25)}, ON_VERCEL ? 'public, s-maxage=1800, stale-while-revalidate=3600' : 'no-store');
+}
+
 function serveStatic(req, res){
   let p;
   try{ p = decodeURIComponent(new URL(req.url, 'http://x').pathname); }catch(e){ res.writeHead(400); return res.end('Bad request'); }
@@ -771,11 +899,13 @@ function handler(req, res){
     return sendJSON(res, 200, {ai: ANY_AI, vision: GEMINI_KEYS.length > 0 || BACKUPS.some(function(b){ return b.vision; }), provider: GEMINI_KEYS.length ? 'gemini' : (BACKUPS[0] ? BACKUPS[0].name : 'none'), webSearch: WEB_SEARCH && GEMINI_KEYS.length > 0});
   }
   if(url === '/api/ai' && req.method === 'POST') return handleAI(req, res).catch(function(e){ try{ sendJSON(res, 500, {code: 'upstream_error', message: e.message}); }catch(_){} });
+  if(url === '/api/mandi' && req.method === 'GET'){ if(!rateOk(clientIp(req), 'mandi', 40)) return sendJSON(res, 429, {error: 'rate_limited'}); return handleMandi(req, res).catch(function(e){ console.warn('[ankurit] mandi:', e.message); sendJSON(res, 502, {error: 'Could not reach data.gov.in right now.'}); }); }
   if(url === '/api/weather' && req.method === 'GET'){ if(!rateOk(clientIp(req), 'wx', 30)) return sendJSON(res, 429, {error: 'rate_limited'}); return handleWeather(req, res).catch(function(e){ sendJSON(res, 502, {error: 'weather_unavailable'}); }); }
   if(url === '/api/revgeo' && req.method === 'GET'){ if(!rateOk(clientIp(req), 'geo', 20)) return sendJSON(res, 429, {error: 'rate_limited'}); return handleRevGeo(req, res); }
   if(url === '/api/geosearch' && req.method === 'GET'){ if(!rateOk(clientIp(req), 'geo', 20)) return sendJSON(res, 429, {error: 'rate_limited'}); return handleGeoSearch(req, res); }
   if(url === '/api/article' && req.method === 'GET'){ if(!rateOk(clientIp(req), 'art', 30)) return sendJSON(res, 429, {text: ''}); return handleArticle(req, res); }
-  if(url === '/api/cropimgs' && req.method === 'GET') return getCropImgs().then(function(c){ sendJSON(res, 200, Object.assign({}, c.map, ownPhotos()), Object.keys(c.map).length ? 'public, max-age=600, s-maxage=86400, stale-while-revalidate=604800' : 'no-store'); });
+  if(url === '/api/cropimgs' && req.method === 'GET') return getCropImgs().then(function(c){ sendJSON(res, 200, Object.assign({}, c.map, chosenPhotos(), ownPhotos()), Object.keys(c.map).length ? 'public, max-age=600, s-maxage=86400, stale-while-revalidate=604800' : 'no-store'); });
+  if(url === '/api/photocands' && req.method === 'GET'){ const id = String(new URL(req.url, 'http://x').searchParams.get('id') || '').replace(/[^a-z]/g, ''); if(!CROP_WIKI[id]) return sendJSON(res, 400, {error: 'unknown crop'}); return photoCandidates(id).then(function(l){ sendJSON(res, 200, {id: id, photos: l}, ON_VERCEL ? 'public, s-maxage=86400' : 'no-store'); }).catch(function(e){ sendJSON(res, 502, {error: e.message}); }); }
   if(url === '/api/ai-check' && req.method === 'GET') return handleAICheck(req, res);
   if(url === '/api/news' && req.method === 'GET') return handleNews(req, res).catch(function(e){ sendJSON(res, 200, {updated: 0, items: [], sources: [], error: e.message}); });
   if(req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res);

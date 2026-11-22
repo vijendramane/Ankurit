@@ -10,15 +10,18 @@ var S = {
   sample: null, sampleReady: false, imgOk: false, tts: null, dict: null,
   chat: [], scanMode: 'leaf', scanFile: null, scanUrl: null, scanRes: {}, guides: {}, reviews: {}, reco: null,
   libCat: 'all', libQ: '', cycTab: 'overview', speakingId: null, webSearch: false,
-  news: null, newsBusy: false, newsErr: null, newsCat: 'all', newsLang: 'all', newsShown: 12, newsAI: {},
+  news: null, newsBusy: false, newsErr: null, newsCat: 'top', newsLang: 'all', newsSheet: null, newsShown: 12, newsAI: {},
   soils: lsGet('soils', []), soilForm: lsGet('soilDraft', {}), soilTab: 'card', soilPlan: null, soilHome: null, soilHomeQ: {}, soilRead: null, openTest: null,
   exoFit: true, plExotic: true,
-  cimg: lsGet('cimg', {}), gps: lsGet('gps', null), wx: lsGet('wx', null), wxBusy: false, wxErr: null, wxOpen: false, wxAI: null, bigText: lsGet('bigText', false)
+  cimg: lsGet('cimg', {}), gps: lsGet('gps', null), wx: lsGet('wx', null), wxBusy: false, wxErr: null, wxOpen: false, wxAI: null, bigText: lsGet('bigText', false),
+  reports: lsGet('reports', []), repFilter: 'all', mk: lsGet('mk', null), mkCrop: lsGet('mkCrop', ''), mkData: {}, botOpen: false, botHello: true, photoPick: lsGet('photoPick', {}), photoCands: {}
 };
 var LANGNAME = {en:'English', hi:'Hindi (हिंदी, Devanagari script)', mr:'Marathi (मराठी, Devanagari script)'};
 var CATCOL = {cereal:'#B7791F', pulse:'#8B5E3C', oil:'#A16207', cash:'#1D6F42', veg:'#2F7D4F', fruit:'#C2410C', spice:'#B45309', exotic:'#9D174D', leafy:'#4D7C0F', flower:'#BE185D', fodder:'#65A30D'};
 var NEWSCOL = {market:'#B45309', weather:'#1F6FB2', schemes:'#7C3AED', advisory:'#2F7D4F', tech:'#0E7490', livestock:'#8B5E3C', success:'#C2410C', other:'#56635B'};
-var NEWSCATS = ['all','market','weather','schemes','advisory','tech','livestock','success','other'];
+var NEWSCATS = ['top','all','market','weather','schemes','advisory','tech','livestock','success','other'];
+var NEWSICON = {top:'fire', all:'news', market:'rupee', weather:'cloudsun', schemes:'shield', advisory:'leaf', tech:'spark', livestock:'cow', success:'star', other:'dots'};
+function topNews(max){ var all = ((S.news && S.news.items) || []).filter(function(n){ return S.newsLang === 'all' || n.lang === S.newsLang; }); var a = all.filter(function(n){ return n.image; }); a.sort(function(x, y){ return (y.source === 'Agrowon') - (x.source === 'Agrowon') || y.date - x.date; }); var rest = all.filter(function(n){ return !n.image; }).sort(function(x, y){ return y.date - x.date; }); var dayAgo = Date.now() - 2 * 86400000; a.sort(function(x, y){ return ((y.date > dayAgo) - (x.date > dayAgo)) || ((y.source === 'Agrowon') - (x.source === 'Agrowon')) || y.date - x.date; }); return a.concat(rest).slice(0, max || 8); }
 var STAGECOL = ['#9BC9A9','#5FAF7B','#E2B33C','#D9920E','#8B5E3C','#6B4D0B'];
 var EXPCATS = ['seed','manure','organic','protection','labour','irrigation','machinery','transport','other'];
 var ACTS = ['prep','sow','irrigate','manure','spray','weed','scout','harvest','scan','other'];
@@ -61,7 +64,7 @@ var ICONS = {
  chat:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
  map:'M9 18l-6 3V6l6-3 6 3 6-3v15l-6 3-6-3zM9 3v15M15 6v15',
  jar:'M8 2h8M9 2v3.5L5.5 9A3 3 0 0 0 5 10.7V20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9.3a3 3 0 0 0-.5-1.7L15 5.5V2M7 14h10',
- plus:'M12 5v14M5 12h14', arrowr:'M5 12h14M13 6l6 6-6 6', arrowl:'M19 12H5M11 18l-6-6 6-6', check:'M20 6 9 17l-5-5', x:'M18 6 6 18M6 6l12 12',
+ plus:'M12 5v14M5 12h14', fire:'M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s1-4 0-7z', file:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', expand:'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7', star:'M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z', cow:'M5 6c0 2 1 3 3 3h8c2 0 3-1 3-3M7 9v6a5 5 0 0 0 10 0V9M10 17h.01M14 17h.01M9 12h.01M15 12h.01', trend:'M3 17l6-6 4 4 8-8M15 7h6v6', arrowr:'M5 12h14M13 6l6 6-6 6', arrowl:'M19 12H5M11 18l-6-6 6-6', check:'M20 6 9 17l-5-5', x:'M18 6 6 18M6 6l12 12',
  trash:'M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
  mic:'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3',
  vol:'M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14', stop:'M6 6h12v12H6z', send:'M22 2 11 13M22 2l-7 20-4-9-9-4z',
@@ -215,11 +218,12 @@ function route(){ var h = (location.hash || '#home').slice(1); var m;
   if((m = h.match(/^crop-([a-z]+)$/))) return {v:'crop', id:m[1]};
   if((m = h.match(/^cycle-(c-[a-z0-9]+)$/))) return {v:'cycle', id:m[1]};
   if(h === 'exotic'){ S.libCat = 'exotic'; return {v:'crops'}; }
-  if(['home','crops','planner','scan','farm','organic','ai','news','soil','weather'].indexOf(h) > -1) return {v:h};
+  if((m = h.match(/^report-(r-[a-z0-9]+)$/))) return {v:'report', id:m[1]};
+  if(['home','crops','planner','scan','farm','organic','ai','news','soil','weather','market','reports','photos'].indexOf(h) > -1) return {v:h};
   return {v:'home'};
 }
-var NAV = [['home','home','nav_home'],['farm','sprout','nav_farm'],['crops','book','nav_crops'],['news','news','nav_news'],['weather','cloudsun','nav_wx'],'-',['scan','scan','t_doctor'],['soil','layers','nav_soil'],['planner','map','nav_planner'],['organic','jar','nav_organic'],['ai','chat','nav_ai']];
-function navKey(v){ return v === 'crop' ? 'crops' : (v === 'cycle' ? 'farm' : v); }
+var NAV = [['home','home','nav_home'],['farm','sprout','nav_farm'],['crops','book','nav_crops'],['news','news','nav_news'],['weather','cloudsun','nav_wx'],['market','rupee','nav_market'],'-',['scan','scan','t_doctor'],['soil','layers','nav_soil'],['planner','map','nav_planner'],['organic','jar','nav_organic'],['ai','chat','nav_ai'],['reports','file','nav_reports']];
+function navKey(v){ return v === 'crop' ? 'crops' : (v === 'cycle' ? 'farm' : (v === 'report' ? 'reports' : v)); }
 
 /* ---------- shell ---------- */
 function shell(){
@@ -227,16 +231,16 @@ function shell(){
   var side = '<aside class="side" aria-label="' + esc(t('app')) + '"><a class="logo" href="#home"><span class="mk">' + MARK + '</span><span><b>' + esc(t('app')) + '</b><small>' + esc(t('tagline')) + '</small></span></a><nav class="snav">' +
     NAV.map(function(n){ if(n === '-') return '<div class="sep"></div>'; return '<a href="#' + n[0] + '" class="' + (nk === n[0] ? 'on' : '') + '"' + (nk === n[0] ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') +
     '</nav><div class="foot"><b>' + esc(t('helpline')) + '</b><a href="tel:18001801551" style="color:#4D3706;font-weight:700;text-decoration:none">1800-180-1551</a></div></aside>';
-  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('nav_organic'), ai:t('ai_h'), news:t('news_h'), soil:t('soil_h'), weather:t('wx_h')};
+  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('nav_organic'), ai:t('bot_name'), news:t('news_h'), soil:t('soil_h'), weather:t('wx_h'), market:t('mk_h'), reports:t('rep_h'), report:t('rep_h'), photos:t('ph_h')};
   var top = '<header class="top" id="top"><div class="ttl">' + esc(titles[r.v]) + '</div><a class="logo mlogo" href="#home" style="padding:0"><span class="mk" style="width:36px;height:36px;border-radius:11px">' + MARK + '</span><span><b style="font-size:19px">' + esc(t('app')) + '</b></span></a>' +
     '<div class="topr"><div class="lang" role="group" aria-label="' + esc(t('language')) + '">' + [['mr','मरा'],['hi','हिं'],['en','EN']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div><button type="button" class="kebab" data-act="menu" aria-label="' + esc(t('menu')) + '" title="' + esc(t('menu')) + '">' + I('dots') + '</button></div></header>';
-  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['farm','sprout','nav_farm'],['news','news','nav_news'],['ai','chat','nav_ai']];
+  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['farm','sprout','nav_farm'],['news','news','nav_news'],['market','rupee','nav_market']];
   var bnav = '<nav class="bnav" aria-label="Main">' + bn.map(function(n){ var on = nk === n[0]; if(n[0] === 'farm') return '<a href="#farm" class="mid' + (on ? ' on' : '') + '"' + (on ? ' aria-current="page"' : '') + '><span class="sc">' + I('sprout') + '</span><span>' + esc(t(n[2])) + '</span></a>'; return '<a href="#' + n[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') + '</nav>';
-  return '<div class="app">' + side + '<div class="main">' + top + '<main class="view" id="view"></main></div></div>' + bnav;
+  return '<div class="app">' + side + '<div class="main">' + top + '<main class="view" id="view"></main></div></div>' + bnav + (r.v === 'home' ? botFab() : '');
 }
 
 /* ---------- views ---------- */
-function cropImg(c){ return S.cimg && S.cimg[c.id] ? S.cimg[c.id] : ''; }
+function cropImg(c){ return S.photoPick && S.photoPick[c.id] ? S.photoPick[c.id] : (S.cimg && S.cimg[c.id] ? S.cimg[c.id] : ''); }
 function imgTag(src, cls){ return '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"' + (cls ? ' class="' + cls + '"' : '') + ' onerror="this.remove()">'; }
 function cropDot(c, big){ var src = cropImg(c); return '<span class="' + (big ? 'cbig' : 'cdot') + '" style="background:' + CATCOL[c.cat] + '" aria-hidden="true">' + esc(first(L(c.n))) + (src ? imgTag(src) : '') + '</span>'; }
 function cropPhoto(c){ var src = cropImg(c); return '<div class="cph" style="background:' + CATCOL[c.cat] + '"><span>' + esc(first(L(c.n))) + '</span>' + (src ? imgTag(src) : '') + '</div>'; }
@@ -252,19 +256,15 @@ var HEROART = '<svg class="art" viewBox="0 120 520 140" preserveAspectRatio="non
 
 function vHome(){
   var se = seasonNow(), sc = CROPS.filter(function(c){ return c.s.indexOf(se) > -1 && c.cat !== 'exotic' && c.s.indexOf('perennial') < 0; });
-  var tasks = buildTasks();
   /* [route, icon, colour, title, desc, AI?] */
   var tiles = [['scan','scan','g','t_doctor','t_doctor_d',1],['soil','layers','o','t_soil','t_soil_d',1],['farm','sprout','s','t_farm','t_farm_d',0],
     ['weather','cloudsun','b','t_wx','t_wx_d',0],['news','news','b','t_news','t_news_d',0],['ai','chat','b','t_ai','t_ai_d',1],
     ['crops','book','g','t_lib','t_lib_d',0],['planner','map','o','t_planner','t_planner_d',1],['organic','jar','s','t_organic','t_organic_d',0]];
   var h = '<section class="hero"><div style="position:relative;z-index:1">' + wxWidget(se) + '<h1 style="margin-top:16px">' + esc(t('greet')) + '!</h1><p>' + esc(t('greet_sub')) + '</p><div class="row wrap"><a class="btn" style="background:#fff;color:var(--g2)" href="#scan">' + I('camera') + esc(t('t_doctor')) + '</a><a class="btn" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)" href="#ai">' + I('chat') + esc(t('t_ai')) + '</a></div></div>' + HEROART + '</section>';
-  if(S.wxOpen) h += '<div id="wxpanel" class="wxpanel">' + wxDetail(true) + '</div>';
   h += '<div class="tiles">' + tiles.map(function(x, i){ return '<a class="tile' + (i === 0 ? ' feat' : '') + '" href="#' + x[0] + '"><span class="ico ' + x[2] + '">' + I(x[1]) + '</span><b>' + esc(t(x[3])) + (x[5] ? ' <span class="ai-dot">AI</span>' : '') + '</b><span class="d">' + esc(t(x[4], {n: CROPS.length})) + '</span></a>'; }).join('') + '</div>';
   h += '<div class="h-sec"><h2>' + esc(t('latest_news')) + '</h2><a href="#news">' + esc(t('see_all')) + ' →</a></div><div id="homenews">' + homeNews() + '</div>';
   h += '<div class="h-sec"><h2>' + esc(t('crops_season')) + ' · ' + esc(t(se)) + '</h2><a href="#crops" data-act="libseason" data-v="' + se + '">' + esc(t('see_all')) + ' →</a></div><p class="mu sm" style="margin:-8px 0 12px">' + esc(t('season_' + se + '_d')) + '</p><div class="cropstrip">' + sc.map(function(c){ return '<a class="cmini" href="#crop-' + c.id + '">' + cropDot(c) + esc(L(c.n)) + '</a>'; }).join('') + '</div>';
-  h += '<div class="grid g2" style="margin-top:26px;align-items:start"><div><div class="h-sec" style="margin-top:0"><h2>' + esc(t('tasks')) + '</h2><a href="#farm">' + esc(t('nav_farm')) + ' →</a></div><div class="card tasks">' +
-    (tasks.length ? tasks.map(function(k){ return '<a class="task" href="#cycle-' + k.cid + '" style="text-decoration:none;color:inherit"><span class="when' + (k.dd === 0 ? ' today' : '') + '"><b>' + k.d.getDate() + '</b><small>' + esc(MONTHS[S.lang][k.d.getMonth()]) + '</small></span><span class="tx"><b>' + esc(k.title) + '</b><span>' + esc(k.sub) + ' · ' + esc(k.dd === 0 ? t('today') : t('in_days', {n: k.dd})) + '</span></span></a>'; }).join('')
-      : '<div class="empty"><span class="ico g">' + I('cal') + '</span><p style="margin:0 0 14px">' + esc(t('no_tasks')) + '</p><button class="btn bp" data-act="newcycle">' + I('plus') + esc(t('add_crop')) + '</button></div>') + '</div></div>';
+  h += '<div class="grid g2" style="margin-top:26px;align-items:start"><div><div class="h-sec" style="margin-top:0"><h2>' + esc(t('tasks')) + '</h2><a href="#farm">' + esc(t('nav_farm')) + ' →</a></div>' + cropTaskCards() + '</div>';
   h += '<div style="display:flex;flex-direction:column;gap:16px"><div class="help"><span class="ico s" style="background:#fff">' + I('phone') + '</span><div><b style="display:block">' + esc(t('helpline')) + '</b><a class="num" href="tel:18001801551">1800-180-1551</a><div class="sm" style="color:#6B4D0B">' + esc(t('helpline_d')) + '</div></div></div>' +
     '<div class="card"><div class="pad" style="padding-bottom:6px"><h2 style="font-size:18px">' + esc(t('links')) + '</h2></div><div class="linkrow"><a href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + esc(t('link_mandi')) + I('ext') + '</a><a href="https://enam.gov.in" target="_blank" rel="noopener">' + esc(t('link_enam')) + I('ext') + '</a><a href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + esc(t('link_shc')) + I('ext') + '</a></div></div></div></div>';
   return h;
@@ -309,7 +309,7 @@ function aiButtons(kind, id, g){
   var lbl = kind === 'guide' ? (g && g.text ? t('regen') : t('gen_guide')) : t('get_review');
   return '<div class="row wrap">' + (g && g.text ? speakBtn(kind + id) : '') + '<button class="btn bp" data-act="' + kind + '" data-v="' + id + '"' + (S.sampleReady ? '' : ' disabled') + '>' + I(g && g.text ? 'refresh' : 'spark') + esc(lbl) + '</button></div>';
 }
-function speakBtn(sid){ var on = S.speakingId === sid; return (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="' + sid + '">' + I(on ? 'stop' : 'vol') + esc(on ? t('stop') : t('listen')) + '</button>' : '') + (sid.indexOf('chat') === 0 ? '' : dlBtn(sid)); }
+function speakBtn(sid){ var on = S.speakingId === sid; return (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="' + sid + '">' + I(on ? 'stop' : 'vol') + esc(on ? t('stop') : t('listen')) + '</button>' : '') + (sid.indexOf('chat') === 0 ? '<button class="btn bs bsm" data-act="savechat" data-v="' + sid.slice(4) + '">' + I('file') + esc(t('rep_save')) + '</button>' : dlBtn(sid)); }
 
 var ctl = {};
 function exoFacts(c){
@@ -337,7 +337,7 @@ function runGuide(id){
   S.guides[key] = {text: '', busy: true}; softRender();
   ctl.guide = new AbortController();
   S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.guide.signal, cache: regen ? {gcTime: 86400000, refresh: true} : {gcTime: 86400000}, onText: function(u){ S.guides[key].text = u.text; patchGuide(key); }})
-   .then(function(r){ S.guides[key] = {text: r.text}; softRender(); })
+   .then(function(r){ S.guides[key] = {text: r.text}; softRender(); saveReport('guide' + id); })
    .catch(function(e){ var g = S.guides[key]; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
 function patchGuide(key){ var el = $('#guide-out'); if(el && route().v === 'crop'){ el.innerHTML = md(S.guides[key].text) + '<div class="load"><span class="spin"></span></div>'; } }
@@ -372,7 +372,7 @@ function runReco(){
     (S.plExotic ? 'Include 1–2 high-value foreign crops (ids marked [exotic]) ONLY if they realistically suit this location and season; say in "tip" if polyhouse / shade net / contract buyer is needed.\n' : 'Do not suggest foreign / exotic crops.\n') +
     'Reply with ONLY JSON: {"crops":[{"id":"<id from the list or empty>","name":"<crop name in the answer language>","why":"<1-2 sentences specific to this district>","duration":"<e.g. 100–120 days, in the answer language>","water":"low|medium|high","profit":"low|medium|high","risk":"low|medium|high","tip":"<one practical tip>"}],"note":"<one short caution or general advice>"}\n' +
     'Keep JSON keys and the low|medium|high values in English; write all other values in the answer language.\nKnown ids: ' + ids;
-  S.sample.json(prompt, {system: sysPrompt(), task: 'json', cache: {gcTime: 86400000}}).then(function(d){ S.reco = {data: d && d.crops ? d : {crops: []}, season: se}; softRender(); }).catch(function(e){ S.reco = {err: aiMsg(e), season: se}; softRender(); });
+  S.sample.json(prompt, {system: sysPrompt(), task: 'json', cache: {gcTime: 86400000}}).then(function(d){ S.reco = {data: d && d.crops ? d : {crops: []}, season: se}; softRender(); if(d && d.crops && d.crops.length) saveReport('reco'); }).catch(function(e){ S.reco = {err: aiMsg(e), season: se}; softRender(); });
 }
 
 /* scan */
@@ -430,7 +430,7 @@ function runScan(){
     'TREATMENT: Organic / biological steps first, in the order to do them, each with the amount per 15-litre pump and how often to repeat. Give a chemical option only as a last resort (active ingredient only, "follow the label dose", protective clothing, waiting period before harvest).\n' +
     'If the photo is not a plant or insect, or is too blurred/dark to judge, set "imageOk": false and explain in "retake" exactly how to take a better photo.\n' +
     'Reply with ONLY JSON: {"imageOk":true,"retake":"","plant":"<plant name or empty>","status":"healthy|disease|pest_damage|nutrient_deficiency|abiotic|harmful_insect|beneficial_insect|unclear","problem":"<problem or insect name in answer language>","problem_en":"<common English name>","scientific":"<scientific name if confident, else empty>","confidence":"low|medium|high","severity":"low|medium|high","observed":["<what you can see>"],"cause":"<cause in simple words and how it spreads>","threshold":"<for pests: when action is needed; else empty>","organic":["<step-by-step organic treatment with dose per 15 L>"],"natural_enemies":["<for pests: natural enemies to protect>"],"prevention":["<prevention for next time>"],"chemical":"<last-resort option or empty>","expert":"<when to contact KVK / agriculture officer>"}';
-  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only. Keep JSON keys and the fixed option values (healthy, disease, low, high…) in English; write every other value in the answer language.'), task: 'vision', images: [S.scanFile]}).then(function(d){ S.scanRes.one = {data: d || {}}; softRender(); }).catch(function(e){ S.scanRes.one = {err: aiMsg(e)}; softRender(); });
+  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only. Keep JSON keys and the fixed option values (healthy, disease, low, high…) in English; write every other value in the answer language.'), task: 'vision', images: [S.scanFile]}).then(function(d){ S.scanRes.one = {data: d || {}}; softRender(); if(d && d.imageOk !== false) saveReport('scanone'); }).catch(function(e){ S.scanRes.one = {err: aiMsg(e)}; softRender(); });
 }
 
 /* farm */
@@ -509,7 +509,7 @@ function runReview(id){
   S.reviews[id] = {text: '', busy: true}; softRender();
   ctl.review = new AbortController();
   S.sample(prompt, {system: sysPrompt(), task: 'guide', cache: false, signal: ctl.review.signal, onText: function(u){ S.reviews[id].text = u.text; var el = $('#review-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
-   .then(function(r){ S.reviews[id] = {text: r.text}; softRender(); })
+   .then(function(r){ S.reviews[id] = {text: r.text}; softRender(); saveReport('review' + id); })
    .catch(function(e){ var g = S.reviews[id]; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
 
@@ -531,7 +531,7 @@ function recipeBody(r){
 
 /* chat */
 function vAI(){
-  var h = '<div class="chat"><div class="row" style="justify-content:space-between;margin:8px 0 10px"><h1 style="font-size:24px">' + esc(t('ai_h')) + '</h1>' + (S.chat.length ? '<button class="btn bs bsm" data-act="newchat">' + I('refresh') + esc(t('new_chat')) + '</button>' : '') + '</div><div class="msgs" id="msgs" aria-live="polite">';
+  var h = '<div class="chat"><div class="row" style="justify-content:space-between;margin:8px 0 10px"><h1 style="font-size:22px;display:flex;align-items:center;gap:10px"><span class="aihlogo">' + BOTLOGO + '</span>' + esc(t('bot_name')) + '</h1>' + (S.chat.length ? '<button class="btn bs bsm" data-act="newchat">' + I('refresh') + esc(t('new_chat')) + '</button>' : '') + '</div><div class="msgs" id="msgs" aria-live="polite">';
   h += '<div class="msg a"><div class="md"><p>' + esc(t('ai_welcome')) + '</p></div></div>';
   S.chat.forEach(function(m, i){ if(m.role === 'user') h += '<div class="msg u">' + esc(m.content) + '</div>'; else h += '<div class="msg a"><div class="md">' + (m.content ? md(m.content) : '') + (m.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (m.content ? '' : esc(t('thinking'))) + '</div>' : '') + (m.err ? '<div class="note r" style="margin-top:8px">' + I('alert') + esc(m.err) + '</div>' : '') + '</div>' + (!m.busy && m.content ? '<div class="mact">' + speakBtn('chat' + i) + '</div>' : '') + '</div>'; });
   if(!S.chat.length) h += '<div class="sugs">' + ['sug1','sug2','sug3','sug4'].map(function(k){ return '<button type="button" data-act="sug" data-v="' + k + '">' + esc(t(k)) + '</button>'; }).join('') + '</div>';
@@ -591,8 +591,9 @@ function loadNews(force){
 }
 function newsNeeded(){ return !S.news || Date.now() - S.news.at > 10 * 60000; }
 function newsList(){
-  var items = (S.news && S.news.items) || [];
-  return items.filter(function(n){ return (S.newsCat === 'all' || n.cat === S.newsCat) && (S.newsLang === 'all' || n.lang === S.newsLang); });
+  var items = ((S.news && S.news.items) || []).filter(function(n){ return S.newsLang === 'all' || n.lang === S.newsLang; });
+  if(S.newsCat === 'top') return topNews(20);
+  return items.filter(function(n){ return S.newsCat === 'all' || n.cat === S.newsCat; });
 }
 function newsImg(n, cls){
   var col = NEWSCOL[n.cat] || NEWSCOL.other, ph = '<div class="nph" style="background:' + col + '">' + I(n.cat === 'weather' ? 'sun' : (n.cat === 'market' ? 'rupee' : (n.cat === 'livestock' ? 'drop' : (n.cat === 'tech' ? 'spark' : 'news')))) + '<span>' + esc(n.source) + '</span></div>';
@@ -622,12 +623,11 @@ function vNews(){
   if(newsNeeded() && !S.newsBusy) setTimeout(function(){ loadNews(false); }, 0);
   var all = (S.news && S.news.items) || [];
   var counts = {}; all.forEach(function(n){ if(S.newsLang === 'all' || n.lang === S.newsLang) counts[n.cat] = (counts[n.cat] || 0) + 1; });
-  var total = Object.keys(counts).reduce(function(a, k){ return a + counts[k]; }, 0);
-  /* category bar — always visible at the top of the news screen */
-  var h = '<div class="nbar"><div class="ncats2" role="tablist" aria-label="' + esc(t('news_cat')) + '">' + NEWSCATS.filter(function(c){ return c === 'all' || counts[c]; }).map(function(c){ var on = S.newsCat === c;
-      return '<button type="button" role="tab" data-act="newscat" data-v="' + c + '" aria-selected="' + on + '" style="--c:' + (NEWSCOL[c] || '#13201A') + '">' + (c === 'all' ? '' : '<i></i>') + esc(t('nc_' + c)) + '<small>' + num(c === 'all' ? total : counts[c], 0) + '</small></button>'; }).join('') + '</div>' +
-    '<button type="button" class="nfilt" data-act="newsfilter" aria-label="' + esc(t('news_lang')) + '" title="' + esc(t('news_lang')) + '">' + I('globe') + (S.newsLang === 'all' ? '' : '<em>' + esc(({mr: 'मरा', hi: 'हिं', en: 'EN'})[S.newsLang]) + '</em>') + '</button></div>';
-  h += '<div class="reels" id="reels">' + reelsBody() + '</div>';
+  var h = '<div class="nwrap"><div class="reels reelsB" id="reels">' + reelsBody() + '</div>';
+  h += '<div class="rtop"><a class="rback" href="#home" aria-label="' + esc(t('back')) + '">' + I('arrowl') + '</a><div class="rtabs" role="tablist" aria-label="' + esc(t('news_cat')) + '">' + NEWSCATS.filter(function(c){ return c === 'all' || c === 'top' || counts[c]; }).map(function(c){ var on = S.newsCat === c;
+      return '<button type="button" role="tab" data-act="newscat" data-v="' + c + '" aria-selected="' + on + '">' + (c === 'top' ? I('fire') : '') + esc(c === 'top' ? t('news_top') : t('ncs_' + c)) + '</button>'; }).join('') + '</div>' +
+    '<button type="button" class="rlang" data-act="newsfilter" aria-label="' + esc(t('news_lang')) + '" title="' + esc(t('news_lang')) + '"><span>अ</span><small>A</small>' + (S.newsLang === 'all' ? '' : '<em>' + esc(({mr: 'म', hi: 'हि', en: 'E'})[S.newsLang]) + '</em>') + '</button></div>';
+  h += '<div id="nsheet">' + newsSheet() + '</div></div>';
   return h;
 }
 function reelsBody(){
@@ -642,22 +642,30 @@ function reelsBody(){
   return list.slice(0, S.reelN).map(function(n, i){ return reelItem(n, i, list.length); }).join('');
 }
 function reelItem(n, i, total){
-  var ai = S.newsAI[n.id];
-  return '<article class="reel" id="n-' + esc(n.id) + '" data-i="' + i + '">' + newsImg(n, 'rimg') +
-    '<div class="rbody"><div class="nmeta">' + newsChip(n) + '<span>' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</span></div>' +
-    '<h2>' + esc(n.title) + '</h2>' +
-    '<div class="rtext">' + (ai ? '<div class="naibox md">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:6px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div>' : '') + (!ai.busy && ai.text ? '<p class="xs mu2" style="margin:8px 0 0">' + esc(t('news_ai_note')) + '</p>' : '') + '</div>' : '') +
-      (n.summary ? '<p>' + esc(n.summary) + '</p>' : '<p class="mu">' + esc(t('news_nosum')) + '</p>') + '</div>' +
-    '<div class="ract"><a class="btn bp" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('news_full')) + I('ext') + '</a>' +
-      (S.sample ? '<button class="btn bs" data-act="newsai" data-v="' + esc(n.id) + '"' + (ai && ai.busy ? ' disabled' : '') + '>' + I('spark') + esc(t('news_ai_s')) + '</button>' : '') +
-      '<button class="btn bs ricon" data-act="newsshare" data-v="' + esc(n.id) + '" aria-label="' + esc(t('share')) + '">' + I('share') + '</button>' +
-      (ai && ai.text && !ai.busy ? '<button class="btn bs ricon" data-act="download" data-v="news' + esc(n.id) + '" aria-label="' + esc(t('download')) + '">' + I('download') + '</button>' : '') + '</div>' +
-    '<div class="rfoot"><span>' + num(i + 1, 0) + ' / ' + num(total, 0) + '</span>' + (i < total - 1 ? '<span class="rhint">' + I('chev', 'up') + esc(t('news_swipe')) + '</span>' : '<span class="rhint">' + esc(t('news_end')) + '</span>') + '<button class="rnav" data-act="reelnext" data-v="' + (i + 1) + '" aria-label="' + esc(t('news_next')) + '">' + I('chev') + '</button></div></div></article>';
+  var ai = S.newsAI[n.id], spk = S.speakingId === 'nread' + n.id, ready = ai && ai.text && !ai.busy;
+  return '<article class="reel rB" id="n-' + esc(n.id) + '" data-i="' + i + '">' + newsImg(n, 'rbg') + '<div class="rsh"></div>' +
+    '<div class="rtx"><div class="rmeta"><span class="rcat" style="background:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '">' + esc(t('nc_' + n.cat)) + '</span><span class="rcnt">' + num(i + 1, 0) + ' / ' + num(total, 0) + '</span></div>' +
+      '<h2>' + esc(n.title) + '</h2>' + (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
+      '<a class="rsrc" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.source) + ' · ' + esc(ago(n.date)) + ' · <u>' + esc(t('news_full')) + ' ›</u></a></div>' +
+    '<div class="rside">' + (S.sample ? '<button type="button" data-act="newsai" data-v="' + esc(n.id) + '"' + (ready ? ' class="ready"' : '') + '>' + I('spark') + '<small>' + esc(t('news_ai_btn')) + '</small></button>' : '') +
+      (S.tts ? '<button type="button" data-act="speak" data-v="nread' + esc(n.id) + '"' + (spk ? ' class="on"' : '') + '>' + I(spk ? 'stop' : 'vol') + '<small>' + esc(spk ? t('stop') : t('listen')) + '</small></button>' : '') +
+      '<button type="button" data-act="newsshare" data-v="' + esc(n.id) + '">' + I('share') + '<small>' + esc(t('share')) + '</small></button>' +
+      '<a href="' + esc(n.url) + '" target="_blank" rel="noopener">' + I('ext') + '<small>' + esc(t('news_open')) + '</small></a></div>' +
+    (i === 0 && total > 1 ? '<div class="rswipe">' + I('chev', 'up') + esc(t('news_swipe')) + '</div>' : '') + '</article>';
 }
+function newsSheet(){
+  var id = S.newsSheet, n = id && newsById(id), ai = id && S.newsAI[id]; if(!n || !ai) return '';
+  return '<div class="nsbg" data-act="nsclose"></div><div class="nsheet" role="dialog" aria-label="' + esc(t('news_ai_s')) + '"><div class="nsgrab"></div><div class="nshd"><span class="ico g">' + I('spark') + '</span><div><b>' + esc(t('news_ai_s')) + '</b><small>' + esc(n.title) + '</small></div><button class="xbtn" data-act="nsclose" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<div class="nsbody md" id="nsbody">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:6px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div><button class="btn bs bsm" style="margin-top:10px" data-act="newsairetry" data-v="' + esc(id) + '">' + I('refresh') + esc(t('news_refresh')) + '</button>' : '') + (!ai.busy && ai.text ? '<p class="xs mu2" style="margin:10px 0 0">' + esc(t('news_ai_note')) + '</p>' : '') + '</div>' +
+    (!ai.busy && ai.text ? '<div class="nsft">' + (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="newsai' + esc(id) + '">' + I(S.speakingId === 'newsai' + id ? 'stop' : 'vol') + esc(S.speakingId === 'newsai' + id ? t('stop') : t('listen')) + '</button>' : '') + '<button class="btn bs bsm" data-act="download" data-v="news' + esc(id) + '" aria-label="' + esc(t('download')) + '">' + I('download') + 'PDF</button>' + '<a class="btn bp bsm" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('news_full')) + I('ext') + '</a></div>' : '') + '</div>';
+}
+function patchSheet(){ var s = $('#nsheet'); if(!s) return; var b = $('#nsbody'), st = b ? b.scrollTop : 0, nearEnd = b && b.scrollTop + b.clientHeight >= b.scrollHeight - 30; s.innerHTML = newsSheet(); var nb = $('#nsbody'); if(nb) nb.scrollTop = nearEnd ? nb.scrollHeight : st; }
+function nextHeads(i){ var l = newsList().slice(i + 1, i + 4); if(!l.length) return ''; return '<div class="rnext"><small>' + esc(t('news_next_h')) + '</small>' + l.map(function(n, j){ return '<button type="button" data-act="reelnext" data-v="' + (i + 1 + j) + '"><span class="rnd" style="background:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '"></span><span>' + esc(n.title) + '</span></button>'; }).join('') + '</div>'; }
 function sizeReels(){
   var r = $('#reels'); if(!r) return;
   var bn = document.querySelector('.bnav'), bnh = bn && getComputedStyle(bn).display !== 'none' ? bn.getBoundingClientRect().height : 0;
-  var hgt = Math.max(420, window.innerHeight - r.getBoundingClientRect().top - bnh - (bnh ? 0 : 16));
+  var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  var hgt = Math.max(380, vh - r.getBoundingClientRect().top - bnh - (bnh ? 0 : (window.innerWidth > 600 ? 16 : 0)));
   r.style.height = hgt + 'px';
 }
 var reelObs = null;
@@ -691,6 +699,7 @@ function toast(msg){ var d = document.createElement('div'); d.className = 'toast
 /* ================= DOWNLOAD AI REPORTS (PDF via the phone's "Save as PDF") ================= */
 function reportFor(sid){
   var c, x;
+  if(sid.indexOf('rep:') === 0){ var sr = repById(sid.slice(4)); return sr ? {title: sr.title, md: sr.md, img: sr.img} : null; }
   if(sid.indexOf('guide') === 0){ c = crop(sid.slice(5)); var g = S.guides[sid.slice(5) + '|' + S.lang + '|' + place()]; return g && g.text ? {title: t('ai_guide') + ' — ' + (c ? L(c.n) : ''), md: g.text} : null; }
   if(sid.indexOf('review') === 0){ var cy = cyc(sid.slice(6)), rv = S.reviews[sid.slice(6)]; if(!rv || !rv.text) return null; c = cy && crop(cy.crop); return {title: t('ai_review_h') + ' — ' + (c ? L(c.n) : '') + (cy && cy.plot ? ' · ' + cy.plot : ''), md: rv.text}; }
   if(sid === 'scanone'){ var d = (S.scanRes.one || {}).data; if(!d) return null; var st = String(d.status || '').toLowerCase();
@@ -733,9 +742,11 @@ function downloadReport(sid){
 }
 
 function newsById(id){ var it = (S.news && S.news.items) || []; for(var i = 0; i < it.length; i++) if(it[i].id === id) return it[i]; return null; }
-function runNewsAI(id){
+function runNewsAI(id, force){
   var n = newsById(id); if(!n || !S.sample) return;
-  S.newsAI[id] = {text: '', busy: true}; patchCard(id);
+  S.newsSheet = id;
+  var old = S.newsAI[id]; if(!force && old && (old.busy || (old.text && !old.err))){ patchSheet(); return; }
+  S.newsAI[id] = {text: '', busy: true}; patchSheet();
   var ctrl = new AbortController(); setTimeout(function(){ ctrl.abort(); }, 9000);
   fetch('/api/article?url=' + encodeURIComponent(n.url), {signal: ctrl.signal}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(a){
     var full = String((a && a.text) || '').slice(0, 5000);
@@ -743,9 +754,9 @@ function runNewsAI(id){
       (full.length > 200 ? 'Full article text:\n<<<\n' + full + '\n>>>\n' : 'Summary: ' + (n.summary || '(no summary available)') + '\n') +
       'Write 3-5 short bullet points: what happened (with the important numbers, places and dates from the text), who it affects, and what a farmer should do or check now. Then one line starting with "👉" with the most useful practical tip.\n' +
       'Use ONLY facts from the text given — do not invent numbers, dates or claims. Do not tell the farmer to "read the full news"; explain what is known. If the text is very short, explain what the headline means for farmers and what to watch for.';
-    S.sample(prompt, {system: EXPERT + '\n' + aiLangRule(), task: 'short', onText: function(u){ S.newsAI[id].text = u.text; patchCard(id); }})
-      .then(function(r){ S.newsAI[id] = {text: r.text}; patchCard(id); })
-      .catch(function(e){ S.newsAI[id] = {err: aiMsg(e), text: e.text || ''}; patchCard(id); });
+    S.sample(prompt, {system: EXPERT + '\n' + aiLangRule(), task: 'short', onText: function(u){ S.newsAI[id].text = u.text; if(S.newsSheet === id) patchSheet(); }})
+      .then(function(r){ S.newsAI[id] = {text: r.text}; patchSheet(); patchCard(id); })
+      .catch(function(e){ S.newsAI[id] = {err: aiMsg(e), text: e.text || ''}; patchSheet(); });
   });
 }
 function patchCard(id){ var el = document.getElementById('n-' + id), n = newsById(id); if(!el || !n) return; var list = newsList(), i = +el.getAttribute('data-i'); var d = document.createElement('div'); d.innerHTML = reelItem(n, i, list.length); el.replaceWith(d.firstChild); }
@@ -882,7 +893,7 @@ function runSoilPlan(){
   S.soilPlan = {text: '', busy: true}; softRender();
   ctl.soil = new AbortController();
   S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.soil.signal, onText: function(u){ S.soilPlan.text = u.text; var el = $('#soilplan-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
-    .then(function(r){ S.soilPlan = {text: r.text}; softRender(); })
+    .then(function(r){ S.soilPlan = {text: r.text}; softRender(); saveReport('soilplan'); })
     .catch(function(e){ var g = S.soilPlan; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
 function runSoilHome(){
@@ -893,7 +904,7 @@ function runSoilHome(){
   S.soilHome = {text: '', busy: true}; softRender();
   ctl.soilhome = new AbortController();
   S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.soilhome.signal, onText: function(u){ S.soilHome.text = u.text; var el = $('#soilhome-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
-    .then(function(r){ S.soilHome = {text: r.text}; softRender(); })
+    .then(function(r){ S.soilHome = {text: r.text}; softRender(); saveReport('soilhome'); })
     .catch(function(e){ var g = S.soilHome; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); softRender(); });
 }
 
@@ -952,7 +963,7 @@ function wxWidget(se){
   if(!w){ inner = '<span class="wxi">' + I(S.wxBusy ? 'refresh' : 'cloudsun') + '</span><span class="wxt"><b>' + esc(S.wxErr || (S.wxBusy ? t('wx_loading') : t('wx_h'))) + '</b><small>' + esc(wxPlace()) + '</small></span>'; }
   else { var c = w.current, k = wmo(c.weather_code);
     inner = '<span class="wxi">' + I(k[1]) + '</span><span class="wxt"><b>' + num(Math.round(c.temperature_2m), 0) + '°<em>' + esc(t(k[0])) + '</em></b><small>' + I('pin') + esc(wxPlace()) + ' · ' + esc(t('humidity')) + ' ' + num(c.relative_humidity_2m, 0) + '%</small></span>'; }
-  return '<button type="button" class="wxw" id="wxw" data-act="wxtoggle" aria-expanded="' + S.wxOpen + '">' + inner + '<span class="wxs"><small>' + esc(t('season_now')) + '</small><b>' + esc(t(se)) + '</b></span><span class="wxc">' + I('chev') + '</span></button>';
+  return '<a class="wxw wxpill" id="wxw" href="#weather" aria-label="' + esc(t('wx_h')) + '">' + inner + '<span class="wxs"><b>' + esc(t(se)) + '</b></span></a>';
 }
 function dayName(iso, i){ if(i === 0) return t('today'); if(i === 1) return t('tomorrow'); var d = parseD(iso); return WEEKDAYS[S.lang][d.getDay()]; }
 function wxDetail(compact){
@@ -995,7 +1006,7 @@ function runWxAI(){
   S.wxAI = {text: '', busy: true}; patchWx();
   ctl.wx = new AbortController();
   S.sample(prompt, {system: sysPrompt(), task: 'guide', signal: ctl.wx.signal, onText: function(u){ S.wxAI.text = u.text; var el = $('#wxai-out'); if(el) el.innerHTML = md(u.text) + '<div class="load"><span class="spin"></span></div>'; }})
-    .then(function(r){ S.wxAI = {text: r.text}; patchWx(); })
+    .then(function(r){ S.wxAI = {text: r.text}; patchWx(); saveReport('wx'); })
     .catch(function(e){ var g = S.wxAI; g.busy = false; g.text = e.text || g.text || ''; if(e.code !== 'cancelled') g.err = aiMsg(e); patchWx(); });
 }
 
@@ -1072,12 +1083,13 @@ function menuBody(){
   var h = '<div class="mhead"><h2>' + esc(t('menu')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>';
   h += locSection();
   h += '<div class="msec"><h3>' + I('globe') + esc(t('language')) + '</h3><div class="seg" role="group">' + [['mr','मराठी'],['hi','हिंदी'],['en','English']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div></div>';
-  h += '<div class="msec"><a class="mrow" href="#weather" data-act="close">' + I('cloudsun') + '<span><b>' + esc(t('wx_h')) + '</b><small>' + esc(t('t_wx_d')) + '</small></span>' + I('chev', 'chev') + '</a>' +
+  h += '<div class="msec"><a class="mrow" href="#reports" data-act="close">' + I('file') + '<span><b>' + esc(t('rep_h')) + (S.reports.length ? ' <em class="mbadge">' + num(S.reports.length, 0) + '</em>' : '') + '</b><small>' + esc(t('rep_menu_d')) + '</small></span>' + I('chev', 'chev') + '</a><a class="mrow" href="#weather" data-act="close">' + I('cloudsun') + '<span><b>' + esc(t('wx_h')) + '</b><small>' + esc(t('t_wx_d')) + '</small></span>' + I('chev', 'chev') + '</a>' +
     '<label class="mrow">' + I('text') + '<span><b>' + esc(t('big_text')) + '</b><small>' + esc(t('big_text_d')) + '</small></span><input type="checkbox" class="sw" data-act="bigtext"' + (S.bigText ? ' checked' : '') + '></label>' +
     '<a class="mrow" href="tel:18001801551">' + I('phone') + '<span><b>' + esc(t('helpline')) + ' · 1800-180-1551</b><small>' + esc(t('helpline_d')) + '</small></span></a>' +
     '<a class="mrow" href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_mandi')) + '</b></span>' + I('ext') + '</a>' +
     '<a class="mrow" href="https://enam.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_enam')) + '</b></span>' + I('ext') + '</a>' +
     '<a class="mrow" href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + I('layers') + '<span><b>' + esc(t('link_shc')) + '</b></span>' + I('ext') + '</a></div>';
+  h += '<div class="msec"><a class="mrow" href="#photos" data-act="close">' + I('camera') + '<span><b>' + esc(t('ph_h')) + '</b><small>' + esc(t('ph_menu_d')) + '</small></span>' + I('chev', 'chev') + '</a></div>';
   h += '<div class="msec"><button class="mrow danger" data-act="cleardata">' + I('trash') + '<span><b>' + esc(t('clear_data')) + '</b><small>' + esc(t('clear_data_d')) + '</small></span></button>' +
     '<p class="xs mu2" style="margin:12px 4px 0">' + esc(t('about_d')) + '</p></div>';
   return h;
@@ -1096,13 +1108,14 @@ function render(){
     case 'crops': html = vCrops(); break; case 'crop': html = vCrop(r.id); break; case 'planner': html = vPlanner(); break;
     case 'scan': html = vScan(); break; case 'farm': html = vFarm(); break; case 'cycle': html = vCycle(r.id); break;
     case 'organic': html = vOrganic(); break; case 'ai': html = vAI(); break;
-    case 'news': html = vNews(); break; case 'soil': html = vSoil(); break; case 'weather': html = vWeather(); break; default: html = vHome();
+    case 'news': html = vNews(); break; case 'market': html = vMarket(); break; case 'reports': html = vReports(); break; case 'photos': html = vPhotos(); break; case 'report': html = vReport(r.id); break; case 'soil': html = vSoil(); break; case 'weather': html = vWeather(); break; default: html = vHome();
   }
+  var keepReel = r.v === 'news' && $('#reels') ? $('#reels').scrollTop : null;
   v.innerHTML = html;
   refreshMenu();
   if(r.v === 'ai') scrollChat();
-  document.body.classList.toggle('newsmode', r.v === 'news');
-  if(r.v === 'news'){ setupReels(); if(S.newsFocus){ var fe = document.getElementById('n-' + S.newsFocus); S.newsFocus = null; if(fe){ var rr = $('#reels'); rr.scrollTop = (+fe.getAttribute('data-i')) * rr.clientHeight; } } }
+  document.body.classList.toggle('newsmode', r.v === 'news'); document.body.classList.toggle('nonav', r.v === 'news' || r.v === 'ai'); document.body.classList.toggle('homemode', r.v === 'home'); if(r.v === 'home') botAfterRender();
+  if(r.v === 'news'){ setupReels(); if(keepReel != null && !S.newsFocus){ $('#reels').scrollTop = keepReel; } if(S.newsFocus){ var fe = document.getElementById('n-' + S.newsFocus); S.newsFocus = null; if(fe){ var rr = $('#reels'); rr.scrollTop = (+fe.getAttribute('data-i')) * rr.clientHeight; } } }
 }
 function softRender(){
   var act = document.activeElement, id = act && act.id, sel = null, asel = null;
@@ -1129,6 +1142,29 @@ document.addEventListener('click', function(e){
     case 'review': runReview(v); break;
     case 'ai-stop': var k = el.getAttribute('data-k'); if(ctl[k]) ctl[k].abort(); break;
     case 'speak': toggleSpeak(v); break;
+    case 'bot': S.botOpen = !S.botOpen; S.botHello = false; botAfterRender(); if(S.botOpen){ var bi = $('#chatin'); if(bi && window.innerWidth > 600) bi.focus(); } break;
+    case 'botclose': S.botOpen = false; botAfterRender(); break;
+    case 'bothide': S.botHello = false; botAfterRender(); break;
+    case 'popclose': var sp = $('#savepop'); if(sp) sp.remove(); break;
+    case 'phcrop': photoModal(v); break;
+    case 'phpick': var pp = v.split('|'); S.photoPick[pp[0]] = el.getAttribute('data-u'); lsSet('photoPick', S.photoPick); closeModal(); render(); toast(t('ph_saved')); break;
+    case 'phreset': delete S.photoPick[v]; lsSet('photoPick', S.photoPick); closeModal(); render(); break;
+    case 'phexport': photoExport(); break;
+    case 'repfilter': S.repFilter = v; render(); break;
+    case 'repmenu': repMenu(v); break;
+    case 'repren': repRename(v); break;
+    case 'repsave': var rr = repById(v), nm = ($('#repname') || {}).value; if(rr && nm && nm.trim()){ rr.title = nm.trim().slice(0, 90); saveReports(); } closeModal(); var sp2 = $('#savepop'); if(sp2) sp2.remove(); softRender(); break;
+    case 'repdel': repDelete(v); break;
+    case 'repdelok': S.reports = S.reports.filter(function(x){ return x.id !== v; }); saveReports(); closeModal(); if(route().v === 'report') location.hash = '#reports'; else softRender(); break;
+    case 'savechat': saveReport('chat' + v); break;
+    case 'mkcrop': S.mkCrop = v; lsSet('mkCrop', v); render(); break;
+    case 'mkretry': loadMandi(true); render(); break;
+    case 'mkloc': mkLocModal(); break;
+    case 'mkcur': S.mk = null; lsSet('mk', null); closeModal(); render(); break;
+    case 'mklocsave': var ms = $('#mkstate').value, md2 = $('#mkdist').value; S.mk = {state: ms, district: md2, name: md2}; lsSet('mk', S.mk); closeModal(); render(); break;
+    case 'mkpick': modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:440px"><div class="mhead" style="padding:0 0 12px"><h2>' + esc(t('crop')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div><select class="inp" id="mkpicksel">' + cropOptions(S.mkCrop) + '</select><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn bp" data-act="mkpickok">' + I('check') + esc(t('save')) + '</button></div></div></div>'); break;
+    case 'mkpickok': S.mkCrop = $('#mkpicksel').value; lsSet('mkCrop', S.mkCrop); closeModal(); render(); break;
+    case 'newsgo': var nl = newsList(), ni = -1; nl.forEach(function(n, i){ if(n.id === v) ni = i; }); if(ni < 0){ S.newsCat = 'all'; render(); nl = newsList(); nl.forEach(function(n, i){ if(n.id === v) ni = i; }); } if(ni >= 0){ if(ni >= S.reelN){ S.reelN = ni + 5; patchNews(); } var rr2 = $('#reels'); if(rr2) rr2.scrollTo({top: ni * rr2.clientHeight, behavior: 'smooth'}); } break;
     case 'plwater': S.plWater = v; render(); break;
     case 'reco': runReco(); break;
     case 'analyze': S.scanCrop = $('#scancrop').value; S.scanNote = $('#scannote').value; runScan(); break;
@@ -1162,12 +1198,14 @@ document.addEventListener('click', function(e){
     case 'newsref': closeModal(); loadNews(true); break;
     case 'newsmore': S.newsShown += 12; patchNews(); break;
     case 'newsai': runNewsAI(v); break;
+    case 'newsairetry': runNewsAI(v, true); break;
+    case 'nsclose': S.newsSheet = null; if(S.speakingId && S.speakingId.indexOf('newsai') === 0) stopSpeak(); patchSheet(); break;
     case 'newsshare': shareNews(v); break;
     case 'newsfilter': openNewsFilter(); break;
     case 'newslangpick': S.newsLang = v; S.reelN = 0; closeModal(); render(); break;
     case 'reelnext': reelScrollTo(+v); break;
     case 'download': downloadReport(v); break;
-    case 'newsopen': S.newsCat = 'all'; S.newsLang = 'all'; S.newsFocus = v; var ix = newsList().findIndex(function(n){ return n.id === v; }); if(ix >= (S.reelN || 25)) S.reelN = ix + 5; break;
+    case 'newsopen': S.newsCat = 'all'; S.newsSheet = null; S.newsLang = 'all'; S.newsFocus = v; var ix = newsList().findIndex(function(n){ return n.id === v; }); if(ix >= (S.reelN || 25)) S.reelN = ix + 5; break;
     case 'soiltab': S.soilTab = v; render(); break;
     case 'soilsave': saveSoil(); break;
     case 'soilclear': S.soilForm = {_pu: S.soilForm._pu}; S.soilRead = null; S.soilPlan = null; saveSoilDraft(); render(); break;
@@ -1215,7 +1253,7 @@ document.addEventListener('keydown', function(e){
 document.addEventListener('dragover', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d){ e.preventDefault(); d.classList.add('over'); } });
 document.addEventListener('dragleave', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d) d.classList.remove('over'); });
 document.addEventListener('drop', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d && e.dataTransfer.files[0]){ e.preventDefault(); var f = e.dataTransfer.files[0]; if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes.one = null; render(); } });
-window.addEventListener('hashchange', function(){ closeModal(); S.cycTab = route().v === 'cycle' ? S.cycTab : 'overview'; render(); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', function(){ closeModal(); stopSpeak(); S.newsSheet = null; var sp = $('#savepop'); if(sp) sp.remove(); S.botOpen = false; S.cycTab = route().v === 'cycle' ? S.cycTab : 'overview'; render(); window.scrollTo(0, 0); });
 window.addEventListener('scroll', function(){ var tp = $('#top'); if(tp) tp.classList.toggle('sc', window.scrollY > 4); }, {passive: true});
 
 function updLib(){
@@ -1259,16 +1297,22 @@ function speechText(sid){
   if(sid.indexOf('chat') === 0){ var m = S.chat[+sid.slice(4)]; return m ? m.content : ''; }
   if(sid === 'soilplan') return S.soilPlan ? S.soilPlan.text : '';
   if(sid === 'soilhome') return S.soilHome ? S.soilHome.text : '';
+  if(sid.indexOf('rep:') === 0){ var sr = repById(sid.slice(4)); return sr ? sr.md : ''; }
+  if(sid.indexOf('nread') === 0){ var nr = newsById(sid.slice(5)); return nr ? nr.title + '. ' + (nr.summary || '') : ''; }
+  if(sid.indexOf('newsai') === 0){ var na = S.newsAI[sid.slice(6)]; return na ? na.text : ''; }
   return '';
 }
+function newsSpeakPatch(){ if(route().v !== 'news'){ softRender(); return; } (S.news && S.news.items || []).forEach(function(n){ var el = document.getElementById('n-' + n.id); if(el && el.querySelector('[data-act="speak"]')){ var on = el.querySelector('[data-act="speak"]').classList.contains('on'); if(on !== (S.speakingId === 'nread' + n.id)) patchCard(n.id); } }); patchSheet(); }
 function stopSpeak(){ if(S.tts && S.speakingId){ try{ S.tts.stop(); }catch(e){} } S.speakingId = null; }
 function toggleSpeak(sid){
   if(!S.tts) return;
-  if(S.speakingId === sid){ stopSpeak(); softRender(); return; }
+  if(S.speakingId === sid){ stopSpeak(); if(sid.indexOf('nread') === 0 || sid.indexOf('newsai') === 0) newsSpeakPatch(); else softRender(); return; }
+  if(S.speakingId){ var prev = S.speakingId; stopSpeak(); if(prev.indexOf('nread') === 0) patchCard(prev.slice(5)); }
   var txt = stripMd(speechText(sid)).slice(0, 1990); if(!txt) return;
-  S.speakingId = sid; softRender();
-  var p; try{ p = S.tts.speak(txt, {language: S.lang}); }catch(e){ p = Promise.reject(e); }
-  p.catch(function(){ return S.tts.speak(txt); }).catch(function(){}).then(function(){ if(S.speakingId === sid){ S.speakingId = null; softRender(); } });
+  var lng = S.lang; if(sid.indexOf('nread') === 0){ var nn = newsById(sid.slice(5)); if(nn && nn.lang) lng = nn.lang; }
+  S.speakingId = sid; if(sid.indexOf('nread') === 0 || sid.indexOf('newsai') === 0) newsSpeakPatch(); else softRender();
+  var p; try{ p = S.tts.speak(txt, {language: lng}); }catch(e){ p = Promise.reject(e); }
+  p.catch(function(e){ if(S.speakingId !== sid || (e && e.code === 'viewer_stopped')) return; return S.tts.speak(txt, {language: lng}); }).catch(function(){}).then(function(){ if(S.speakingId === sid){ S.speakingId = null; if(sid.indexOf('nread') === 0 || sid.indexOf('newsai') === 0) newsSpeakPatch(); else softRender(); } });
 }
 function toggleMic(){
   var d = S.dict; if(!d) return;
@@ -1286,6 +1330,202 @@ function toggleMic(){
   Promise.resolve(pr).catch(function(){ S.listening = false; softRender(); });
 }
 
+/* ===================================================================
+   v5 — crop-wise tasks, reports, market prices, Ankur AI bot
+   =================================================================== */
+function tasksFor(c){
+  var now = today0(), x = cycInfo(c), out = [];
+  if(x.done) return out;
+  for(var k = 15; k < x.dur * 0.85; k += 15){ var d = addDays(x.sow, k); var dd = diffDays(d, now); if(dd >= 0){ out.push({d: d, dd: dd, title: t('task_jeev'), ic: 'leaf'}); break; } }
+  x.stages.forEach(function(s, i){ if(i === 0) return; var d = addDays(x.sow, s.start), dd = diffDays(d, now); if(dd >= 0 && dd <= 30) out.push({d: d, dd: dd, title: t('task_stage', {s: t('st_' + s.k)}), ic: 'sprout'}); });
+  if(x.day >= 1){ var nxt = 7 - ((x.day - 1) % 7); if(nxt === 7) nxt = 0; out.push({d: addDays(now, nxt), dd: nxt, title: t('task_scout'), ic: 'bug'}); }
+  var hd = diffDays(x.h1, now); if(hd >= 0 && hd <= 45) out.push({d: x.h1, dd: hd, title: t('task_harvest'), sub: fmtDs(x.h1) + ' – ' + fmtDs(x.h2), ic: 'cal'});
+  out.sort(function(a, b){ return a.dd - b.dd; });
+  return out;
+}
+function cropTaskCards(){
+  var list = S.cycles.map(function(c){ var x = cycInfo(c); return {c: c, x: x, tk: tasksFor(c)}; }).filter(function(o){ return !o.x.done; });
+  if(!list.length) return '<div class="card tasks"><div class="empty"><span class="ico g">' + I('cal') + '</span><p style="margin:0 0 14px">' + esc(t('no_tasks')) + '</p><button class="btn bp" data-act="newcycle">' + I('plus') + esc(t('add_crop')) + '</button></div></div>';
+  list.sort(function(a, b){ return (a.tk[0] ? a.tk[0].dd : 999) - (b.tk[0] ? b.tk[0].dd : 999); });
+  return '<div class="ctasks">' + list.map(function(o){ var c = o.c, x = o.x;
+    var st = x.cur ? t('st_' + x.cur.k) : t('not_sown');
+    return '<div class="card ctask"><a class="cth" href="#cycle-' + c.id + '">' + cropDot(x.cr) + '<span class="ctt"><b>' + esc(L(x.cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</b><small>' + esc(num(c.area) + ' ' + t('acres_short')) + ' · ' + esc(t('day_n', {n: num(Math.max(0, x.day), 0)})) + ' · ' + esc(st) + '</small></span><span class="ctp">' + num(Math.round(x.pct), 0) + '%</span></a>' +
+      '<div class="prog ctprog"><i style="width:' + x.pct + '%"></i></div>' +
+      (o.tk.length ? o.tk.slice(0, 3).map(function(k){ return '<a class="task" href="#cycle-' + c.id + '"><span class="when' + (k.dd === 0 ? ' today' : '') + '"><b>' + k.d.getDate() + '</b><small>' + esc(MONTHS[S.lang][k.d.getMonth()]) + '</small></span><span class="tx"><b>' + esc(k.title) + '</b><span>' + esc((k.sub ? k.sub + ' · ' : '') + (k.dd === 0 ? t('today') : t('in_days', {n: k.dd}))) + '</span></span></a>'; }).join('')
+        : '<div class="task"><span class="tx"><span>' + esc(t('no_task_30')) + '</span></span></div>') + '</div>'; }).join('') + '</div>';
+}
+
+/* ---------------- reports (saved AI answers) ---------------- */
+var REPKIND = {scan: ['g', 'scan', 'rk_scan'], soil: ['o', 'layers', 'rk_soil'], guide: ['g', 'book', 'rk_guide'], wx: ['b', 'cloudsun', 'rk_wx'], chat: ['b', 'chat', 'rk_chat'], news: ['s', 'news', 'rk_news'], other: ['s', 'spark', 'rk_other']};
+function repKind(sid){ if(sid.indexOf('scan') === 0) return 'scan'; if(sid.indexOf('soil') === 0) return 'soil'; if(sid.indexOf('guide') === 0 || sid.indexOf('review') === 0 || sid === 'reco') return 'guide'; if(sid === 'wx') return 'wx'; if(sid.indexOf('chat') === 0) return 'chat'; if(sid.indexOf('news') === 0) return 'news'; return 'other'; }
+function saveReports(){ if(S.reports.length > 80) S.reports = S.reports.slice(0, 80); lsSet('reports', S.reports); }
+function saveReport(sid, quiet){
+  var r = reportFor(sid); if(!r || !r.md) return null;
+  var dup = S.reports.filter(function(x){ return x.sid === sid && x.md === r.md; })[0]; if(dup){ if(!quiet) savedPop(dup); return dup; }
+  var rep = {id: uid('r-'), sid: sid, kind: repKind(sid), title: r.title, md: r.md, date: Date.now(), lang: S.lang};
+  S.reports.unshift(rep); saveReports();
+  if(r.img) thumb(r.img, function(d){ rep.img = d; saveReports(); });
+  if(!quiet) savedPop(rep);
+  return rep;
+}
+function thumb(src, cb){ var im = new Image(); im.onload = function(){ try{ var s = Math.min(1, 480 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); cb(cv.toDataURL('image/jpeg', 0.72)); }catch(e){} }; im.src = src; }
+function repById(id){ return S.reports.filter(function(x){ return x.id === id; })[0]; }
+function savedPop(rep){
+  var old = $('#savepop'); if(old) old.remove();
+  var d = document.createElement('div'); d.id = 'savepop'; d.className = 'savepop'; d.setAttribute('role', 'status');
+  d.innerHTML = '<span class="ico g">' + I('check') + '</span><div class="spt"><b>' + esc(t('rep_saved')) + '</b><small>' + esc(rep.title) + '</small></div><a class="btn bp bsm" href="#report-' + rep.id + '" data-act="popclose">' + esc(t('open')) + '</a><button class="btn bs bsm" data-act="repren" data-v="' + rep.id + '">' + I('edit') + '</button><button class="xbtn" data-act="popclose" aria-label="' + esc(t('close')) + '">' + I('x') + '</button>';
+  document.body.appendChild(d);
+  clearTimeout(savedPop.tm); savedPop.tm = setTimeout(function(){ var p = $('#savepop'); if(p) p.remove(); }, 7000);
+}
+function fmtWhen(ts){ var d = new Date(ts); return fmtD(d) + ' · ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+function vReports(){
+  var kinds = ['all', 'scan', 'soil', 'guide', 'wx', 'chat'];
+  var list = S.reports.filter(function(r){ return S.repFilter === 'all' || r.kind === S.repFilter || (S.repFilter === 'guide' && r.kind === 'other'); });
+  var h = '<div class="dhead"><a class="btn bs bsm" href="#home">' + I('arrowl') + esc(t('back')) + '</a></div><div class="ph"><h1>' + esc(t('rep_h')) + '</h1><p>' + esc(t('rep_d')) + '</p></div>';
+  h += '<div class="chips" role="group" style="margin-bottom:14px">' + kinds.map(function(k){ var n = k === 'all' ? S.reports.length : S.reports.filter(function(r){ return r.kind === k; }).length; return '<button type="button" data-act="repfilter" data-v="' + k + '" aria-pressed="' + (S.repFilter === k) + '">' + esc(k === 'all' ? t('all') : t(REPKIND[k][2])) + (n ? ' · ' + num(n, 0) : '') + '</button>'; }).join('') + '</div>';
+  if(!list.length) return h + '<div class="card"><div class="empty"><span class="ico g">' + I('file') + '</span><p style="margin:0">' + esc(t('rep_empty')) + '</p></div></div>';
+  h += '<div class="card lst replist">' + list.map(function(r){ var k = REPKIND[r.kind] || REPKIND.other;
+    return '<div class="li rep"><a class="repa" href="#report-' + r.id + '">' + (r.img ? '<span class="repimg"><img src="' + r.img + '" alt=""></span>' : '<span class="ico ' + k[0] + '" style="width:44px;height:44px;border-radius:12px">' + I(k[1]) + '</span>') + '<span class="tx"><b>' + esc(r.title) + '</b><span>' + esc(t(k[2])) + ' · ' + esc(fmtWhen(r.date)) + '</span></span></a><button class="xbtn" data-act="repmenu" data-v="' + r.id + '" aria-label="' + esc(t('menu')) + '">' + I('dots') + '</button></div>'; }).join('') + '</div>';
+  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('rep_local')) + '</p>';
+  return h;
+}
+function vReport(id){
+  var r = repById(id); if(!r) return vReports();
+  var k = REPKIND[r.kind] || REPKIND.other;
+  var h = '<div class="dhead"><a class="btn bs bsm" href="#reports">' + I('arrowl') + esc(t('rep_h')) + '</a></div>';
+  h += '<div class="card pad"><div class="row" style="align-items:flex-start;gap:12px"><span class="ico ' + k[0] + '">' + I(k[1]) + '</span><div style="flex:1;min-width:0"><h1 style="font-size:22px">' + esc(r.title) + '</h1><div class="sm mu">' + esc(t(k[2])) + ' · ' + esc(fmtWhen(r.date)) + '</div></div></div>' +
+    '<div class="row wrap" style="margin:14px 0 4px">' + speakBtn('rep:' + r.id) + '<button class="btn bs bsm" data-act="repren" data-v="' + r.id + '">' + I('edit') + esc(t('rename')) + '</button><button class="btn bd bsm" data-act="repdel" data-v="' + r.id + '">' + I('trash') + esc(t('delete')) + '</button></div>' +
+    (r.img ? '<img class="repbig" src="' + r.img + '" alt="">' : '') + '<div class="md" style="margin-top:10px">' + md(r.md) + '</div><p class="xs mu2" style="margin:14px 0 0">' + esc(t('disclaimer')) + '</p></div>';
+  return h;
+}
+function repMenu(id){
+  var r = repById(id); if(!r) return;
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box sheet"><div class="mhead" style="padding:0 0 8px"><h2 style="font-size:18px">' + esc(r.title) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<a class="mrow" href="#report-' + id + '" data-act="close">' + I('file') + '<span><b>' + esc(t('open')) + '</b></span></a>' +
+    '<button class="mrow" data-act="repren" data-v="' + id + '">' + I('edit') + '<span><b>' + esc(t('rename')) + '</b></span></button>' +
+    '<button class="mrow" data-act="download" data-v="rep:' + id + '">' + I('download') + '<span><b>' + esc(t('download')) + '</b></span></button>' +
+    '<button class="mrow danger" data-act="repdel" data-v="' + id + '">' + I('trash') + '<span><b>' + esc(t('delete')) + '</b></span></button></div></div>');
+}
+function repRename(id){
+  var r = repById(id); if(!r) return;
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:440px"><div class="mhead" style="padding:0 0 12px"><h2>' + esc(t('rename')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div><input class="inp" id="repname" value="' + esc(r.title) + '" maxlength="90"><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn bs" data-act="close">' + esc(t('cancel')) + '</button><button class="btn bp" data-act="repsave" data-v="' + id + '">' + I('check') + esc(t('save')) + '</button></div></div></div>');
+  var i = $('#repname'); if(i){ i.focus(); i.select(); }
+}
+function repDelete(id){
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:400px"><h2 style="font-size:19px;margin-bottom:8px">' + esc(t('rep_del_q')) + '</h2><p class="mu" style="margin:0 0 16px">' + esc((repById(id) || {}).title || '') + '</p><div class="row" style="justify-content:flex-end"><button class="btn bs" data-act="close">' + esc(t('cancel')) + '</button><button class="btn bd" data-act="repdelok" data-v="' + id + '">' + I('trash') + esc(t('delete')) + '</button></div></div></div>');
+}
+
+/* ---------------- market prices (Agmarknet via data.gov.in) ---------------- */
+var MKTOP = ['onion','soybean','cotton','tomato','wheat','chana','tur','pomegranate','grapes','maize','potato','jowar'];
+function mkPlace(){ var m = S.mk; if(m && m.district) return m; return {state: S.state, district: S.district, name: S.gps ? (gpsName() || S.district) : S.district, lat: S.gps && S.gps.lat, lon: S.gps && S.gps.lon, cur: true}; }
+function mkCrops(){ var mine = []; S.cycles.forEach(function(c){ if(mine.indexOf(c.crop) < 0 && crop(c.crop)) mine.push(c.crop); }); var rest = MKTOP.filter(function(id){ return mine.indexOf(id) < 0 && crop(id); }); if(S.mkCrop && mine.indexOf(S.mkCrop) < 0 && rest.indexOf(S.mkCrop) < 0) rest.unshift(S.mkCrop); return {mine: mine, rest: rest}; }
+function mkKey(){ var p = mkPlace(); return S.mkCrop + '|' + p.state + '|' + p.district; }
+function loadMandi(force){
+  var p = mkPlace(), k = mkKey(), cur = S.mkData[k];
+  if(!S.mkCrop || (cur && (cur.busy || (!force && Date.now() - (cur.at || 0) < 1800000)))) return;
+  S.mkData[k] = {busy: true};
+  var q = 'crop=' + encodeURIComponent(S.mkCrop) + '&state=' + encodeURIComponent(p.state || '') + '&district=' + encodeURIComponent(p.district || '') + (p.lat ? '&lat=' + p.lat + '&lon=' + p.lon : '');
+  fetch('/api/mandi?' + q).then(function(r){ return r.json().then(function(j){ if(!r.ok) { var e = new Error(j.error || 'HTTP ' + r.status); e.code = j.code; throw e; } return j; }); })
+    .then(function(j){ S.mkData[k] = {at: Date.now(), d: j}; if(route().v === 'market') softRender(); })
+    .catch(function(e){ S.mkData[k] = {at: Date.now(), err: e.code === 'no_key' ? t('mk_nokey') : (e.message || t('mk_err'))}; if(route().v === 'market') softRender(); });
+}
+function rsq(v){ return '₹' + num(Math.round(v), 0); }
+function spark(arr){
+  if(!arr || arr.length < 2) return '';
+  var vs = arr.map(function(x){ return x.p; }), mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), W = 300, H = 56, rg = (mx - mn) || 1;
+  var pts = arr.map(function(x, i){ return [Math.round(i * W / (arr.length - 1)), Math.round(H - 6 - (x.p - mn) / rg * (H - 14))]; });
+  var d = pts.map(function(p, i){ return (i ? 'L' : 'M') + p[0] + ' ' + p[1]; }).join(' ');
+  return '<svg class="spark" viewBox="-4 0 308 ' + H + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + ' L300 ' + H + ' L0 ' + H + 'Z" fill="rgba(47,143,87,.12)"/><path d="' + d + '" fill="none" stroke="#2F8F57" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="4" fill="#14532F"/></svg>';
+}
+function dayLbl(iso){ var d = parseD(iso), dd = diffDays(today0(), d); return dd <= 0 ? t('today') : (dd === 1 ? t('yesterday') : fmtDs(d)); }
+function vMarket(){
+  var cs = mkCrops(); if(!S.mkCrop) S.mkCrop = cs.mine[0] || 'onion';
+  var p = mkPlace(), c = crop(S.mkCrop), k = mkKey(), st = S.mkData[k];
+  if(!st) setTimeout(function(){ loadMandi(false); }, 0);
+  var h = '<div class="ph"><h1>' + esc(t('mk_h')) + '</h1><p>' + esc(t('mk_d')) + '</p></div>';
+  h += '<div class="curloc">' + I('pin') + '<div><b>' + esc(p.name || p.district || p.state) + (p.district && p.name !== p.district ? ', ' + esc(p.district) : '') + '</b><small>' + esc(p.cur ? t('mk_curloc') : t('mk_chosen')) + '</small></div><button class="btn bs bsm" data-act="mkloc">' + I('edit') + esc(t('change')) + '</button></div>';
+  h += '<div class="mkcrops">' + cs.mine.concat(cs.rest).map(function(id){ var cr = crop(id), mine = cs.mine.indexOf(id) > -1; return '<button type="button" data-act="mkcrop" data-v="' + id + '" aria-pressed="' + (S.mkCrop === id) + '">' + cropDot(cr) + esc(L(cr.n)) + (mine ? '<i title="' + esc(t('nav_farm')) + '">' + I('sprout') + '</i>' : '') + '</button>'; }).join('') + '<button type="button" class="mkmore" data-act="mkpick">' + I('plus') + esc(t('crop')) + '</button></div>';
+  if(!st || st.busy) return h + '<div class="card pad"><div class="load"><span class="spin"></span>' + esc(t('mk_loading')) + '</div></div>';
+  if(st.err) return h + '<div class="card pad"><div class="note r">' + I('alert') + esc(st.err) + '</div><div class="row wrap" style="margin-top:12px"><button class="btn bs bsm" data-act="mkretry">' + I('refresh') + esc(t('news_refresh')) + '</button><a class="btn bg bsm" href="https://agmarknet.gov.in" target="_blank" rel="noopener">agmarknet.gov.in' + I('ext') + '</a></div></div>';
+  var d = st.d, rows = d.markets || [];
+  if(!rows.length) return h + '<div class="card pad"><div class="note">' + I('info') + esc(t('mk_none', {crop: L(c.n), state: p.state})) + '</div></div>';
+  var best = rows[0], hi = rows.reduce(function(a, b){ return b.modal > a.modal ? b : a; }, rows[0]);
+  var chg = best.prev ? best.modal - best.prev : null;
+  h += '<div class="card mkbest"><div class="mkh"><span class="chip g">' + I('pin').replace('<svg', '<svg width="13" height="13" stroke="currentColor"') + esc(t('mk_nearest')) + '</span><span class="chip">' + esc(dayLbl(best.date)) + '</span></div>' +
+    '<h2>' + esc(best.market) + '</h2><div class="sm mu">' + esc(best.district) + (best.km != null ? ' · ' + num(best.km, 0) + ' km' : '') + (best.variety ? ' · ' + esc(best.variety) : '') + '</div>' +
+    '<div class="mkp"><div><small>' + esc(t('mk_modal')) + '</small><b>' + rsq(best.modal) + '</b><span>' + esc(t('mk_perq')) + '</span></div>' + (chg != null ? '<span class="mkchg ' + (chg >= 0 ? 'up' : 'dn') + '">' + (chg >= 0 ? '▲ ' : '▼ ') + rsq(Math.abs(chg)) + '<small>' + esc(t('mk_vsprev')) + '</small></span>' : '') + '</div>' +
+    '<div class="mkmm"><div><small>' + esc(t('mk_min')) + '</small><b>' + rsq(best.min) + '</b></div><div><small>' + esc(t('mk_max')) + '</small><b>' + rsq(best.max) + '</b></div>' + (best.arrival ? '<div><small>' + esc(t('mk_arr')) + '</small><b>' + num(best.arrival, 0) + ' ' + esc(t('quintal_s')) + '</b></div>' : '') + '</div>' +
+    (best.trend && best.trend.length > 1 ? '<div class="mktr"><small>' + esc(t('mk_trend')) + '</small>' + spark(best.trend) + '</div>' : '') + '</div>';
+  h += '<div class="h-sec" style="margin-top:18px"><h2 style="font-size:18px">' + esc(t('mk_nearby')) + '</h2><span class="xs mu2">' + esc(t('mk_perq')) + '</span></div>';
+  h += '<div class="card lst mklist">' + rows.slice(1, 12).map(function(m){ return '<div class="li"><div class="tx"><b>' + esc(m.market) + (m === hi ? ' <span class="chip s" style="font-size:11px;padding:0 7px">' + esc(t('mk_high')) + '</span>' : '') + '</b><span>' + esc(m.district) + (m.km != null ? ' · ' + num(m.km, 0) + ' km' : '') + ' · ' + esc(dayLbl(m.date)) + '</span></div><div class="mkr"><b>' + rsq(m.modal) + '</b><small>' + rsq(m.min) + '–' + rsq(m.max).slice(1) + '</small></div></div>'; }).join('') + '</div>';
+  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('mk_src')) + ' · ' + esc(t('news_updated', {t: ago(st.at)})) + '</p>';
+  return h;
+}
+function mkLocModal(){
+  var p = mkPlace(), ds = DISTRICTS[p.state];
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:440px"><div class="mhead" style="padding:0 0 12px"><h2>' + esc(t('mk_loc_h')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<button class="btn bp locbtn" data-act="mkcur">' + I('gps') + esc(t('mk_usecur')) + '</button>' +
+    '<div class="grid g2" style="gap:10px;margin-top:12px"><label class="f">' + esc(t('state')) + '<select class="inp" id="mkstate">' + STATES.map(function(s){ return '<option' + (s === p.state ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">' + esc(t('district')) + (ds ? '<select class="inp" id="mkdist">' + ds.map(function(d){ return '<option' + (d === p.district ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') + '</select>' : '<input class="inp" id="mkdist" value="' + esc(p.district || '') + '">') + '</label></div>' +
+    '<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn bp" data-act="mklocsave">' + I('check') + esc(t('save')) + '</button></div></div></div>');
+}
+
+/* ---------------- Ankur AI (floating assistant, home page only) ---------------- */
+var BOTLOGO = '<svg class="botlogo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="bgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DA568"/><stop offset="1" stop-color="#14532F"/></linearGradient></defs><circle cx="32" cy="32" r="32" fill="url(#bgA)"/><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/>' +
+  '<path d="M19 18h26a7 7 0 0 1 7 7v11a7 7 0 0 1-7 7H31l-8.5 7.2a1 1 0 0 1-1.6-.8V43H19a7 7 0 0 1-7-7V25a7 7 0 0 1 7-7z" fill="#fff"/>' +
+  '<path d="M32 39v-9" stroke="#1D6F42" stroke-width="2.6" stroke-linecap="round"/><path d="M32 32.5c-.6-4.4-3.4-6.8-8.2-6.9.2 4.6 3 7.3 8.2 6.9z" fill="#3DA568"/><path d="M32 30.5c.4-5.4 3.6-8.3 9.4-8.4-.1 5.6-3.4 8.7-9.4 8.4z" fill="#1D6F42"/>' +
+  '<path d="M49.5 7.5l1.5 3.7 3.7 1.5-3.7 1.5-1.5 3.7-1.5-3.7-3.7-1.5 3.7-1.5z" fill="#F2C14E"/></svg>';
+function botFab(){ return '<div id="botroot" class="botroot"></div>'; }
+function botHTML(){
+  var h = '';
+  if(S.botOpen){
+    var off = S.sampleReady && !S.sample, busy = S.chat.length && S.chat[S.chat.length - 1].busy;
+    h += '<div class="botpanel" role="dialog" aria-label="' + esc(t('bot_name')) + '"><div class="bph">' + BOTLOGO + '<div class="bpt"><b>' + esc(t('bot_name')) + '</b><small><i></i>' + esc(t('bot_sub')) + '</small></div><a class="xbtn" href="#ai" aria-label="' + esc(t('bot_full')) + '" title="' + esc(t('bot_full')) + '">' + I('expand') + '</a><button class="xbtn" data-act="botclose" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+      '<div class="bpmsgs" id="msgs" aria-live="polite"><div class="msg a"><div class="md"><p>' + esc(t('bot_welcome')) + '</p></div></div>' +
+      S.chat.slice(-8).map(function(m){ var i = S.chat.indexOf(m); return m.role === 'user' ? '<div class="msg u">' + esc(m.content) + '</div>' : '<div class="msg a"><div class="md">' + (m.content ? md(m.content) : '') + (m.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (m.content ? '' : esc(t('thinking'))) + '</div>' : '') + (m.err ? '<div class="note r" style="margin-top:8px">' + I('alert') + esc(m.err) + '</div>' : '') + '</div>' + (!m.busy && m.content ? '<div class="mact">' + speakBtn('chat' + i) + '</div>' : '') + '</div>'; }).join('') +
+      (S.chat.length ? '' : '<div class="sugs">' + ['sug1','sug2','sug3'].map(function(k){ return '<button type="button" data-act="sug" data-v="' + k + '">' + esc(t(k)) + '</button>'; }).join('') + '</div>') + '</div>' +
+      '<form class="composer" id="composer">' + (S.dict ? '<button type="button" class="iconbtn' + (S.listening ? ' rec' : '') + '" data-act="mic" aria-label="' + esc(t('speak')) + '">' + I('mic') + '</button>' : '') + '<textarea id="chatin" rows="1" placeholder="' + esc(S.listening ? t('listening') : t('ai_ph')) + '"' + (off ? ' disabled' : '') + '>' + esc(S.draft || '') + '</textarea>' + (busy ? '<button type="button" class="iconbtn" data-act="ai-stop" data-k="chat" aria-label="' + esc(t('stop_gen')) + '">' + I('stop') + '</button>' : '<button type="submit" class="iconbtn p" aria-label="' + esc(t('send')) + '"' + (off || !S.sampleReady ? ' disabled' : '') + '>' + I('send') + '</button>') + '</form></div>';
+  } else if(S.botHello){
+    h += '<div class="bothello" role="status"><button class="bhx" data-act="bothide" aria-label="' + esc(t('close')) + '">' + I('x') + '</button><b>' + esc(t('bot_hello')) + '</b><span>' + esc(t('bot_hello_d')) + '</span></div>';
+  }
+  h += '<button type="button" class="botfab' + (S.botOpen ? ' open' : '') + '" data-act="bot" aria-label="' + esc(t('bot_name')) + '" aria-expanded="' + !!S.botOpen + '">' + (S.botOpen ? '<span class="bfx">' + I('x') + '</span>' : BOTLOGO) + '<span class="bfl">' + esc(t('bot_short')) + '</span></button>';
+  return h;
+}
+function botAfterRender(){
+  var b = $('#botroot'); if(!b) return;
+  b.innerHTML = botHTML();
+  var m = $('#msgs', b); if(m) m.scrollTop = m.scrollHeight;
+  if(S.botHello && !S.botOpen && !botAfterRender.tm) botAfterRender.tm = setTimeout(function(){ S.botHello = false; var bh = $('.bothello'); if(bh) bh.remove(); }, 9000);
+}
+
+
+/* ---------------- crop photo review (pick the right photo for each crop) ---------------- */
+function vPhotos(){
+  var n = Object.keys(S.photoPick).length;
+  var h = '<div class="dhead"><a class="btn bs bsm" href="#home">' + I('arrowl') + esc(t('back')) + '</a></div><div class="ph"><h1>' + esc(t('ph_h')) + '</h1><p>' + esc(t('ph_d')) + '</p></div>';
+  h += '<div class="card pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:200px"><b>' + esc(t('ph_count', {n: num(n, 0)})) + '</b><div class="sm mu">' + esc(t('ph_how')) + '</div></div><button class="btn bp" data-act="phexport"' + (n ? '' : ' disabled') + '>' + I('download') + 'crop-photos.json</button></div>';
+  h += '<div class="phgrid">' + CROPS.map(function(c){ var picked = !!S.photoPick[c.id];
+    return '<button type="button" class="phc' + (picked ? ' ok' : '') + '" data-act="phcrop" data-v="' + c.id + '">' + cropPhoto(c) + '<b>' + esc(L(c.n)) + '</b>' + (picked ? '<i>' + I('check') + '</i>' : '') + '</button>'; }).join('') + '</div>';
+  return h;
+}
+function photoModal(id){
+  var c = crop(id); if(!c) return;
+  function body(){ var st = S.photoCands[id];
+    var g = !st || st.busy ? '<div class="load"><span class="spin"></span>' + esc(t('ph_loading')) + '</div>' : (st.err || !st.list.length ? '<div class="note">' + I('info') + esc(st.err || t('ph_none')) + '</div>' :
+      '<div class="phcands">' + st.list.map(function(p, i){ var on = cropImg(c) === p.url; return '<button type="button" class="' + (on ? 'on' : '') + '" data-act="phpick" data-v="' + id + '|' + i + '" data-u="' + esc(p.url) + '"><img src="' + esc(p.url) + '" alt="" loading="lazy" referrerpolicy="no-referrer"><span>' + esc(p.title) + '</span></button>'; }).join('') + '</div>');
+    return '<div class="mhead" style="padding:0 0 10px"><h2 style="font-size:19px">' + esc(L(c.n)) + ' · ' + esc(c.n.en) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div><p class="sm mu" style="margin:0 0 12px">' + esc(t('ph_pick')) + '</p>' + g + (S.photoPick[id] ? '<button class="btn bs bsm" style="margin-top:12px" data-act="phreset" data-v="' + id + '">' + I('refresh') + esc(t('ph_reset')) + '</button>' : ''); }
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" id="phbox">' + body() + '</div></div>');
+  if(!S.photoCands[id] || S.photoCands[id].err){ S.photoCands[id] = {busy: true};
+    fetch('/api/photocands?id=' + id).then(function(r){ return r.json(); }).then(function(j){ S.photoCands[id] = {list: j.photos || [], err: j.error}; }).catch(function(e){ S.photoCands[id] = {list: [], err: e.message}; })
+      .then(function(){ var b = $('#phbox'); if(b) b.innerHTML = body(); }); }
+}
+function photoExport(){
+  fetch('/img/crop-photos.json', {cache: 'no-store'}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(old){
+    var all = Object.assign({}, old || {}, S.photoPick), txt = JSON.stringify(all, Object.keys(all).sort(), 1);
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type: 'application/json'})); a.download = 'crop-photos.json'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  });
+}
+
 /* ---------- boot ---------- */
 S.calc = {};
 render();
@@ -1295,4 +1535,5 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.targ
 loadCropImgs();
 applyBigText();
 loadWx(false);
+
 })();
