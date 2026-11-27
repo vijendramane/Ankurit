@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 /* ---------- config (.env) ---------- */
-function loadEnv(file){
+function loadEnv(file){ 
   try{
     fs.readFileSync(file, 'utf8').split(/\r?\n/).forEach(function(line){
       const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
