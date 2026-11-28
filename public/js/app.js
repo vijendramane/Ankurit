@@ -14,7 +14,8 @@ var S = {
   soils: lsGet('soils', []), soilForm: lsGet('soilDraft', {}), soilTab: 'card', soilPlan: null, soilHome: null, soilHomeQ: {}, soilRead: null, openTest: null,
   exoFit: true, plExotic: true,
   cimg: lsGet('cimg', {}), gps: lsGet('gps', null), wx: lsGet('wx', null), wxBusy: false, wxErr: null, wxOpen: false, wxAI: null, bigText: lsGet('bigText', false),
-  reports: lsGet('reports', []), repFilter: 'all', mk: lsGet('mk', null), mkCrop: lsGet('mkCrop', ''), mkData: {}, botOpen: false, botHello: true, photoPick: lsGet('photoPick', {}), photoCands: {}
+  reports: lsGet('reports', []), repFilter: 'all', mk: lsGet('mk', null), mkCrop: lsGet('mkCrop', ''), mkData: {}, botOpen: false, botHello: false, photoPick: lsGet('photoPick', {}), photoCands: {},
+  cphoto: {}, prCache: lsGet('pr', {}), yprof: lsGet('yprof', null), yres: lsGet('yres', null), yBusy: false, yErr: null, yEdit: false, yOpen: 0, ydocs: lsGet('ydocs', {}), mkR: lsGet('mkR', 100), mkSort: 'km', mkNear: lsGet('mkNear', false), mkOpen: null, mkList: null
 };
 var LANGNAME = {en:'English', hi:'Hindi (हिंदी, Devanagari script)', mr:'Marathi (मराठी, Devanagari script)'};
 var CATCOL = {cereal:'#B7791F', pulse:'#8B5E3C', oil:'#A16207', cash:'#1D6F42', veg:'#2F7D4F', fruit:'#C2410C', spice:'#B45309', exotic:'#9D174D', leafy:'#4D7C0F', flower:'#BE185D', fodder:'#65A30D'};
@@ -64,7 +65,7 @@ var ICONS = {
  chat:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
  map:'M9 18l-6 3V6l6-3 6 3 6-3v15l-6 3-6-3zM9 3v15M15 6v15',
  jar:'M8 2h8M9 2v3.5L5.5 9A3 3 0 0 0 5 10.7V20a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9.3a3 3 0 0 0-.5-1.7L15 5.5V2M7 14h10',
- plus:'M12 5v14M5 12h14', fire:'M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s1-4 0-7z', file:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', expand:'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7', star:'M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z', cow:'M5 6c0 2 1 3 3 3h8c2 0 3-1 3-3M7 9v6a5 5 0 0 0 10 0V9M10 17h.01M14 17h.01M9 12h.01M15 12h.01', trend:'M3 17l6-6 4 4 8-8M15 7h6v6', arrowr:'M5 12h14M13 6l6 6-6 6', arrowl:'M19 12H5M11 18l-6-6 6-6', check:'M20 6 9 17l-5-5', x:'M18 6 6 18M6 6l12 12',
+ plus:'M12 5v14M5 12h14', list:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', fire:'M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 2 1 3 3 3 3s1-4 0-7z', file:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', expand:'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7', star:'M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z', cow:'M5 6c0 2 1 3 3 3h8c2 0 3-1 3-3M7 9v6a5 5 0 0 0 10 0V9M10 17h.01M14 17h.01M9 12h.01M15 12h.01', trend:'M3 17l6-6 4 4 8-8M15 7h6v6', arrowr:'M5 12h14M13 6l6 6-6 6', arrowl:'M19 12H5M11 18l-6-6 6-6', check:'M20 6 9 17l-5-5', x:'M18 6 6 18M6 6l12 12',
  trash:'M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
  mic:'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3',
  vol:'M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14', stop:'M6 6h12v12H6z', send:'M22 2 11 13M22 2l-7 20-4-9-9-4z',
@@ -183,7 +184,7 @@ function writeCycle(c){
     wq[c.id] = (wq[c.id] || Promise.resolve()).then(function(){ return S.db.collection('data/users/' + S.uid).doc(c.id).set(body); }).catch(function(e){ if(e && e.code === 'invalid_argument'){ S.store = 'local'; softRender(); } });
   }
 }
-function removeCycle(id){
+function removeCycle(id){ photoDel(id);
   S.cycles = S.cycles.filter(function(x){ return x.id !== id; }); lsSet('cycles', S.cycles);
   if(S.store === 'cloud' && S.db && S.uid){ wq[id] = (wq[id] || Promise.resolve()).then(function(){ return S.db.collection('data/users/' + S.uid).doc(id).delete(); }).catch(function(){}); }
 }
@@ -194,11 +195,13 @@ function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function cycInfo(c){
   var cr = crop(c.crop) || CROPS[0], dur = avgDur(cr), sow = parseD(c.sow), now = today0();
   var day = diffDays(now, sow) + 1, st = stagesFor(cr, dur), cur = null;
+  if(c.stg && typeof c.stg === 'object'){ st.forEach(function(s){ var v = c.stg[s.k]; if(typeof v === 'number' && isFinite(v) && v >= 0 && v < 1500) s.start = Math.round(v); s.edited = typeof v === 'number'; }); st.sort(function(a, b){ return a.start - b.start; }); st.forEach(function(s, i){ s.end = i < st.length - 1 ? Math.max(s.start + 1, st[i + 1].start) : Math.max(s.start + 1, dur); }); }
   st.forEach(function(s){ if(day - 1 >= s.start) cur = s; });
+  var hv1 = cr.d[0], hv2 = cr.d[1]; if(Array.isArray(c.hv) && c.hv.length === 2 && c.hv[0] > 0 && c.hv[1] >= c.hv[0] && c.hv[1] < 1500){ hv1 = c.hv[0]; hv2 = c.hv[1]; }
   var spent = (c.exp || []).reduce(function(a, e){ return a + (+e.amt || 0); }, 0);
   var inc = (c.inc || []).reduce(function(a, e){ return a + (+e.qty || 0) * (+e.rate || 0); }, 0);
   return {cr: cr, dur: dur, sow: sow, day: day, stages: st, cur: cur, pct: Math.max(0, Math.min(100, (day - 1) / dur * 100)), spent: spent, inc: inc, profit: inc - spent,
-    h1: addDays(sow, cr.d[0]), h2: addDays(sow, cr.d[1]), done: day > cr.d[1] + 15};
+    h1: addDays(sow, hv1), h2: addDays(sow, hv2), hvEdited: hv1 !== cr.d[0] || hv2 !== cr.d[1], done: day > hv2 + 15};
 }
 function buildTasks(){
   var now = today0(), out = [];
@@ -219,10 +222,14 @@ function route(){ var h = (location.hash || '#home').slice(1); var m;
   if((m = h.match(/^cycle-(c-[a-z0-9]+)$/))) return {v:'cycle', id:m[1]};
   if(h === 'exotic'){ S.libCat = 'exotic'; return {v:'crops'}; }
   if((m = h.match(/^report-(r-[a-z0-9]+)$/))) return {v:'report', id:m[1]};
-  if(['home','crops','planner','scan','farm','organic','ai','news','soil','weather','market','reports','photos'].indexOf(h) > -1) return {v:h};
+  if(h === 'market' && !FEATURES.market) return {v:'home'};
+  if(['home','crops','planner','scan','farm','organic','ai','news','soil','weather','market','reports','photos','rakshak','yojana'].indexOf(h) > -1) return {v:h};
   return {v:'home'};
 }
-var NAV = [['home','home','nav_home'],['farm','sprout','nav_farm'],['crops','book','nav_crops'],['news','news','nav_news'],['weather','cloudsun','nav_wx'],['market','rupee','nav_market'],'-',['scan','scan','t_doctor'],['soil','layers','nav_soil'],['planner','map','nav_planner'],['organic','jar','nav_organic'],['ai','chat','nav_ai'],['reports','file','nav_reports']];
+/* Feature switches. बाजारभाव (market prices) is turned off for now — all its code stays; set market: true to bring it back. */
+var FEATURES = {market: false};
+var NAV = [['home','home','nav_home'],['farm','sprout','nav_farm'],['crops','book','nav_crops'],['news','news','nav_news'],['weather','cloudsun','nav_wx'],['market','rupee','nav_market'],'-',['rakshak','shield','pr_h'],['yojana','file','y_h'],['scan','scan','t_doctor'],['soil','layers','nav_soil'],['planner','map','nav_planner'],['organic','leaf','org_nav'],['ai','chat','nav_ai'],['reports','file','nav_reports']];
+NAV = NAV.filter(function(n){ return n === '-' || FEATURES.market || n[0] !== 'market'; });
 function navKey(v){ return v === 'crop' ? 'crops' : (v === 'cycle' ? 'farm' : (v === 'report' ? 'reports' : v)); }
 
 /* ---------- shell ---------- */
@@ -231,10 +238,10 @@ function shell(){
   var side = '<aside class="side" aria-label="' + esc(t('app')) + '"><a class="logo" href="#home"><span class="mk">' + MARK + '</span><span><b>' + esc(t('app')) + '</b><small>' + esc(t('tagline')) + '</small></span></a><nav class="snav">' +
     NAV.map(function(n){ if(n === '-') return '<div class="sep"></div>'; return '<a href="#' + n[0] + '" class="' + (nk === n[0] ? 'on' : '') + '"' + (nk === n[0] ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') +
     '</nav><div class="foot"><b>' + esc(t('helpline')) + '</b><a href="tel:18001801551" style="color:#4D3706;font-weight:700;text-decoration:none">1800-180-1551</a></div></aside>';
-  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('nav_organic'), ai:t('bot_name'), news:t('news_h'), soil:t('soil_h'), weather:t('wx_h'), market:t('mk_h'), reports:t('rep_h'), report:t('rep_h'), photos:t('ph_h')};
+  var titles = {home:t('app'), crops:t('nav_crops'), crop:t('nav_crops'), planner:t('nav_planner'), scan:t('scan_title'), farm:t('nav_farm'), cycle:t('nav_farm'), organic:t('org_nav'), ai:t('bot_name'), news:t('news_h'), soil:t('soil_h'), weather:t('wx_h'), market:t('mk_h'), reports:t('rep_h'), report:t('rep_h'), photos:t('ph_h'), rakshak:t('pr_h'), yojana:t('y_h')};
   var top = '<header class="top" id="top"><div class="ttl">' + esc(titles[r.v]) + '</div><a class="logo mlogo" href="#home" style="padding:0"><span class="mk" style="width:36px;height:36px;border-radius:11px">' + MARK + '</span><span><b style="font-size:19px">' + esc(t('app')) + '</b></span></a>' +
     '<div class="topr"><div class="lang" role="group" aria-label="' + esc(t('language')) + '">' + [['mr','मरा'],['hi','हिं'],['en','EN']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div><button type="button" class="kebab" data-act="menu" aria-label="' + esc(t('menu')) + '" title="' + esc(t('menu')) + '">' + I('dots') + '</button></div></header>';
-  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['farm','sprout','nav_farm'],['news','news','nav_news'],['market','rupee','nav_market']];
+  var bn = [['home','home','nav_home'],['crops','book','nav_crops'],['farm','sprout','nav_farm'],['news','news','nav_news'], FEATURES.market ? ['market','rupee','nav_market'] : ['organic','leaf','org_nav']];
   var bnav = '<nav class="bnav" aria-label="Main">' + bn.map(function(n){ var on = nk === n[0]; if(n[0] === 'farm') return '<a href="#farm" class="mid' + (on ? ' on' : '') + '"' + (on ? ' aria-current="page"' : '') + '><span class="sc">' + I('sprout') + '</span><span>' + esc(t(n[2])) + '</span></a>'; return '<a href="#' + n[0] + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + I(n[1]) + '<span>' + esc(t(n[2])) + '</span></a>'; }).join('') + '</nav>';
   return '<div class="app">' + side + '<div class="main">' + top + '<main class="view" id="view"></main></div></div>' + bnav + (r.v === 'home' ? botFab() : '');
 }
@@ -242,8 +249,8 @@ function shell(){
 /* ---------- views ---------- */
 function cropImg(c){ return S.photoPick && S.photoPick[c.id] ? S.photoPick[c.id] : (S.cimg && S.cimg[c.id] ? S.cimg[c.id] : ''); }
 function imgTag(src, cls){ return '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"' + (cls ? ' class="' + cls + '"' : '') + ' onerror="this.remove()">'; }
-function cropDot(c, big){ var src = cropImg(c); return '<span class="' + (big ? 'cbig' : 'cdot') + '" style="background:' + CATCOL[c.cat] + '" aria-hidden="true">' + esc(first(L(c.n))) + (src ? imgTag(src) : '') + '</span>'; }
-function cropPhoto(c){ var src = cropImg(c); return '<div class="cph" style="background:' + CATCOL[c.cat] + '"><span>' + esc(first(L(c.n))) + '</span>' + (src ? imgTag(src) : '') + '</div>'; }
+function cropDot(c, big){ var src = sized(cropImg(c), big ? 500 : 330); return '<span class="' + (big ? 'cbig' : 'cdot') + '" style="background:' + CATCOL[c.cat] + '" aria-hidden="true">' + esc(first(L(c.n))) + (src ? imgTag(src) : '') + '</span>'; }
+function cropPhoto(c){ var src = sized(cropImg(c), 960); return '<div class="cph" style="background:' + CATCOL[c.cat] + '"><span>' + esc(first(L(c.n))) + '</span>' + (src ? imgTag(src) : '') + '</div>'; }
 function loadCropImgs(){ fetch('/api/cropimgs').then(function(r){ return r.ok ? r.json() : {}; }).then(function(m){ if(m && Object.keys(m).length){ var changed = JSON.stringify(m) !== JSON.stringify(S.cimg); S.cimg = m; lsSet('cimg', m); if(changed) softRender(); } }).catch(function(){}); }
 function locBox(){
   var ds = DISTRICTS[S.state];
@@ -257,16 +264,18 @@ var HEROART = '<svg class="art" viewBox="0 120 520 140" preserveAspectRatio="non
 function vHome(){
   var se = seasonNow(), sc = CROPS.filter(function(c){ return c.s.indexOf(se) > -1 && c.cat !== 'exotic' && c.s.indexOf('perennial') < 0; });
   /* [route, icon, colour, title, desc, AI?] */
-  var tiles = [['scan','scan','g','t_doctor','t_doctor_d',1],['soil','layers','o','t_soil','t_soil_d',1],['farm','sprout','s','t_farm','t_farm_d',0],
+  var tiles = [['scan','scan','g','t_doctor','t_doctor_d',1],['rakshak','shield','g','pr_h','pr_tile_d',1],['soil','layers','o','t_soil','t_soil_d',1],['farm','sprout','s','t_farm','t_farm_d',0],['yojana','file','o','y_h','y_tile_d',1],['market','rupee','s','mk_h','mk_tile_d',0],
     ['weather','cloudsun','b','t_wx','t_wx_d',0],['news','news','b','t_news','t_news_d',0],['ai','chat','b','t_ai','t_ai_d',1],
-    ['crops','book','g','t_lib','t_lib_d',0],['planner','map','o','t_planner','t_planner_d',1],['organic','jar','s','t_organic','t_organic_d',0]];
+    ['crops','book','g','t_lib','t_lib_d',0],['planner','map','o','t_planner','t_planner_d',1],['organic','leaf','s','org_nav','t_organic_d',0]];
+  tiles = tiles.filter(function(x){ return FEATURES.market || x[0] !== 'market'; });
   var h = '<section class="hero"><div style="position:relative;z-index:1">' + wxWidget(se) + '<h1 style="margin-top:16px">' + esc(t('greet')) + '!</h1><p>' + esc(t('greet_sub')) + '</p><div class="row wrap"><a class="btn" style="background:#fff;color:var(--g2)" href="#scan">' + I('camera') + esc(t('t_doctor')) + '</a><a class="btn" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)" href="#ai">' + I('chat') + esc(t('t_ai')) + '</a></div></div>' + HEROART + '</section>';
+  h += prHomeCard();
   h += '<div class="tiles">' + tiles.map(function(x, i){ return '<a class="tile' + (i === 0 ? ' feat' : '') + '" href="#' + x[0] + '"><span class="ico ' + x[2] + '">' + I(x[1]) + '</span><b>' + esc(t(x[3])) + (x[5] ? ' <span class="ai-dot">AI</span>' : '') + '</b><span class="d">' + esc(t(x[4], {n: CROPS.length})) + '</span></a>'; }).join('') + '</div>';
-  h += '<div class="h-sec"><h2>' + esc(t('latest_news')) + '</h2><a href="#news">' + esc(t('see_all')) + ' →</a></div><div id="homenews">' + homeNews() + '</div>';
   h += '<div class="h-sec"><h2>' + esc(t('crops_season')) + ' · ' + esc(t(se)) + '</h2><a href="#crops" data-act="libseason" data-v="' + se + '">' + esc(t('see_all')) + ' →</a></div><p class="mu sm" style="margin:-8px 0 12px">' + esc(t('season_' + se + '_d')) + '</p><div class="cropstrip">' + sc.map(function(c){ return '<a class="cmini" href="#crop-' + c.id + '">' + cropDot(c) + esc(L(c.n)) + '</a>'; }).join('') + '</div>';
   h += '<div class="grid g2" style="margin-top:26px;align-items:start"><div><div class="h-sec" style="margin-top:0"><h2>' + esc(t('tasks')) + '</h2><a href="#farm">' + esc(t('nav_farm')) + ' →</a></div>' + cropTaskCards() + '</div>';
   h += '<div style="display:flex;flex-direction:column;gap:16px"><div class="help"><span class="ico s" style="background:#fff">' + I('phone') + '</span><div><b style="display:block">' + esc(t('helpline')) + '</b><a class="num" href="tel:18001801551">1800-180-1551</a><div class="sm" style="color:#6B4D0B">' + esc(t('helpline_d')) + '</div></div></div>' +
     '<div class="card"><div class="pad" style="padding-bottom:6px"><h2 style="font-size:18px">' + esc(t('links')) + '</h2></div><div class="linkrow"><a href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + esc(t('link_mandi')) + I('ext') + '</a><a href="https://enam.gov.in" target="_blank" rel="noopener">' + esc(t('link_enam')) + I('ext') + '</a><a href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + esc(t('link_shc')) + I('ext') + '</a></div></div></div></div>';
+  h += '<div class="h-sec"><h2>' + esc(t('latest_news')) + '</h2><a href="#news">' + esc(t('see_all')) + ' →</a></div><div id="homenews">' + homeNews() + '</div>';
   return h;
 }
 function vCrops(){
@@ -292,12 +301,12 @@ function vCrop(id){
   var c = crop(id); if(!c) return vCrops();
   var dur = avgDur(c), st = stagesFor(c, dur), key = c.id + '|' + S.lang + '|' + place();
   var h = '<div class="dhead"><a class="btn bs bsm" href="#crops">' + I('arrowl') + esc(t('back')) + '</a></div>';
-  if(cropImg(c)) h += '<div class="cbanner">' + imgTag(cropImg(c)) + '</div>';
+  if(cropImg(c)) h += '<div class="cbanner">' + imgTag(sized(cropImg(c), 1280)) + '</div>';
   h += '<div class="dhead" style="margin-top:0">' + cropDot(c, true) + '<div style="flex:1;min-width:200px"><h1>' + esc(L(c.n)) + '</h1><div class="mu">' + esc(S.lang === 'en' ? c.n.mr + ' · ' + c.n.hi : c.n.en) + ' · ' + esc(t('cat_' + c.cat)) + '</div></div><button class="btn bp" data-act="newcycle" data-v="' + c.id + '">' + I('plus') + esc(t('start_track')) + '</button></div>';
   h += '<div class="facts">' + [['season', c.s.map(function(s){ return t(s); }).join(', ')], ['duration', c.d[0] + '–' + c.d[1] + ' ' + t('days')], ['sowing', sowText(c)], ['soil', c.soil.map(function(s){ return t('soil_' + s); }).join(', ')], ['water', t(c.w)], ['temp', c.t]].map(function(f){ return '<div class="fact"><small>' + esc(t(f[0])) + '</small><b>' + esc(f[1]) + '</b></div>'; }).join('') + '</div>';
   if(c.x) h += exoEcon(c);
   h += '<div class="card pad" style="margin-top:16px"><h2 style="font-size:19px">' + esc(t('stages')) + '</h2><div class="stagebar">' + st.map(function(s, i){ return '<i style="flex:' + Math.max(1, s.end - s.start) + ';background:' + STAGECOL[i] + '"></i>'; }).join('') + '</div><div class="stagelist">' + st.map(function(s, i){ return '<div><i style="background:' + STAGECOL[i] + '"></i><span>' + esc(t('st_' + s.k)) + '<small>' + esc(t('day_n', {n: s.start + 1})) + ' – ' + s.end + '</small></span></div>'; }).join('') + '</div><p class="xs mu2" style="margin:12px 0 0">' + esc(t('approx')) + '</p></div>';
-  h += '<div class="grid g2" style="margin-top:16px"><div class="card pad"><h2 style="font-size:19px;margin-bottom:12px;display:flex;gap:8px;align-items:center"><span class="ico r" style="width:36px;height:36px;border-radius:10px">' + I('bug') + '</span>' + esc(t('pests')) + '</h2><div class="row wrap" style="gap:8px">' + c.p.map(function(p){ return '<span class="chip r">' + esc(L(PESTS[p])) + '</span>'; }).join('') + '</div><h2 style="font-size:19px;margin:20px 0 12px;display:flex;gap:8px;align-items:center"><span class="ico s" style="width:36px;height:36px;border-radius:10px">' + I('alert') + '</span>' + esc(t('diseases')) + '</h2><div class="row wrap" style="gap:8px">' + c.ds.map(function(d){ return '<span class="chip s">' + esc(L(DISEASES[d])) + '</span>'; }).join('') + '</div><div class="row wrap" style="margin-top:18px"><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="leaf">' + I('leaf') + esc(t('t_doctor')) + '</a><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="insect">' + I('bug') + esc(t('t_pest')) + '</a></div></div>';
+  h += '<div class="grid g2" style="margin-top:16px"><div class="card pad"><h2 style="font-size:19px;margin-bottom:12px;display:flex;gap:8px;align-items:center"><span class="ico r" style="width:36px;height:36px;border-radius:10px">' + I('bug') + '</span>' + esc(t('pests')) + '</h2><div class="pdgrid">' + c.p.map(function(p){ return pdCard(c, 'pest', p); }).join('') + '</div><h2 style="font-size:19px;margin:20px 0 12px;display:flex;gap:8px;align-items:center"><span class="ico s" style="width:36px;height:36px;border-radius:10px">' + I('alert') + '</span>' + esc(t('diseases')) + '</h2><div class="pdgrid">' + c.ds.map(function(d){ return pdCard(c, 'disease', d); }).join('') + '</div><p class="xs mu2" style="margin:10px 0 0">' + esc(t('pd_tap')) + '</p><div class="row wrap" style="margin-top:18px"><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="leaf">' + I('leaf') + esc(t('t_doctor')) + '</a><a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="insect">' + I('bug') + esc(t('t_pest')) + '</a></div></div>';
   h += '<div class="card pad"><h2 style="font-size:19px;margin-bottom:14px;display:flex;gap:8px;align-items:center"><span class="ico g" style="width:36px;height:36px;border-radius:10px">' + I('leaf') + '</span>' + esc(t('organic_plan')) + '</h2><ul class="ulist">' + ['op1','op2','op3','op4','op5','op6','op7'].map(function(k){ return '<li>' + I('check') + '<span>' + esc(t(k)) + '</span></li>'; }).join('') + '</ul><a class="btn bg bsm" style="margin-top:12px;padding-left:0" href="#organic">' + esc(t('t_organic')) + ' →</a></div></div>';
   var g = S.guides[key];
   h += '<div class="aibox" style="margin-top:16px"><div class="hd"><div style="display:flex;gap:14px;align-items:flex-start"><span class="ico s">' + I('spark') + '</span><div><h2 style="font-size:20px">' + esc(t('ai_guide')) + '</h2><p class="mu sm" style="margin:4px 0 0;max-width:620px">' + esc(t('ai_guide_d', {place: place()})) + '</p></div></div>' + aiButtons('guide', c.id, g) + '</div><div id="guide-out" class="md" style="margin-top:' + (g ? '14px' : '0') + '">' + (g ? (g.text ? md(g.text) : '') + (g.busy ? '<div class="load"><span class="spin"></span>' + esc(g.text ? '' : t('thinking')) + '</div>' : '') + (g.err ? '<div class="note r">' + I('alert') + esc(g.err) + '</div>' : '') : '') + '</div>' + (g && g.text && !g.busy ? '<p class="xs mu2" style="margin:14px 0 0">' + esc(t('disclaimer')) + '</p>' : '') + '</div>';
@@ -439,7 +448,7 @@ function vFarm(){
   if(!S.cycles.length) return h + '<div class="card empty"><span class="ico g">' + I('sprout') + '</span><p style="margin:0 0 16px;max-width:420px;margin-inline:auto">' + esc(t('empty_farm')) + '</p><button class="btn bp" data-act="newcycle">' + I('plus') + esc(t('add_crop')) + '</button></div>';
   h += '<div class="grid g3">' + S.cycles.map(function(c){ var x = cycInfo(c);
     var stTxt = x.day < 1 ? t('not_sown', {n: 1 - x.day}) : (x.done ? t('done_cycle') : (t('day_n', {n: x.day}) + ' · ' + t('st_' + (x.cur ? x.cur.k : 'germ'))));
-    return '<a class="cyc" href="#cycle-' + c.id + '"><div class="hd">' + cropDot(x.cr, true) + '<div style="flex:1;min-width:0"><h3>' + esc(L(x.cr.n)) + '</h3><div class="sm mu">' + esc((c.plot || '') + (c.plot ? ' · ' : '') + num(c.area) + ' ' + t('acres_short')) + '</div></div></div><div><div class="row" style="justify-content:space-between;font-size:14px;margin-bottom:6px"><span>' + esc(stTxt) + '</span><span class="mu2">' + Math.round(x.pct) + '%</span></div><div class="prog"><i style="width:' + x.pct + '%"></i></div></div><div class="row" style="justify-content:space-between;font-size:14px"><span class="mu">' + esc(t('spent')) + ' <b style="color:var(--ink)">' + rs(x.spent) + '</b></span><span class="mu">' + esc(t('exp_harvest')) + ' <b style="color:var(--ink)">' + esc(fmtDs(x.h1)) + '</b></span></div></a>'; }).join('') + '</div>';
+    return '<a class="cyc" href="#cycle-' + c.id + '">' + (cycImg(c) ? '<div class="cycph"><img src="' + cycImg(c) + '" alt=""></div>' : '') + '<div class="hd">' + cycDot(c, true) + '<div style="flex:1;min-width:0"><h3>' + esc(L(x.cr.n)) + '</h3><div class="sm mu">' + esc((c.plot || '') + (c.plot ? ' · ' : '') + num(c.area) + ' ' + t('acres_short')) + '</div></div></div><div><div class="row" style="justify-content:space-between;font-size:14px;margin-bottom:6px"><span>' + esc(stTxt) + '</span><span class="mu2">' + Math.round(x.pct) + '%</span></div><div class="prog"><i style="width:' + x.pct + '%"></i></div></div><div class="row" style="justify-content:space-between;font-size:14px"><span class="mu">' + esc(t('spent')) + ' <b style="color:var(--ink)">' + rs(x.spent) + '</b></span><span class="mu">' + esc(t('exp_harvest')) + ' <b style="color:var(--ink)">' + esc(fmtDs(x.h1)) + '</b></span></div></a>'; }).join('') + '</div>';
   return h;
 }
 var CATORDER = ['cereal','pulse','oil','veg','leafy','fruit','spice','cash','flower','fodder','exotic'];
@@ -465,15 +474,17 @@ function vCycle(id){
   var c = cyc(id); if(!c) return vFarm();
   var x = cycInfo(c), tab = S.cycTab;
   var h = '<div class="dhead"><a class="btn bs bsm" href="#farm">' + I('arrowl') + esc(t('back')) + '</a></div>';
-  h += '<div class="dhead" style="margin-top:0">' + cropDot(x.cr, true) + '<div style="flex:1;min-width:200px"><h1>' + esc(L(x.cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</h1><div class="mu">' + esc(num(c.area) + ' ' + t('acres_short') + (c.variety ? ' · ' + c.variety : '') + ' · ' + t('irr_' + (c.irr || 'rainfed')) + ' · ' + fmtD(x.sow)) + '</div></div><div class="row"><button class="btn bs bsm" data-act="editcycle" data-v="' + c.id + '">' + I('edit') + esc(t('edit')) + '</button><button class="btn bd bsm" data-act="delcycle" data-v="' + c.id + '">' + I('trash') + esc(t('delete')) + '</button></div></div>';
+  h += cycBanner(c);
+  h += '<div class="dhead" style="margin-top:0">' + cycDot(c, true) + '<div style="flex:1;min-width:200px"><h1>' + esc(L(x.cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</h1><div class="mu">' + esc(num(c.area) + ' ' + t('acres_short') + (c.variety ? ' · ' + c.variety : '') + ' · ' + t('irr_' + (c.irr || 'rainfed')) + ' · ' + fmtD(x.sow)) + '</div></div><div class="row"><button class="btn bs bsm" data-act="editcycle" data-v="' + c.id + '">' + I('edit') + esc(t('edit')) + '</button><button class="btn bd bsm" data-act="delcycle" data-v="' + c.id + '">' + I('trash') + esc(t('delete')) + '</button></div></div>';
   var pos = x.profit >= 0;
   h += '<div class="kpis"><div class="kpi"><small>' + esc(t('cur_stage')) + '</small><b style="font-size:19px">' + esc(x.day < 1 ? t('not_sown', {n: 1 - x.day}) : (x.done ? t('done_cycle') : t('st_' + (x.cur ? x.cur.k : 'germ')))) + '</b><small>' + (x.day >= 1 ? esc(t('day_n', {n: x.day})) : '') + '</small></div><div class="kpi"><small>' + esc(t('spent')) + '</small><b>' + rs(x.spent) + '</b><small>' + esc(t('per_acre')) + ': ' + rs(c.area ? x.spent / c.area : 0) + '</small></div><div class="kpi"><small>' + esc(t('income')) + '</small><b>' + rs(x.inc) + '</b><small>' + esc(t('exp_harvest')) + ': ' + esc(fmtDs(x.h1)) + '</small></div><div class="kpi ' + (x.inc || x.spent ? (pos ? 'pos' : 'neg') : '') + '"><small>' + esc(pos ? t('profit') : t('loss')) + '</small><b>' + rs(Math.abs(x.profit)) + '</b><small>' + (c.budget ? esc(t('budget_used')) + ': ' + Math.round(x.spent / c.budget * 100) + '%' : esc(t('no_budget'))) + '</small></div></div>';
-  h += '<div class="tabs" role="tablist">' + [['overview','tab_overview'],['exp','tab_exp'],['inc','tab_inc'],['diary','tab_diary']].map(function(k){ return '<button type="button" role="tab" data-act="cyctab" data-v="' + k[0] + '" aria-selected="' + (tab === k[0]) + '">' + esc(t(k[1])) + '</button>'; }).join('') + '</div>';
+  h += '<div class="tabs" role="tablist">' + [['overview','tab_overview'],['plan','tab_plan'],['exp','tab_exp'],['inc','tab_inc'],['diary','tab_diary']].map(function(k){ var due = k[0] === 'plan' ? planDueCount(c) : 0; return '<button type="button" role="tab" data-act="cyctab" data-v="' + k[0] + '" aria-selected="' + (tab === k[0]) + '">' + (k[0] === 'plan' ? I('spark') : '') + esc(t(k[1])) + (due ? '<span class="tbadge">' + num(due, 0) + '</span>' : '') + '</button>'; }).join('') + '</div>';
   if(tab === 'overview'){
-    h += '<div class="grid g2" style="align-items:start"><div class="card pad"><h2 style="font-size:19px;margin-bottom:6px">' + esc(t('timeline')) + '</h2><div class="prog" style="margin:10px 0 18px"><i style="width:' + x.pct + '%"></i></div><div class="tl">' + x.stages.map(function(s){ var d = addDays(x.sow, s.start), st = (x.day - 1) >= s.end ? 'done' : ((x.cur && x.cur.k === s.k && !x.done) ? 'now' : ''); return '<div class="it ' + st + '"><span class="dt"></span><div><b>' + esc(t('st_' + s.k)) + '</b><small>' + esc(fmtDs(d)) + ' · ' + esc(t('day_n', {n: s.start + 1})) + '</small></div></div>'; }).join('') + '<div class="it ' + (x.done ? 'done' : '') + '"><span class="dt"></span><div><b>' + esc(t('exp_harvest')) + '</b><small>' + esc(fmtDs(x.h1) + ' – ' + fmtDs(x.h2)) + '</small></div></div></div><p class="xs mu2" style="margin:10px 0 0">' + esc(t('approx')) + '</p></div>';
+    h += '<div class="grid g2" style="align-items:start"><div class="card pad"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><h2 style="font-size:19px">' + esc(t('timeline')) + '</h2><button class="btn bs bsm" data-act="stgedit" data-v="' + c.id + '">' + I('edit') + esc(t('edit')) + '</button></div><div class="prog" style="margin:10px 0 18px"><i style="width:' + x.pct + '%"></i></div><div class="tl">' + x.stages.map(function(s){ var d = addDays(x.sow, s.start), st = (x.day - 1) >= s.end ? 'done' : ((x.cur && x.cur.k === s.k && !x.done) ? 'now' : ''); return '<div class="it ' + st + '"><span class="dt"></span><div><b>' + esc(t('st_' + s.k)) + (s.edited ? ' <span class="edtag">' + esc(t('pl_mine')) + '</span>' : '') + '</b><small>' + esc(fmtDs(d)) + ' · ' + esc(t('day_n', {n: s.start + 1})) + '</small></div></div>'; }).join('') + '<div class="it ' + (x.done ? 'done' : '') + '"><span class="dt"></span><div><b>' + esc(t('exp_harvest')) + (x.hvEdited ? ' <span class="edtag">' + esc(t('pl_mine')) + '</span>' : '') + '</b><small>' + esc(fmtDs(x.h1) + ' – ' + fmtDs(x.h2)) + '</small></div></div></div><p class="xs mu2" style="margin:10px 0 0">' + esc(c.stg || c.hv ? t('stg_edited_note') : t('approx')) + '</p>' + planPeek(c) + '</div>';
     var rv = S.reviews[c.id];
     h += '<div style="display:flex;flex-direction:column;gap:16px"><div class="card pad"><h2 style="font-size:19px;margin-bottom:14px">' + esc(t('by_cat')) + '</h2>' + catBars(c) + '</div><div class="aibox"><div class="hd"><div style="display:flex;gap:12px"><span class="ico s">' + I('spark') + '</span><div><h2 style="font-size:19px">' + esc(t('ai_review')) + '</h2><p class="sm mu" style="margin:4px 0 0">' + esc(t('ai_review_d')) + '</p></div></div>' + aiButtons('review', c.id, rv) + '</div><div class="md" id="review-out" style="margin-top:' + (rv ? '12px' : '0') + '">' + (rv ? (rv.text ? md(rv.text) : '') + (rv.busy ? '<div class="load"><span class="spin"></span>' + esc(rv.text ? '' : t('thinking')) + '</div>' : '') + (rv.err ? '<div class="note r">' + I('alert') + esc(rv.err) + '</div>' : '') : '') + '</div></div></div></div>';
   }
+  if(tab === 'plan') h += planTab(c);
   if(tab === 'exp'){
     h += '<div class="card pad" style="margin-bottom:16px"><form id="expform" class="grid g4" style="align-items:end"><label class="f">' + esc(t('category')) + '<select class="inp" name="cat">' + EXPCATS.map(function(k){ return '<option value="' + k + '">' + esc(t('ec_' + k)) + '</option>'; }).join('') + '</select></label><label class="f">' + esc(t('amount')) + '<input class="inp" type="number" name="amt" min="1" step="1" required></label><label class="f">' + esc(t('date')) + '<input class="inp" type="date" name="date" value="' + isoDate(today0()) + '"></label><label class="f">' + esc(t('note')) + '<input class="inp" name="note" maxlength="80"></label></form><button class="btn bp" style="margin-top:14px" data-act="addexp" data-v="' + c.id + '">' + I('plus') + esc(t('add_exp')) + '</button></div>';
     var ex = (c.exp || []).slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; });
@@ -514,11 +525,6 @@ function runReview(id){
 }
 
 /* organic */
-function vOrganic(){
-  var h = '<div class="ph"><h1>' + esc(t('org_h')) + '</h1><p>' + esc(t('org_d')) + '</p></div><div class="note" style="margin-bottom:16px">' + I('info') + esc(t('org_note')) + '</div><div style="display:flex;flex-direction:column;gap:12px">';
-  h += RECIPES.map(function(r){ var open = S.openRecipe === r.id; return '<div class="rcard' + (open ? ' open' : '') + '"><button type="button" data-act="recipe" data-v="' + r.id + '" aria-expanded="' + open + '"><span class="ico ' + (r.base === 'dilute' ? 'r' : (r.base === 'seed' ? 's' : 'g')) + '">' + I(r.base === 'dilute' ? 'shield' : (r.base === 'seed' ? 'sprout' : 'leaf')) + '</span><span class="tx"><b>' + esc(L(r.n)) + '</b><span>' + esc(L(r.purpose)) + '</span></span>' + I('chev', 'chev') + '</button><div class="body">' + (open ? recipeBody(r) : '') + '</div></div>'; }).join('');
-  return h + '</div>';
-}
 function recipeBody(r){
   var v = S.calc[r.id], f = 1, calc = '';
   if(r.base === 'acre'){ v = v || {a: 1, u: 'acre'}; var ac = v.u === 'guntha' ? v.a / 40 : (v.u === 'hectare' ? v.a * 2.471 : v.a); f = ac;
@@ -533,7 +539,7 @@ function recipeBody(r){
 function vAI(){
   var h = '<div class="chat"><div class="row" style="justify-content:space-between;margin:8px 0 10px"><h1 style="font-size:22px;display:flex;align-items:center;gap:10px"><span class="aihlogo">' + BOTLOGO + '</span>' + esc(t('bot_name')) + '</h1>' + (S.chat.length ? '<button class="btn bs bsm" data-act="newchat">' + I('refresh') + esc(t('new_chat')) + '</button>' : '') + '</div><div class="msgs" id="msgs" aria-live="polite">';
   h += '<div class="msg a"><div class="md"><p>' + esc(t('ai_welcome')) + '</p></div></div>';
-  S.chat.forEach(function(m, i){ if(m.role === 'user') h += '<div class="msg u">' + esc(m.content) + '</div>'; else h += '<div class="msg a"><div class="md">' + (m.content ? md(m.content) : '') + (m.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (m.content ? '' : esc(t('thinking'))) + '</div>' : '') + (m.err ? '<div class="note r" style="margin-top:8px">' + I('alert') + esc(m.err) + '</div>' : '') + '</div>' + (!m.busy && m.content ? '<div class="mact">' + speakBtn('chat' + i) + '</div>' : '') + '</div>'; });
+  S.chat.forEach(function(m, i){ h += chatMsgHTML(m, i); });
   if(!S.chat.length) h += '<div class="sugs">' + ['sug1','sug2','sug3','sug4'].map(function(k){ return '<button type="button" data-act="sug" data-v="' + k + '">' + esc(t(k)) + '</button>'; }).join('') + '</div>';
   h += '</div>';
   var off = S.sampleReady && !S.sample;
@@ -542,20 +548,31 @@ function vAI(){
   h += '<form class="composer" id="composer">' + (S.dict ? '<button type="button" class="iconbtn' + (S.listening ? ' rec' : '') + '" data-act="mic" aria-label="' + esc(S.listening ? t('listening') : t('speak')) + '">' + I('mic') + '</button>' : '') + '<textarea id="chatin" rows="1" placeholder="' + esc(S.listening ? t('listening') : t('ai_ph')) + '" aria-label="' + esc(t('ai_ph')) + '"' + (off ? ' disabled' : '') + '>' + esc(S.draft || '') + '</textarea>' + (busy ? '<button type="button" class="iconbtn" data-act="ai-stop" data-k="chat" aria-label="' + esc(t('stop_gen')) + '">' + I('stop') + '</button>' : '<button type="submit" class="iconbtn p" aria-label="' + esc(t('send')) + '"' + (off || !S.sampleReady ? ' disabled' : '') + '>' + I('send') + '</button>') + '</form></div>';
   return h;
 }
+function chatMsgHTML(m, i){
+  if(m.role === 'user') return '<div class="msg u' + (m.detail ? ' ask' : '') + '">' + (m.detail ? I('file') : '') + esc(m.content) + '</div>';
+  var last = i === S.chat.length - 1, done = !m.busy && m.content && !m.err;
+  return '<div class="msg a' + (m.detail ? ' long' : '') + '"><div class="md">' + (m.content ? md(m.content) : '') + (m.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (m.content ? '' : esc(t(m.detail ? 'chat_detail_busy' : 'thinking'))) + '</div>' : '') + (m.err ? '<div class="note r" style="margin-top:8px">' + I('alert') + esc(m.err) + '</div>' : '') + '</div>' +
+    (done ? '<div class="mact">' + speakBtn('chat' + i) + (!m.detail && last && !(S.chat[i + 1]) ? '<button type="button" class="mdet" data-act="chatdetail" data-v="' + i + '">' + I('file') + esc(t('chat_detail')) + '</button>' : '') + (m.detail ? '<button type="button" class="mdet" data-act="download" data-v="chat' + i + '">' + I('download') + 'PDF</button>' : '') + '</div>' : '') + '</div>';
+}
 function chatRules(){
   var mine = S.cycles.slice(0, 6).map(function(c){ var x = cycInfo(c); return x.cr.n.en + ' (' + c.area + ' acre, day ' + x.day + ', stage ' + (x.cur ? T.en['st_' + x.cur.k] : 'not sown') + ', spent ₹' + Math.round(x.spent) + ')'; }).join('; ');
   return sysPrompt((mine ? 'The farmer is currently growing: ' + mine + '.\n' : '') +
     'Always reply in the language above, even if the farmer writes in another language or in Roman script.\n' +
-    'ANSWER STYLE: Start with a 1–2 line direct answer. Then short numbered steps or bullets with quantities and timing (days after sowing / crop stage). Use a small table only when comparing options. Keep it under about 250 words unless the farmer asks for detail. If key information is missing (crop, stage, symptoms, area), first give the most likely answer, then ask ONE short follow-up question at the end. Do not repeat the question back.\n' +
+    'ANSWER STYLE (very important): reply like a short chat message from an expert friend, easy for a farmer to read on a phone. ' +
+    'Default = SHORT: one direct answer line, then at most 3–4 short bullet points with the key quantity, dose and timing. About 40–90 words. No headings, no tables, no long introductions, no repeating the question. ' +
+    'Give a LONG, detailed, well-structured answer (short headings, bullets, a small table if useful) ONLY when the farmer clearly asks for detail, a report, a full plan or schedule (words like detail, सविस्तर, विस्तार से, अहवाल, रिपोर्ट, report, plan, वेळापत्रक, full). ' +
+    'If key information is missing (crop, stage, symptoms, area), give the most likely answer and ask ONE short follow-up question at the end.\n' +
     (S.webSearch ? 'LIVE DATA: You may use Google Search for current prices, weather, scheme news and dates — mention the source and date, and keep it short.' : 'LIVE DATA: You cannot see live mandi prices, weather forecasts or the latest scheme news. If asked, say so briefly and suggest agmarknet.gov.in / eNAM, the IMD Meghdoot app, or the Kisan Call Centre 1800-180-1551 — then still give useful general advice.'));
 }
-function sendChat(text){
+function sendChat(text, detail){
   text = String(text || '').trim(); if(!text || !S.sample) return;
-  S.draft = ''; S.chat.push({role: 'user', content: text}); var a = {role: 'assistant', content: '', busy: true}; S.chat.push(a); softRender(); scrollChat();
+  if(S.chat.length && S.chat[S.chat.length - 1].busy) return;
+  S.draft = ''; S.chat.push({role: 'user', content: text, detail: !!detail}); var a = {role: 'assistant', content: '', busy: true, detail: !!detail}; S.chat.push(a); softRender(); botAfterRender(); scrollChat();
   var hist = S.chat.filter(function(m){ return m !== a && !m.err; }).slice(-14).map(function(m){ return {role: m.role, content: m.content || '…'}; });
   while(hist.length && hist[0].role !== 'user') hist.shift();
+  if(detail && hist.length) hist[hist.length - 1] = {role: 'user', content: 'Give me the DETAILED report on the topic we just discussed (my previous question and your short answer). Use short headings, numbered steps, exact doses per litre / per acre, timing by crop stage or days, organic and chemical options, precautions and cost where useful. Write it clearly for a farmer.'};
   ctl.chat = new AbortController();
-  S.sample(hist, {system: chatRules(), task: 'chat', cache: false, signal: ctl.chat.signal, onText: function(u){ a.content = u.text; var el = $$('#msgs .msg.a'); el = el[el.length - 1]; if(el && route().v === 'ai'){ $('.md', el).innerHTML = md(u.text); scrollChat(); } }})
+  S.sample(hist, {system: chatRules(), task: detail ? 'guide' : 'chat', cache: false, signal: ctl.chat.signal, onText: function(u){ a.content = u.text; var el = $$('#msgs .msg.a'); el = el[el.length - 1]; if(el && route().v === 'ai'){ $('.md', el).innerHTML = md(u.text); scrollChat(); } }})
    .then(function(r){ a.content = r.text; a.busy = false; softRender(); scrollChat(); })
    .catch(function(e){ a.busy = false; a.content = e.text || a.content; if(e.code !== 'cancelled') a.err = aiMsg(e); if(!a.content && !a.err) S.chat.splice(S.chat.indexOf(a), 1); softRender(); });
 }
@@ -581,7 +598,7 @@ function exoEcon(c){
 function loadNews(force){
   if(S.newsBusy) return;
   var had = !!(S.news && S.news.items && S.news.items.length);
-  S.newsBusy = true; S.newsErr = null; if(route().v === 'news' && (force || !had)) patchNews();
+  S.newsBusy = true; S.newsErr = null; S.newsTry = Date.now(); if(route().v === 'news' && (force || !had)) patchNews();
   use('news').then(function(fn){
     if(!fn) throw new Error('no news');
     return fn(force);
@@ -589,6 +606,7 @@ function loadNews(force){
     .catch(function(){ S.newsErr = t('news_err'); })
     .then(function(){ S.newsBusy = false; var v = route().v; if(v === 'news' && (force || !had)) render(); if(v === 'home'){ var hn = $('#homenews'); if(hn) hn.innerHTML = homeNews(); } });
 }
+function newsAuto(){ if(newsNeeded() && !S.newsBusy && !(S.newsErr && Date.now() - (S.newsTry || 0) < 30000)) setTimeout(function(){ loadNews(false); }, 0); }
 function newsNeeded(){ return !S.news || Date.now() - S.news.at > 10 * 60000; }
 function newsList(){
   var items = ((S.news && S.news.items) || []).filter(function(n){ return S.newsLang === 'all' || n.lang === S.newsLang; });
@@ -598,7 +616,8 @@ function newsList(){
 function newsImg(n, cls){
   var col = NEWSCOL[n.cat] || NEWSCOL.other, ph = '<div class="nph" style="background:' + col + '">' + I(n.cat === 'weather' ? 'sun' : (n.cat === 'market' ? 'rupee' : (n.cat === 'livestock' ? 'drop' : (n.cat === 'tech' ? 'spark' : 'news')))) + '<span>' + esc(n.source) + '</span></div>';
   if(!n.image) return '<div class="' + cls + '">' + ph + '</div>';
-  return '<div class="' + cls + '"><img src="' + esc(n.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + ph + '</div>';
+  var eager = cls === 'rbg' && n.__i < 2;
+  return '<div class="' + cls + '"><img src="' + esc(sized(n.image, 1280)) + '" alt="" ' + (eager ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"') + ' decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' + ph + '</div>';
 }
 function newsChip(n){ return '<span class="nchip" style="--c:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '">' + esc(t('nc_' + n.cat)) + '</span>'; }
 function newsCard(n){
@@ -611,7 +630,7 @@ function newsCard(n){
     '</div></article>';
 }
 function homeNews(){
-  if(newsNeeded() && !S.newsBusy) setTimeout(function(){ loadNews(false); }, 0);
+  newsAuto();
   var items = ((S.news && S.news.items) || []).slice(0, 10);
   if(!items.length){
     if(S.newsErr) return '<div class="note">' + I('info') + esc(S.newsErr) + '</div>';
@@ -620,7 +639,7 @@ function homeNews(){
   return '<div class="nstrip">' + items.map(function(n){ return '<a class="nmini" href="#news" data-act="newsopen" data-v="' + esc(n.id) + '">' + newsImg(n, 'nimg') + '<div class="nbody">' + newsChip(n) + '<b class="clamp3">' + esc(n.title) + '</b><small>' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</small></div></a>'; }).join('') + '</div>';
 }
 function vNews(){
-  if(newsNeeded() && !S.newsBusy) setTimeout(function(){ loadNews(false); }, 0);
+  newsAuto();
   var all = (S.news && S.news.items) || [];
   var counts = {}; all.forEach(function(n){ if(S.newsLang === 'all' || n.lang === S.newsLang) counts[n.cat] = (counts[n.cat] || 0) + 1; });
   var h = '<div class="nwrap"><div class="reels reelsB" id="reels">' + reelsBody() + '</div>';
@@ -643,10 +662,11 @@ function reelsBody(){
 }
 function reelItem(n, i, total){
   var ai = S.newsAI[n.id], spk = S.speakingId === 'nread' + n.id, ready = ai && ai.text && !ai.busy;
+  n.__i = i;
   return '<article class="reel rB" id="n-' + esc(n.id) + '" data-i="' + i + '">' + newsImg(n, 'rbg') + '<div class="rsh"></div>' +
     '<div class="rtx"><div class="rmeta"><span class="rcat" style="background:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '">' + esc(t('nc_' + n.cat)) + '</span><span class="rcnt">' + num(i + 1, 0) + ' / ' + num(total, 0) + '</span></div>' +
-      '<h2>' + esc(n.title) + '</h2>' + (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
-      '<a class="rsrc" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(n.source) + ' · ' + esc(ago(n.date)) + ' · <u>' + esc(t('news_full')) + ' ›</u></a></div>' +
+      '<button type="button" class="rtap" data-act="nread" data-v="' + esc(n.id) + '"><h2>' + esc(n.title) + '</h2>' + (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') + '</button>' +
+      '<button type="button" class="rsrc" data-act="nread" data-v="' + esc(n.id) + '">' + esc(n.source) + ' · ' + esc(ago(n.date)) + ' · <u>' + esc(t('nr_read')) + ' ›</u></button></div>' +
     '<div class="rside">' + (S.sample ? '<button type="button" data-act="newsai" data-v="' + esc(n.id) + '"' + (ready ? ' class="ready"' : '') + '>' + I('spark') + '<small>' + esc(t('news_ai_btn')) + '</small></button>' : '') +
       (S.tts ? '<button type="button" data-act="speak" data-v="nread' + esc(n.id) + '"' + (spk ? ' class="on"' : '') + '>' + I(spk ? 'stop' : 'vol') + '<small>' + esc(spk ? t('stop') : t('listen')) + '</small></button>' : '') +
       '<button type="button" data-act="newsshare" data-v="' + esc(n.id) + '">' + I('share') + '<small>' + esc(t('share')) + '</small></button>' +
@@ -659,18 +679,28 @@ function newsSheet(){
     '<div class="nsbody md" id="nsbody">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:6px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div><button class="btn bs bsm" style="margin-top:10px" data-act="newsairetry" data-v="' + esc(id) + '">' + I('refresh') + esc(t('news_refresh')) + '</button>' : '') + (!ai.busy && ai.text ? '<p class="xs mu2" style="margin:10px 0 0">' + esc(t('news_ai_note')) + '</p>' : '') + '</div>' +
     (!ai.busy && ai.text ? '<div class="nsft">' + (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="newsai' + esc(id) + '">' + I(S.speakingId === 'newsai' + id ? 'stop' : 'vol') + esc(S.speakingId === 'newsai' + id ? t('stop') : t('listen')) + '</button>' : '') + '<button class="btn bs bsm" data-act="download" data-v="news' + esc(id) + '" aria-label="' + esc(t('download')) + '">' + I('download') + 'PDF</button>' + '<a class="btn bp bsm" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('news_full')) + I('ext') + '</a></div>' : '') + '</div>';
 }
-function patchSheet(){ var s = $('#nsheet'); if(!s) return; var b = $('#nsbody'), st = b ? b.scrollTop : 0, nearEnd = b && b.scrollTop + b.clientHeight >= b.scrollHeight - 30; s.innerHTML = newsSheet(); var nb = $('#nsbody'); if(nb) nb.scrollTop = nearEnd ? nb.scrollHeight : st; }
+function patchSheet(){ var nr = $('#nrai'); if(nr && S.nread) nr.innerHTML = nrAI(S.nread); var s = $('#nsheet'); if(!s) return; var b = $('#nsbody'), st = b ? b.scrollTop : 0, nearEnd = b && b.scrollTop + b.clientHeight >= b.scrollHeight - 30; s.innerHTML = newsSheet(); var nb = $('#nsbody'); if(nb) nb.scrollTop = nearEnd ? nb.scrollHeight : st; }
 function nextHeads(i){ var l = newsList().slice(i + 1, i + 4); if(!l.length) return ''; return '<div class="rnext"><small>' + esc(t('news_next_h')) + '</small>' + l.map(function(n, j){ return '<button type="button" data-act="reelnext" data-v="' + (i + 1 + j) + '"><span class="rnd" style="background:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '"></span><span>' + esc(n.title) + '</span></button>'; }).join('') + '</div>'; }
-function sizeReels(){
-  var r = $('#reels'); if(!r) return;
-  var bn = document.querySelector('.bnav'), bnh = bn && getComputedStyle(bn).display !== 'none' ? bn.getBoundingClientRect().height : 0;
-  var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  var hgt = Math.max(380, vh - r.getBoundingClientRect().top - bnh - (bnh ? 0 : (window.innerWidth > 600 ? 16 : 0)));
-  r.style.height = hgt + 'px';
+/* v7.8 — the news page is a fixed full-screen stage sized by the browser itself (CSS), so nothing is measured here.
+   Each card's text is fitted from the bottom up: summary 3 → 2 → 1 → 0 lines, then title 3 → 2, so the source line is always on screen. */
+function sizeReels(){ var r = $('#reels'); if(!r) return; if(r.style.height) r.style.height = ''; fitReels(); }
+var FITS = ['f1', 'f2', 'f3', 'f4'];
+function fitReel(el){
+  var tx = el.querySelector('.rtx'); if(!tx || !el.clientHeight) return;
+  var top = document.querySelector('.rtop'), topH = top ? top.getBoundingClientRect().height : 60;
+  var avail = el.clientHeight - topH - 12;
+  FITS.forEach(function(f){ el.classList.remove(f); });
+  for(var i = 0; i < FITS.length && tx.getBoundingClientRect().top - el.getBoundingClientRect().top < topH + 4; i++) el.classList.add(FITS[i]);
+  el.classList.toggle('fitok', tx.offsetHeight <= avail);
 }
+function fitReels(){ var r = $('#reels'); if(!r) return; Array.prototype.forEach.call(r.querySelectorAll('.reel'), fitReel); }
 var reelObs = null;
 function setupReels(){
-  sizeReels();
+  sizeReels(); requestAnimationFrame(sizeReels); setTimeout(sizeReels, 250); setTimeout(sizeReels, 1200);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeReels);
+  if(window.ResizeObserver && !setupReels.ro){ setupReels.ro = new ResizeObserver(function(){ if(route().v === 'news') fitReels(); }); setupReels.ro.observe(document.documentElement); }
+  var rr = $('#reels'); if(rr && window.MutationObserver){ if(setupReels.mo) setupReels.mo.disconnect(); setupReels.mo = new MutationObserver(function(){ requestAnimationFrame(fitReels); }); setupReels.mo.observe(rr, {childList: true}); }
+  if(window.visualViewport && !setupReels.vv){ setupReels.vv = true; visualViewport.addEventListener('resize', function(){ if(route().v === 'news') sizeReels(); }); }
   var r = $('#reels'); if(!r) return;
   if(reelObs){ reelObs.disconnect(); reelObs = null; }
   var last = r.querySelector('.reel:last-child');
@@ -694,12 +724,15 @@ function shareNews(id){
   var txt = n.title + '\n' + n.url;
   if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast(t('copied')); }); else window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
 }
-function toast(msg){ var d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 2200); }
+var lastToast = {m: '', at: 0};
+function toast(msg, kind){ var now = Date.now(); if(msg === lastToast.m && now - lastToast.at < 2500) return; lastToast = {m: msg, at: now}; var old = document.querySelectorAll('.toast'); for(var i = 0; i < old.length; i++) old[i].remove(); var d = document.createElement('div'); d.className = 'toast' + (kind ? ' ' + kind : ''); d.setAttribute('role', 'status'); d.setAttribute('aria-live', 'polite'); d.textContent = msg; document.body.appendChild(d); setTimeout(function(){ d.classList.add('out'); setTimeout(function(){ d.remove(); }, 260); }, kind === 'long' ? 4200 : 2400); }
 
 /* ================= DOWNLOAD AI REPORTS (PDF via the phone's "Save as PDF") ================= */
 function reportFor(sid){
   var c, x;
   if(sid.indexOf('rep:') === 0){ var sr = repById(sid.slice(4)); return sr ? {title: sr.title, md: sr.md, img: sr.img} : null; }
+  if(sid === 'yojana') return yReport();
+  if(/^prc-/.test(sid)) return prReport(sid.slice(2));
   if(sid.indexOf('guide') === 0){ c = crop(sid.slice(5)); var g = S.guides[sid.slice(5) + '|' + S.lang + '|' + place()]; return g && g.text ? {title: t('ai_guide') + ' — ' + (c ? L(c.n) : ''), md: g.text} : null; }
   if(sid.indexOf('review') === 0){ var cy = cyc(sid.slice(6)), rv = S.reviews[sid.slice(6)]; if(!rv || !rv.text) return null; c = cy && crop(cy.crop); return {title: t('ai_review_h') + ' — ' + (c ? L(c.n) : '') + (cy && cy.plot ? ' · ' + cy.plot : ''), md: rv.text}; }
   if(sid === 'scanone'){ var d = (S.scanRes.one || {}).data; if(!d) return null; var st = String(d.status || '').toLowerCase();
@@ -754,7 +787,7 @@ function runNewsAI(id, force){
       (full.length > 200 ? 'Full article text:\n<<<\n' + full + '\n>>>\n' : 'Summary: ' + (n.summary || '(no summary available)') + '\n') +
       'Write 3-5 short bullet points: what happened (with the important numbers, places and dates from the text), who it affects, and what a farmer should do or check now. Then one line starting with "👉" with the most useful practical tip.\n' +
       'Use ONLY facts from the text given — do not invent numbers, dates or claims. Do not tell the farmer to "read the full news"; explain what is known. If the text is very short, explain what the headline means for farmers and what to watch for.';
-    S.sample(prompt, {system: EXPERT + '\n' + aiLangRule(), task: 'short', onText: function(u){ S.newsAI[id].text = u.text; if(S.newsSheet === id) patchSheet(); }})
+    S.sample(prompt, {system: EXPERT + '\n' + aiLangRule(), task: 'short', onText: function(u){ S.newsAI[id].text = u.text; if(S.newsSheet === id || S.nread === id) patchSheet(); }})
       .then(function(r){ S.newsAI[id] = {text: r.text}; patchSheet(); patchCard(id); })
       .catch(function(e){ S.newsAI[id] = {err: aiMsg(e), text: e.text || ''}; patchSheet(); });
   });
@@ -932,6 +965,7 @@ function patchWx(){
   var v = route().v;
   if(v === 'home'){ var w = $('#wxw'); if(w) w.outerHTML = wxWidget(seasonNow()); var p = $('#wxpanel'); if(p) p.innerHTML = wxDetail(true); }
   if(v === 'weather'){ var b = $('#wxbody'); if(b) b.innerHTML = wxDetail(false); }
+  prPatch();
 }
 function wxFresh(){ return S.wx && S.wx.current && S.wx.q === wxQuery() ? S.wx : null; }
 function hourIndex(w){ var h = w.hourly && w.hourly.time; if(!h) return 0; var now = String(w.current.time || '').slice(0, 13); for(var i = 0; i < h.length; i++) if(h[i].slice(0, 13) >= now) return i; return 0; }
@@ -1083,12 +1117,14 @@ function menuBody(){
   var h = '<div class="mhead"><h2>' + esc(t('menu')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>';
   h += locSection();
   h += '<div class="msec"><h3>' + I('globe') + esc(t('language')) + '</h3><div class="seg" role="group">' + [['mr','मराठी'],['hi','हिंदी'],['en','English']].map(function(l){ return '<button type="button" data-act="lang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '" lang="' + l[0] + '">' + l[1] + '</button>'; }).join('') + '</div></div>';
+  h += '<div class="msec"><a class="mrow" href="#rakshak" data-act="close">' + I('shield') + '<span><b>' + esc(t('pr_h')) + '</b><small>' + esc(t('pr_tile_d')) + '</small></span>' + I('chev', 'chev') + '</a><a class="mrow" href="#yojana" data-act="close">' + I('file') + '<span><b>' + esc(t('y_h')) + '</b><small>' + esc(t('y_tile_d')) + '</small></span>' + I('chev', 'chev') + '</a></div>';
   h += '<div class="msec"><a class="mrow" href="#reports" data-act="close">' + I('file') + '<span><b>' + esc(t('rep_h')) + (S.reports.length ? ' <em class="mbadge">' + num(S.reports.length, 0) + '</em>' : '') + '</b><small>' + esc(t('rep_menu_d')) + '</small></span>' + I('chev', 'chev') + '</a><a class="mrow" href="#weather" data-act="close">' + I('cloudsun') + '<span><b>' + esc(t('wx_h')) + '</b><small>' + esc(t('t_wx_d')) + '</small></span>' + I('chev', 'chev') + '</a>' +
     '<label class="mrow">' + I('text') + '<span><b>' + esc(t('big_text')) + '</b><small>' + esc(t('big_text_d')) + '</small></span><input type="checkbox" class="sw" data-act="bigtext"' + (S.bigText ? ' checked' : '') + '></label>' +
     '<a class="mrow" href="tel:18001801551">' + I('phone') + '<span><b>' + esc(t('helpline')) + ' · 1800-180-1551</b><small>' + esc(t('helpline_d')) + '</small></span></a>' +
     '<a class="mrow" href="https://agmarknet.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_mandi')) + '</b></span>' + I('ext') + '</a>' +
     '<a class="mrow" href="https://enam.gov.in" target="_blank" rel="noopener">' + I('rupee') + '<span><b>' + esc(t('link_enam')) + '</b></span>' + I('ext') + '</a>' +
     '<a class="mrow" href="https://soilhealth.dac.gov.in" target="_blank" rel="noopener">' + I('layers') + '<span><b>' + esc(t('link_shc')) + '</b></span>' + I('ext') + '</a></div>';
+  if(installEvt && !isStandalone()) h += '<div class="msec"><button class="mrow inst" data-act="install">' + I('download') + '<span><b>' + esc(t('v7_install')) + '</b><small>' + esc(t('v7_install_d')) + '</small></span>' + I('chev', 'chev') + '</button></div>';
   h += '<div class="msec"><a class="mrow" href="#photos" data-act="close">' + I('camera') + '<span><b>' + esc(t('ph_h')) + '</b><small>' + esc(t('ph_menu_d')) + '</small></span>' + I('chev', 'chev') + '</a></div>';
   h += '<div class="msec"><button class="mrow danger" data-act="cleardata">' + I('trash') + '<span><b>' + esc(t('clear_data')) + '</b><small>' + esc(t('clear_data_d')) + '</small></span></button>' +
     '<p class="xs mu2" style="margin:12px 4px 0">' + esc(t('about_d')) + '</p></div>';
@@ -1103,15 +1139,20 @@ function render(){
   document.documentElement.lang = S.lang;
   document.title = t('app') + ' — ' + t('tagline');
   if(key !== lastShellKey){ document.getElementById('root').innerHTML = shell(); lastShellKey = key; }
-  var v = $('#view'), html;
+  var v = $('#view'), html, routeKey = r.v + '|' + (r.id || '');
+  try{
   switch(r.v){
     case 'crops': html = vCrops(); break; case 'crop': html = vCrop(r.id); break; case 'planner': html = vPlanner(); break;
     case 'scan': html = vScan(); break; case 'farm': html = vFarm(); break; case 'cycle': html = vCycle(r.id); break;
     case 'organic': html = vOrganic(); break; case 'ai': html = vAI(); break;
-    case 'news': html = vNews(); break; case 'market': html = vMarket(); break; case 'reports': html = vReports(); break; case 'photos': html = vPhotos(); break; case 'report': html = vReport(r.id); break; case 'soil': html = vSoil(); break; case 'weather': html = vWeather(); break; default: html = vHome();
+    case 'news': html = vNews(); break; case 'market': html = vMarket(); break; case 'reports': html = vReports(); break; case 'photos': html = vPhotos(); break; case 'rakshak': html = vRakshak(); break; case 'yojana': html = vYojana(); break; case 'report': html = vReport(r.id); break; case 'soil': html = vSoil(); break; case 'weather': html = vWeather(); break; default: html = vHome();
   }
+  }catch(err){ html = crashView(err, r.v); }
   var keepReel = r.v === 'news' && $('#reels') ? $('#reels').scrollTop : null;
   v.innerHTML = html;
+  if(r.v === 'news') v.classList.remove('enter');
+  if(routeKey !== lastRouteKey){ lastRouteKey = routeKey; if(r.v !== 'news' && !reduceMotion()){ v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter'); } }
+  imgSettle(v);
   refreshMenu();
   if(r.v === 'ai') scrollChat();
   document.body.classList.toggle('newsmode', r.v === 'news'); document.body.classList.toggle('nonav', r.v === 'news' || r.v === 'ai'); document.body.classList.toggle('homemode', r.v === 'home'); if(r.v === 'home') botAfterRender();
@@ -1150,6 +1191,24 @@ document.addEventListener('click', function(e){
     case 'phpick': var pp = v.split('|'); S.photoPick[pp[0]] = el.getAttribute('data-u'); lsSet('photoPick', S.photoPick); closeModal(); render(); toast(t('ph_saved')); break;
     case 'phreset': delete S.photoPick[v]; lsSet('photoPick', S.photoPick); closeModal(); render(); break;
     case 'phexport': photoExport(); break;
+    case 'install': doInstall(); break;
+    case 'installx': lsSet('instx', Date.now()); var ic = $('#instcard'); if(ic) ic.remove(); break;
+    case 'crashretry': lastShellKey = ''; render(); break;
+    case 'offx': S.offHide = true; offBanner(); break;
+    case 'prrefresh': loadWx(true); S.prCache = {}; lsSet('pr', {}); prPatch(); break;
+    case 'prrun': var pc = cyc(v); if(pc) prRun(pc, true); break;
+    case 'claimkit': claimKit(); break;
+    case 'ckshare': var ct = claimText(); if(navigator.share){ navigator.share({text: ct}).catch(function(){}); } else { try{ navigator.clipboard.writeText(ct); toast(t('copied')); }catch(e){} } break;
+    case 'cycphotodel': photoDel(v).then(function(){ render(); }); break;
+    case 'yneed': S.yprof = yRead(); var nd = S.yprof.need, ni2 = nd.indexOf(v); if(ni2 > -1) nd.splice(ni2, 1); else nd.push(v); el.setAttribute('aria-pressed', ni2 < 0); lsSet('yprof', S.yprof); break;
+    case 'yfind': yFind(); break;
+    case 'yfind2': if(!S.yprof) S.yprof = yDefault(); S.yEdit = true; render(); yFind(); break;
+    case 'yedit': S.yEdit = true; render(); break;
+    case 'ycancel': S.yEdit = false; render(); break;
+    case 'yopen': S.yOpen = S.yOpen === +v ? -1 : +v; render(); break;
+    case 'mkr': S.mkR = +v; lsSet('mkR', S.mkR); render(); break;
+    case 'mkopen': S.mkOpen = S.mkOpen === v ? null : v; render(); break;
+    case 'mknearon': S.mkNear = true; lsSet('mkNear', true); render(); break;
     case 'repfilter': S.repFilter = v; render(); break;
     case 'repmenu': repMenu(v); break;
     case 'repren': repRename(v); break;
@@ -1229,6 +1288,11 @@ document.addEventListener('change', function(e){
   if(a === 'soilpu'){ S.soilForm._pu = el.value; saveSoilDraft(); patchSoil(); }
   if(a === 'soilscan'){ var sf = el.files && el.files[0]; if(sf) runSoilRead(sf); el.value = ''; }
   if(a === 'soilq'){ S.soilHomeQ[el.getAttribute('data-k')] = el.value; }
+  if(a === 'cycphoto'){ var pf = el.files && el.files[0], pid = el.getAttribute('data-v'); if(pf) photoSave(pid, pf).then(function(){ toast(t('ph_saved')); render(); }).catch(function(){ toast(t('ph_err')); }); el.value = ''; }
+  if(a === 'mksort'){ S.mkSort = el.value; render(); }
+  if(a === 'mknear'){ S.mkNear = el.checked; lsSet('mkNear', S.mkNear); render(); }
+  if(a === 'ydoc'){ S.ydocs[el.getAttribute('data-v')] = el.checked; lsSet('ydocs', S.ydocs); }
+  if(a === 'ystate'){ S.yprof = yRead(); S.yprof.state = el.value; S.yprof.district = ''; render(); }
   if(a === 'soilmeta'){ S.soilForm[el.getAttribute('data-k')] = el.value; saveSoilDraft(); }
   if(a === 'calc'){ var id = el.getAttribute('data-v'), k = el.getAttribute('data-k'); S.calc[id] = S.calc[id] || (RECIPES.filter(function(r){ return r.id === id; })[0].base === 'acre' ? {a: 1, u: 'acre'} : {a: 100}); S.calc[id][k] = k === 'u' ? el.value : Math.max(0, parseFloat(el.value) || 0); softRender(); }
   if(a === 'scanfile'){ var f = el.files && el.files[0]; if(f){ if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes.one = null; S.scanCrop = $('#scancrop') && $('#scancrop').value; S.scanNote = $('#scannote') && $('#scannote').value; render(); } }
@@ -1253,7 +1317,7 @@ document.addEventListener('keydown', function(e){
 document.addEventListener('dragover', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d){ e.preventDefault(); d.classList.add('over'); } });
 document.addEventListener('dragleave', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d) d.classList.remove('over'); });
 document.addEventListener('drop', function(e){ var d = e.target.closest && e.target.closest('#drop'); if(d && e.dataTransfer.files[0]){ e.preventDefault(); var f = e.dataTransfer.files[0]; if(S.scanUrl) URL.revokeObjectURL(S.scanUrl); S.scanFile = f; S.scanUrl = URL.createObjectURL(f); S.scanRes.one = null; render(); } });
-window.addEventListener('hashchange', function(){ closeModal(); stopSpeak(); S.newsSheet = null; var sp = $('#savepop'); if(sp) sp.remove(); S.botOpen = false; S.cycTab = route().v === 'cycle' ? S.cycTab : 'overview'; render(); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', function(e){ var from = String(e.oldURL || '').split('#')[1] || 'home', to = location.hash.slice(1) || 'home'; navScroll[from] = window.scrollY; var back = navStack.length > 1 && navStack[navStack.length - 2] === to; if(back) navStack.pop(); else { navStack.push(to); if(navStack.length > 40) navStack.shift(); } closeModal(); stopSpeak(); S.newsSheet = null; var sp = $('#savepop'); if(sp) sp.remove(); S.botOpen = false; S.cycTab = route().v === 'cycle' ? S.cycTab : 'overview'; render(); var y = back ? (navScroll[to] || 0) : 0; window.scrollTo(0, y); if(back && y) setTimeout(function(){ if(Math.abs(window.scrollY - y) > 40) window.scrollTo(0, y); }, 350); });
 window.addEventListener('scroll', function(){ var tp = $('#top'); if(tp) tp.classList.toggle('sc', window.scrollY > 4); }, {passive: true});
 
 function updLib(){
@@ -1266,6 +1330,7 @@ function saveCycleForm(id){
   if(!(area > 0) || !fd.get('sow')){ f.reportValidity && f.reportValidity(); return; }
   var acres = unit === 'guntha' ? area / 40 : (unit === 'hectare' ? area * 2.471 : area);
   var c = id ? clone(cyc(id)) : {id: uid('c-'), created: Date.now(), exp: [], inc: [], log: []};
+  if(id && c.crop !== fd.get('crop')){ delete c.stg; delete c.hv; if(c.plan) c.plan.items = (c.plan.items || []).filter(function(x){ return x.src === 'me'; }); }
   c.crop = fd.get('crop'); c.plot = String(fd.get('plot') || '').trim().slice(0, 40); c.area = Math.round(acres * 1000) / 1000; c.unit = unit; c.sow = fd.get('sow');
   c.variety = String(fd.get('variety') || '').trim().slice(0, 40); c.budget = parseFloat(fd.get('budget')) || 0; c.irr = fd.get('irr');
   writeCycle(c); closeModal();
@@ -1298,6 +1363,8 @@ function speechText(sid){
   if(sid === 'soilplan') return S.soilPlan ? S.soilPlan.text : '';
   if(sid === 'soilhome') return S.soilHome ? S.soilHome.text : '';
   if(sid.indexOf('rep:') === 0){ var sr = repById(sid.slice(4)); return sr ? sr.md : ''; }
+  if(sid === 'yojana'){ var yr = yReport(); return yr ? yr.md : ''; }
+  if(/^prc-/.test(sid)){ var prr = prReport(sid.slice(2)); return prr ? prr.md : ''; }
   if(sid.indexOf('nread') === 0){ var nr = newsById(sid.slice(5)); return nr ? nr.title + '. ' + (nr.summary || '') : ''; }
   if(sid.indexOf('newsai') === 0){ var na = S.newsAI[sid.slice(6)]; return na ? na.text : ''; }
   return '';
@@ -1340,6 +1407,8 @@ function tasksFor(c){
   x.stages.forEach(function(s, i){ if(i === 0) return; var d = addDays(x.sow, s.start), dd = diffDays(d, now); if(dd >= 0 && dd <= 30) out.push({d: d, dd: dd, title: t('task_stage', {s: t('st_' + s.k)}), ic: 'sprout'}); });
   if(x.day >= 1){ var nxt = 7 - ((x.day - 1) % 7); if(nxt === 7) nxt = 0; out.push({d: addDays(now, nxt), dd: nxt, title: t('task_scout'), ic: 'bug'}); }
   var hd = diffDays(x.h1, now); if(hd >= 0 && hd <= 45) out.push({d: x.h1, dd: hd, title: t('task_harvest'), sub: fmtDs(x.h1) + ' – ' + fmtDs(x.h2), ic: 'cal'});
+  var pl = planItems(c).filter(function(it){ return !it.done; });
+  if(pl.length){ out = out.filter(function(o){ return o.ic !== 'leaf'; }); pl.forEach(function(it){ var d = addDays(x.sow, it.day), dd = diffDays(d, now); if((dd >= 0 || (dd >= -2 && planBorn(c, it))) && dd <= 30) out.push({d: d, dd: Math.max(0, dd), late: dd < 0, title: it.title, sub: PLTYPE[it.type] ? t('pt_' + it.type) : '', ic: (PLTYPE[it.type] || PLTYPE.other)[0]}); }); }
   out.sort(function(a, b){ return a.dd - b.dd; });
   return out;
 }
@@ -1349,15 +1418,15 @@ function cropTaskCards(){
   list.sort(function(a, b){ return (a.tk[0] ? a.tk[0].dd : 999) - (b.tk[0] ? b.tk[0].dd : 999); });
   return '<div class="ctasks">' + list.map(function(o){ var c = o.c, x = o.x;
     var st = x.cur ? t('st_' + x.cur.k) : t('not_sown');
-    return '<div class="card ctask"><a class="cth" href="#cycle-' + c.id + '">' + cropDot(x.cr) + '<span class="ctt"><b>' + esc(L(x.cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</b><small>' + esc(num(c.area) + ' ' + t('acres_short')) + ' · ' + esc(t('day_n', {n: num(Math.max(0, x.day), 0)})) + ' · ' + esc(st) + '</small></span><span class="ctp">' + num(Math.round(x.pct), 0) + '%</span></a>' +
+    return '<div class="card ctask"><a class="cth" href="#cycle-' + c.id + '">' + cycDot(c) + '<span class="ctt"><b>' + esc(L(x.cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</b><small>' + esc(num(c.area) + ' ' + t('acres_short')) + ' · ' + esc(t('day_n', {n: num(Math.max(0, x.day), 0)})) + ' · ' + esc(st) + '</small></span><span class="ctp">' + num(Math.round(x.pct), 0) + '%</span></a>' +
       '<div class="prog ctprog"><i style="width:' + x.pct + '%"></i></div>' +
       (o.tk.length ? o.tk.slice(0, 3).map(function(k){ return '<a class="task" href="#cycle-' + c.id + '"><span class="when' + (k.dd === 0 ? ' today' : '') + '"><b>' + k.d.getDate() + '</b><small>' + esc(MONTHS[S.lang][k.d.getMonth()]) + '</small></span><span class="tx"><b>' + esc(k.title) + '</b><span>' + esc((k.sub ? k.sub + ' · ' : '') + (k.dd === 0 ? t('today') : t('in_days', {n: k.dd}))) + '</span></span></a>'; }).join('')
         : '<div class="task"><span class="tx"><span>' + esc(t('no_task_30')) + '</span></span></div>') + '</div>'; }).join('') + '</div>';
 }
 
 /* ---------------- reports (saved AI answers) ---------------- */
-var REPKIND = {scan: ['g', 'scan', 'rk_scan'], soil: ['o', 'layers', 'rk_soil'], guide: ['g', 'book', 'rk_guide'], wx: ['b', 'cloudsun', 'rk_wx'], chat: ['b', 'chat', 'rk_chat'], news: ['s', 'news', 'rk_news'], other: ['s', 'spark', 'rk_other']};
-function repKind(sid){ if(sid.indexOf('scan') === 0) return 'scan'; if(sid.indexOf('soil') === 0) return 'soil'; if(sid.indexOf('guide') === 0 || sid.indexOf('review') === 0 || sid === 'reco') return 'guide'; if(sid === 'wx') return 'wx'; if(sid.indexOf('chat') === 0) return 'chat'; if(sid.indexOf('news') === 0) return 'news'; return 'other'; }
+var REPKIND = {scan: ['g', 'scan', 'rk_scan'], soil: ['o', 'layers', 'rk_soil'], guide: ['g', 'book', 'rk_guide'], wx: ['b', 'cloudsun', 'rk_wx'], chat: ['b', 'chat', 'rk_chat'], news: ['s', 'news', 'rk_news'], yojana: ['o', 'file', 'rk_yojana'], guard: ['g', 'shield', 'rk_guard'], other: ['s', 'spark', 'rk_other']};
+function repKind(sid){ if(sid.indexOf('scan') === 0) return 'scan'; if(sid.indexOf('soil') === 0) return 'soil'; if(sid.indexOf('guide') === 0 || sid.indexOf('review') === 0 || sid === 'reco') return 'guide'; if(sid === 'wx') return 'wx'; if(sid.indexOf('chat') === 0) return 'chat'; if(sid.indexOf('news') === 0) return 'news'; if(sid === 'yojana') return 'yojana'; if(/^prc-/.test(sid)) return 'guard'; return 'other'; }
 function saveReports(){ if(S.reports.length > 80) S.reports = S.reports.slice(0, 80); lsSet('reports', S.reports); }
 function saveReport(sid, quiet){
   var r = reportFor(sid); if(!r || !r.md) return null;
@@ -1379,7 +1448,7 @@ function savedPop(rep){
 }
 function fmtWhen(ts){ var d = new Date(ts); return fmtD(d) + ' · ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function vReports(){
-  var kinds = ['all', 'scan', 'soil', 'guide', 'wx', 'chat'];
+  var kinds = ['all', 'scan', 'soil', 'guide', 'guard', 'yojana', 'wx', 'chat'];
   var list = S.reports.filter(function(r){ return S.repFilter === 'all' || r.kind === S.repFilter || (S.repFilter === 'guide' && r.kind === 'other'); });
   var h = '<div class="dhead"><a class="btn bs bsm" href="#home">' + I('arrowl') + esc(t('back')) + '</a></div><div class="ph"><h1>' + esc(t('rep_h')) + '</h1><p>' + esc(t('rep_d')) + '</p></div>';
   h += '<div class="chips" role="group" style="margin-bottom:14px">' + kinds.map(function(k){ var n = k === 'all' ? S.reports.length : S.reports.filter(function(r){ return r.kind === k; }).length; return '<button type="button" data-act="repfilter" data-v="' + k + '" aria-pressed="' + (S.repFilter === k) + '">' + esc(k === 'all' ? t('all') : t(REPKIND[k][2])) + (n ? ' · ' + num(n, 0) : '') + '</button>'; }).join('') + '</div>';
@@ -1417,18 +1486,8 @@ function repDelete(id){
 
 /* ---------------- market prices (Agmarknet via data.gov.in) ---------------- */
 var MKTOP = ['onion','soybean','cotton','tomato','wheat','chana','tur','pomegranate','grapes','maize','potato','jowar'];
-function mkPlace(){ var m = S.mk; if(m && m.district) return m; return {state: S.state, district: S.district, name: S.gps ? (gpsName() || S.district) : S.district, lat: S.gps && S.gps.lat, lon: S.gps && S.gps.lon, cur: true}; }
+function mkPlace(){ var m = S.mk; if(m && m.district) return m; if(!S.district && S.gps && S.gps.en && S.gps.en.district){ var dd = matchDistrict(S.state, S.gps.en.district); if(dd){ S.district = dd; lsSet('district', dd); } } return {state: S.state, district: S.district, name: S.gps ? (gpsName() || S.district) : S.district, lat: S.gps && S.gps.lat, lon: S.gps && S.gps.lon, cur: true}; }
 function mkCrops(){ var mine = []; S.cycles.forEach(function(c){ if(mine.indexOf(c.crop) < 0 && crop(c.crop)) mine.push(c.crop); }); var rest = MKTOP.filter(function(id){ return mine.indexOf(id) < 0 && crop(id); }); if(S.mkCrop && mine.indexOf(S.mkCrop) < 0 && rest.indexOf(S.mkCrop) < 0) rest.unshift(S.mkCrop); return {mine: mine, rest: rest}; }
-function mkKey(){ var p = mkPlace(); return S.mkCrop + '|' + p.state + '|' + p.district; }
-function loadMandi(force){
-  var p = mkPlace(), k = mkKey(), cur = S.mkData[k];
-  if(!S.mkCrop || (cur && (cur.busy || (!force && Date.now() - (cur.at || 0) < 1800000)))) return;
-  S.mkData[k] = {busy: true};
-  var q = 'crop=' + encodeURIComponent(S.mkCrop) + '&state=' + encodeURIComponent(p.state || '') + '&district=' + encodeURIComponent(p.district || '') + (p.lat ? '&lat=' + p.lat + '&lon=' + p.lon : '');
-  fetch('/api/mandi?' + q).then(function(r){ return r.json().then(function(j){ if(!r.ok) { var e = new Error(j.error || 'HTTP ' + r.status); e.code = j.code; throw e; } return j; }); })
-    .then(function(j){ S.mkData[k] = {at: Date.now(), d: j}; if(route().v === 'market') softRender(); })
-    .catch(function(e){ S.mkData[k] = {at: Date.now(), err: e.code === 'no_key' ? t('mk_nokey') : (e.message || t('mk_err'))}; if(route().v === 'market') softRender(); });
-}
 function rsq(v){ return '₹' + num(Math.round(v), 0); }
 function spark(arr){
   if(!arr || arr.length < 2) return '';
@@ -1438,29 +1497,6 @@ function spark(arr){
   return '<svg class="spark" viewBox="-4 0 308 ' + H + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + ' L300 ' + H + ' L0 ' + H + 'Z" fill="rgba(47,143,87,.12)"/><path d="' + d + '" fill="none" stroke="#2F8F57" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="4" fill="#14532F"/></svg>';
 }
 function dayLbl(iso){ var d = parseD(iso), dd = diffDays(today0(), d); return dd <= 0 ? t('today') : (dd === 1 ? t('yesterday') : fmtDs(d)); }
-function vMarket(){
-  var cs = mkCrops(); if(!S.mkCrop) S.mkCrop = cs.mine[0] || 'onion';
-  var p = mkPlace(), c = crop(S.mkCrop), k = mkKey(), st = S.mkData[k];
-  if(!st) setTimeout(function(){ loadMandi(false); }, 0);
-  var h = '<div class="ph"><h1>' + esc(t('mk_h')) + '</h1><p>' + esc(t('mk_d')) + '</p></div>';
-  h += '<div class="curloc">' + I('pin') + '<div><b>' + esc(p.name || p.district || p.state) + (p.district && p.name !== p.district ? ', ' + esc(p.district) : '') + '</b><small>' + esc(p.cur ? t('mk_curloc') : t('mk_chosen')) + '</small></div><button class="btn bs bsm" data-act="mkloc">' + I('edit') + esc(t('change')) + '</button></div>';
-  h += '<div class="mkcrops">' + cs.mine.concat(cs.rest).map(function(id){ var cr = crop(id), mine = cs.mine.indexOf(id) > -1; return '<button type="button" data-act="mkcrop" data-v="' + id + '" aria-pressed="' + (S.mkCrop === id) + '">' + cropDot(cr) + esc(L(cr.n)) + (mine ? '<i title="' + esc(t('nav_farm')) + '">' + I('sprout') + '</i>' : '') + '</button>'; }).join('') + '<button type="button" class="mkmore" data-act="mkpick">' + I('plus') + esc(t('crop')) + '</button></div>';
-  if(!st || st.busy) return h + '<div class="card pad"><div class="load"><span class="spin"></span>' + esc(t('mk_loading')) + '</div></div>';
-  if(st.err) return h + '<div class="card pad"><div class="note r">' + I('alert') + esc(st.err) + '</div><div class="row wrap" style="margin-top:12px"><button class="btn bs bsm" data-act="mkretry">' + I('refresh') + esc(t('news_refresh')) + '</button><a class="btn bg bsm" href="https://agmarknet.gov.in" target="_blank" rel="noopener">agmarknet.gov.in' + I('ext') + '</a></div></div>';
-  var d = st.d, rows = d.markets || [];
-  if(!rows.length) return h + '<div class="card pad"><div class="note">' + I('info') + esc(t('mk_none', {crop: L(c.n), state: p.state})) + '</div></div>';
-  var best = rows[0], hi = rows.reduce(function(a, b){ return b.modal > a.modal ? b : a; }, rows[0]);
-  var chg = best.prev ? best.modal - best.prev : null;
-  h += '<div class="card mkbest"><div class="mkh"><span class="chip g">' + I('pin').replace('<svg', '<svg width="13" height="13" stroke="currentColor"') + esc(t('mk_nearest')) + '</span><span class="chip">' + esc(dayLbl(best.date)) + '</span></div>' +
-    '<h2>' + esc(best.market) + '</h2><div class="sm mu">' + esc(best.district) + (best.km != null ? ' · ' + num(best.km, 0) + ' km' : '') + (best.variety ? ' · ' + esc(best.variety) : '') + '</div>' +
-    '<div class="mkp"><div><small>' + esc(t('mk_modal')) + '</small><b>' + rsq(best.modal) + '</b><span>' + esc(t('mk_perq')) + '</span></div>' + (chg != null ? '<span class="mkchg ' + (chg >= 0 ? 'up' : 'dn') + '">' + (chg >= 0 ? '▲ ' : '▼ ') + rsq(Math.abs(chg)) + '<small>' + esc(t('mk_vsprev')) + '</small></span>' : '') + '</div>' +
-    '<div class="mkmm"><div><small>' + esc(t('mk_min')) + '</small><b>' + rsq(best.min) + '</b></div><div><small>' + esc(t('mk_max')) + '</small><b>' + rsq(best.max) + '</b></div>' + (best.arrival ? '<div><small>' + esc(t('mk_arr')) + '</small><b>' + num(best.arrival, 0) + ' ' + esc(t('quintal_s')) + '</b></div>' : '') + '</div>' +
-    (best.trend && best.trend.length > 1 ? '<div class="mktr"><small>' + esc(t('mk_trend')) + '</small>' + spark(best.trend) + '</div>' : '') + '</div>';
-  h += '<div class="h-sec" style="margin-top:18px"><h2 style="font-size:18px">' + esc(t('mk_nearby')) + '</h2><span class="xs mu2">' + esc(t('mk_perq')) + '</span></div>';
-  h += '<div class="card lst mklist">' + rows.slice(1, 12).map(function(m){ return '<div class="li"><div class="tx"><b>' + esc(m.market) + (m === hi ? ' <span class="chip s" style="font-size:11px;padding:0 7px">' + esc(t('mk_high')) + '</span>' : '') + '</b><span>' + esc(m.district) + (m.km != null ? ' · ' + num(m.km, 0) + ' km' : '') + ' · ' + esc(dayLbl(m.date)) + '</span></div><div class="mkr"><b>' + rsq(m.modal) + '</b><small>' + rsq(m.min) + '–' + rsq(m.max).slice(1) + '</small></div></div>'; }).join('') + '</div>';
-  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('mk_src')) + ' · ' + esc(t('news_updated', {t: ago(st.at)})) + '</p>';
-  return h;
-}
 function mkLocModal(){
   var p = mkPlace(), ds = DISTRICTS[p.state];
   modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:440px"><div class="mhead" style="padding:0 0 12px"><h2>' + esc(t('mk_loc_h')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
@@ -1482,7 +1518,7 @@ function botHTML(){
     var off = S.sampleReady && !S.sample, busy = S.chat.length && S.chat[S.chat.length - 1].busy;
     h += '<div class="botpanel" role="dialog" aria-label="' + esc(t('bot_name')) + '"><div class="bph">' + BOTLOGO + '<div class="bpt"><b>' + esc(t('bot_name')) + '</b><small><i></i>' + esc(t('bot_sub')) + '</small></div><a class="xbtn" href="#ai" aria-label="' + esc(t('bot_full')) + '" title="' + esc(t('bot_full')) + '">' + I('expand') + '</a><button class="xbtn" data-act="botclose" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
       '<div class="bpmsgs" id="msgs" aria-live="polite"><div class="msg a"><div class="md"><p>' + esc(t('bot_welcome')) + '</p></div></div>' +
-      S.chat.slice(-8).map(function(m){ var i = S.chat.indexOf(m); return m.role === 'user' ? '<div class="msg u">' + esc(m.content) + '</div>' : '<div class="msg a"><div class="md">' + (m.content ? md(m.content) : '') + (m.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (m.content ? '' : esc(t('thinking'))) + '</div>' : '') + (m.err ? '<div class="note r" style="margin-top:8px">' + I('alert') + esc(m.err) + '</div>' : '') + '</div>' + (!m.busy && m.content ? '<div class="mact">' + speakBtn('chat' + i) + '</div>' : '') + '</div>'; }).join('') +
+      S.chat.slice(-8).map(function(m){ return chatMsgHTML(m, S.chat.indexOf(m)); }).join('') +
       (S.chat.length ? '' : '<div class="sugs">' + ['sug1','sug2','sug3'].map(function(k){ return '<button type="button" data-act="sug" data-v="' + k + '">' + esc(t(k)) + '</button>'; }).join('') + '</div>') + '</div>' +
       '<form class="composer" id="composer">' + (S.dict ? '<button type="button" class="iconbtn' + (S.listening ? ' rec' : '') + '" data-act="mic" aria-label="' + esc(t('speak')) + '">' + I('mic') + '</button>' : '') + '<textarea id="chatin" rows="1" placeholder="' + esc(S.listening ? t('listening') : t('ai_ph')) + '"' + (off ? ' disabled' : '') + '>' + esc(S.draft || '') + '</textarea>' + (busy ? '<button type="button" class="iconbtn" data-act="ai-stop" data-k="chat" aria-label="' + esc(t('stop_gen')) + '">' + I('stop') + '</button>' : '<button type="submit" class="iconbtn p" aria-label="' + esc(t('send')) + '"' + (off || !S.sampleReady ? ' disabled' : '') + '>' + I('send') + '</button>') + '</form></div>';
   } else if(S.botHello){
@@ -1495,7 +1531,7 @@ function botAfterRender(){
   var b = $('#botroot'); if(!b) return;
   b.innerHTML = botHTML();
   var m = $('#msgs', b); if(m) m.scrollTop = m.scrollHeight;
-  if(S.botHello && !S.botOpen && !botAfterRender.tm) botAfterRender.tm = setTimeout(function(){ S.botHello = false; var bh = $('.bothello'); if(bh) bh.remove(); }, 9000);
+  var fab = $('.botfab', b); if(fab && !S.botOpen && !botAfterRender.flashed){ botAfterRender.flashed = true; if(!reduceMotion()){ fab.classList.add('flash'); setTimeout(function(){ fab.classList.remove('flash'); }, 2600); } }
 }
 
 
@@ -1526,6 +1562,1093 @@ function photoExport(){
   });
 }
 
+function mkKey(){ var p = mkPlace(); return S.mkCrop + '|' + p.state + '|' + p.district + '|' + (p.lat ? (+p.lat).toFixed(2) : '') + '|' + (S.mkNear ? 1 : 0); }
+function loadMandiCrops(){
+  if(S.mkList || S.mkListBusy) return; S.mkListBusy = true;
+  fetch('/api/mandi?crops=1').then(function(r){ return r.json(); }).then(function(j){ S.mkList = j.crops || []; }).catch(function(){ S.mkList = MKTOP.slice(); })
+    .then(function(){ S.mkListBusy = false; if(route().v === 'market') softRender(); });
+}
+function loadMandi(force){
+  var p = mkPlace(), k = mkKey(), cur = S.mkData[k];
+  if(!S.mkCrop || (cur && (cur.busy || (!force && Date.now() - (cur.at || 0) < 1800000)))) return;
+  S.mkData[k] = {busy: true};
+  var q = 'crop=' + encodeURIComponent(S.mkCrop) + '&state=' + encodeURIComponent(p.state || '') + '&district=' + encodeURIComponent(p.district || '') + (p.lat ? '&lat=' + p.lat + '&lon=' + p.lon : '') + (S.mkNear ? '&near=1' : '');
+  fetch('/api/mandi?' + q).then(function(r){ return r.json().then(function(j){ if(!r.ok){ var e = new Error(j.error || 'HTTP ' + r.status); e.code = j.code; throw e; } return j; }); })
+    .then(function(j){ S.mkData[k] = {at: Date.now(), d: j}; if(route().v === 'market') softRender(); })
+    .catch(function(e){ S.mkData[k] = {at: Date.now(), err: e.code === 'no_key' ? t('mk_nokey') : (e.code === 'bad_key' ? t('mk_badkey') : (e.message || t('mk_err')))}; if(route().v === 'market') softRender(); });
+}
+function mkChange(m){ if(!m.prev) return ''; var c = m.modal - m.prev; if(!c) return '<span class="mkd eq">=</span>'; return '<span class="mkd ' + (c > 0 ? 'up' : 'dn') + '">' + (c > 0 ? '▲' : '▼') + num(Math.abs(Math.round(c)), 0) + '</span>'; }
+function mkKm(m){ return m.km == null ? '' : (m.exact ? '' : '≈') + num(m.km, 0) + ' ' + t('km'); }
+function vMarket(){
+  loadMandiCrops();
+  var cs = mkCrops(), avail = S.mkList;
+  if(avail){ cs.mine = cs.mine.filter(function(id){ return avail.indexOf(id) > -1; }); cs.rest = cs.rest.filter(function(id){ return avail.indexOf(id) > -1; }); }
+  if(!S.mkCrop || (avail && avail.indexOf(S.mkCrop) < 0)) S.mkCrop = cs.mine[0] || 'onion';
+  var p = mkPlace(), c = crop(S.mkCrop), k = mkKey(), st = S.mkData[k];
+  if(!st) setTimeout(function(){ loadMandi(false); }, 0);
+  var h = '<div class="ph"><h1>' + esc(t('mk_h')) + '</h1><p>' + esc(t('mk_d')) + '</p></div>';
+  h += '<div class="curloc">' + I('pin') + '<div><b>' + esc(p.name || p.district || p.state) + (p.district && p.name !== p.district ? ', ' + esc(p.district) : '') + '</b><small>' + esc(p.cur ? (p.lat ? t('mk_curloc') : t('mk_curdist')) : t('mk_chosen')) + '</small></div><button class="btn bs bsm" data-act="mkloc">' + I('edit') + esc(t('change')) + '</button></div>';
+  h += '<div class="mkcrops">' + cs.mine.concat(cs.rest).map(function(id){ var cr = crop(id), mine = cs.mine.indexOf(id) > -1; return '<button type="button" data-act="mkcrop" data-v="' + id + '" aria-pressed="' + (S.mkCrop === id) + '">' + cropDot(cr) + esc(L(cr.n)) + (mine ? '<i title="' + esc(t('nav_farm')) + '">' + I('sprout') + '</i>' : '') + '</button>'; }).join('') + '<button type="button" class="mkmore" data-act="mkpick">' + I('plus') + esc(t('crop')) + '</button></div>';
+  if(!st || st.busy) return h + '<div class="card pad">' + loadBox(t('mk_loading'), 4) + '<p class="xs mu2" style="margin:6px 0 0">' + esc(t('mk_loading_d')) + '</p></div>';
+  if(st.err) return h + '<div class="card pad"><div class="note r">' + I('alert') + esc(st.err) + '</div><div class="row wrap" style="margin-top:12px"><button class="btn bs bsm" data-act="mkretry">' + I('refresh') + esc(t('news_refresh')) + '</button><a class="btn bg bsm" href="https://agmarknet.gov.in" target="_blank" rel="noopener">agmarknet.gov.in' + I('ext') + '</a></div></div>';
+  var d = st.d, all = d.markets || [];
+  var R = S.mkR == null ? 100 : S.mkR, sort = S.mkSort || 'km';
+  var rows = all.filter(function(m){ return !R || !d.located || (m.km != null && m.km <= R); });
+  if(sort === 'price') rows = rows.slice().sort(function(a, b){ return b.modal - a.modal; });
+  if(sort === 'date') rows = rows.slice().sort(function(a, b){ return b.date.localeCompare(a.date) || (a.km || 1e9) - (b.km || 1e9); });
+  /* controls */
+  h += '<div class="mkctl"><div class="chips" role="group" aria-label="' + esc(t('mk_radius')) + '">' + (d.located ? [25, 50, 100, 200, 0].map(function(r){ return '<button type="button" data-act="mkr" data-v="' + r + '" aria-pressed="' + (R === r) + '">' + esc(r ? num(r, 0) + ' ' + t('km') : t('all')) + '</button>'; }).join('') : '') + '</div>' +
+    '<div class="row wrap" style="gap:6px"><select class="inp mksort" data-act="mksort" aria-label="' + esc(t('mk_sort')) + '">' + ['km', 'price', 'date'].map(function(s){ return '<option value="' + s + '"' + (sort === s ? ' selected' : '') + '>' + esc(t('mks_' + s)) + '</option>'; }).join('') + '</select>' +
+    '<label class="mknear"><input type="checkbox" data-act="mknear"' + (S.mkNear ? ' checked' : '') + '>' + esc(t('mk_near')) + '</label></div></div>';
+  if(!all.length) return h + '<div class="card pad"><div class="note">' + I('info') + esc(t('mk_none', {crop: L(c.n), state: (d.states || [p.state]).join(', ')})) + '</div>' + (!S.mkNear ? '<button class="btn bs bsm" style="margin-top:10px" data-act="mknearon">' + esc(t('mk_near')) + '</button>' : '') + '</div>';
+  if(!rows.length) return h + '<div class="card pad"><div class="note">' + I('info') + esc(t('mk_none_r', {r: num(R, 0)})) + '</div><button class="btn bs bsm" style="margin-top:10px" data-act="mkr" data-v="0">' + esc(t('mk_showall')) + '</button></div>';
+  /* summary */
+  var near = rows.reduce(function(a, m){ return (m.km != null && (a == null || m.km < a.km)) ? m : a; }, null) || rows[0];
+  var best = rows.reduce(function(a, m){ return m.modal > a.modal ? m : a; }, rows[0]);
+  var avg = Math.round(rows.reduce(function(a, m){ return a + m.modal; }, 0) / rows.length);
+  h += '<div class="mksum"><div class="mks"><small>' + esc(t('mk_count')) + '</small><b>' + num(rows.length, 0) + '</b><span>' + esc(R && d.located ? t('mk_within', {r: num(R, 0)}) : (d.states || []).join(', ')) + '</span></div>' +
+    '<div class="mks"><small>' + esc(t('mk_avg')) + '</small><b>' + rsq(avg) + '</b><span>' + esc(t('mk_perq')) + '</span></div>' +
+    '<div class="mks hi"><small>' + esc(t('mk_high')) + '</small><b>' + rsq(best.modal) + '</b><span>' + esc(best.market) + (best.km != null ? ' · ' + mkKm(best) : '') + '</span></div></div>';
+  /* nearest mandi card */
+  var chg = near.prev ? near.modal - near.prev : null;
+  if(!d.located) h += '<div class="note" style="margin-bottom:12px">' + I('pin') + '<span>' + esc(t('mk_setloc')) + ' <button class="btn bs bsm" data-act="mkloc">' + esc(t('change')) + '</button></span></div>';
+  h += '<div class="card mkbest"><div class="mkh"><span class="chip g">' + esc(d.located ? t('mk_nearest') : t('mk_latest')) + '</span><span class="chip">' + esc(dayLbl(near.date)) + '</span></div>' +
+    '<h2>' + esc(near.market) + '</h2><div class="sm mu">' + esc([near.taluka && near.taluka !== near.market ? near.taluka : '', near.district, near.state !== p.state ? near.state : ''].filter(Boolean).join(' · ')) + (near.km != null ? ' · ' + mkKm(near) : '') + '</div>' +
+    '<div class="mkp"><div><small>' + esc(t('mk_modal')) + '</small><b>' + rsq(near.modal) + '</b><span>' + esc(t('mk_perq')) + '</span></div>' + (chg != null ? '<span class="mkchg ' + (chg >= 0 ? 'up' : 'dn') + '">' + (chg >= 0 ? '▲ ' : '▼ ') + rsq(Math.abs(chg)) + '<small>' + esc(t('mk_vsprev_d', {d: dayLbl(near.prevDate)})) + '</small></span>' : '') + '</div>' +
+    '<div class="mkmm"><div><small>' + esc(t('mk_min')) + '</small><b>' + rsq(near.min) + '</b></div><div><small>' + esc(t('mk_max')) + '</small><b>' + rsq(near.max) + '</b></div><div><small>' + esc(t('mk_vars')) + '</small><b>' + num(near.varieties.length, 0) + '</b></div></div>' +
+    (near.trend && near.trend.length > 1 ? '<div class="mktr"><small>' + esc(t('mk_trend')) + '</small>' + spark(near.trend) + '<div class="mktrl"><span>' + esc(dayLbl(near.trend[0].d)) + ' ' + rsq(near.trend[0].p) + '</span><span>' + esc(dayLbl(near.trend[near.trend.length - 1].d)) + ' ' + rsq(near.trend[near.trend.length - 1].p) + '</span></div></div>' : '') + '</div>';
+  /* list */
+  h += '<div class="h-sec" style="margin-top:18px"><h2 style="font-size:18px">' + esc(t('mk_nearby')) + '</h2><span class="xs mu2">' + esc(t('mk_tapmore')) + '</span></div>';
+  h += '<div class="card lst mklist">' + rows.slice(0, 60).map(function(m){ var key = m.market + '|' + m.district, open = S.mkOpen === key;
+    return '<div class="mki' + (open ? ' open' : '') + '"><button type="button" class="li mkrow" data-act="mkopen" data-v="' + esc(key) + '" aria-expanded="' + open + '"><div class="tx"><b>' + esc(m.market) + (m === best ? ' <span class="chip s" style="font-size:11px;padding:0 7px">' + esc(t('mk_high')) + '</span>' : '') + '</b><span>' + esc([m.taluka && m.taluka !== m.market ? m.taluka : '', m.district, m.state !== p.state ? m.state : ''].filter(Boolean).join(' · ')) + (m.km != null ? ' · ' + mkKm(m) : '') + ' · ' + esc(dayLbl(m.date)) + '</span></div><div class="mkr"><b>' + rsq(m.modal) + ' ' + mkChange(m) + '</b><small>' + rsq(m.min) + '–' + rsq(m.max).slice(1) + '</small></div></button>' +
+      (open ? '<div class="mkx">' + '<table class="mkvt"><thead><tr><th>' + esc(t('mk_variety')) + '</th><th>' + esc(t('mk_min')) + '</th><th>' + esc(t('mk_max')) + '</th><th>' + esc(t('mk_modal_s')) + '</th></tr></thead><tbody>' + m.varieties.map(function(v){ return '<tr><td>' + esc(v.variety + (v.grade && v.grade !== 'FAQ' ? ' · ' + v.grade : '')) + '</td><td>' + rsq(v.min) + '</td><td>' + rsq(v.max) + '</td><td><b>' + rsq(v.modal) + '</b></td></tr>'; }).join('') + '</tbody></table>' +
+        (m.trend && m.trend.length > 1 ? '<div class="mktr"><small>' + esc(t('mk_trend')) + '</small>' + spark(m.trend) + '<div class="mktrl">' + m.trend.map(function(x){ return '<span>' + esc(dayLbl(x.d)) + '<br><b>' + rsq(x.p) + '</b></span>'; }).join('') + '</div></div>' : '') +
+        '<div class="row wrap" style="margin-top:8px"><a class="btn bs bsm" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(m.market + ' APMC, ' + m.district + ', ' + m.state) + '" target="_blank" rel="noopener">' + I('pin') + esc(t('mk_map')) + '</a></div></div>' : '') + '</div>'; }).join('') + '</div>';
+  /* district summary */
+  var byD = {}; rows.forEach(function(m){ var dk = m.district + '|' + m.state; (byD[dk] = byD[dk] || []).push(m); });
+  var dl = Object.keys(byD).map(function(dk){ var l = byD[dk]; return {d: l[0].district, s: l[0].state, n: l.length, avg: Math.round(l.reduce(function(a, m){ return a + m.modal; }, 0) / l.length), hi: Math.max.apply(null, l.map(function(m){ return m.modal; })), km: Math.min.apply(null, l.map(function(m){ return m.km == null ? 1e9 : m.km; }))}; }).sort(function(a, b){ return a.km - b.km; });
+  if(dl.length > 1) h += '<div class="h-sec" style="margin-top:18px"><h2 style="font-size:18px">' + esc(t('mk_bydist')) + '</h2></div><div class="card"><table class="mkvt mkdt"><thead><tr><th>' + esc(t('district')) + '</th><th>' + esc(t('mk_count_s')) + '</th><th>' + esc(t('mk_avg_s')) + '</th><th>' + esc(t('mk_high_s')) + '</th></tr></thead><tbody>' + dl.map(function(x){ return '<tr><td>' + esc(x.d + (x.s !== p.state ? ' (' + x.s + ')' : '')) + '</td><td>' + num(x.n, 0) + '</td><td>' + rsq(x.avg) + '</td><td><b>' + rsq(x.hi) + '</b></td></tr>'; }).join('') + '</tbody></table></div>';
+  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('mk_src')) + ' ' + esc(t('mk_dist_note')) + ' · ' + esc(t('news_updated', {t: ago(st.at)})) + '</p>';
+  return h;
+}
+
+/* ===================================================================
+   v6 — पीक रक्षक (Crop Guardian), own crop photos, HD images, schemes
+   =================================================================== */
+
+/* ---------- image sizes (Wikimedia thumbnails come in standard widths) ---------- */
+function sized(src, w){
+  if(!src) return src;
+  if(/upload\.wikimedia\.org\/.+\/thumb\//.test(src)) return src.replace(/\/\d+px-([^/?]+)$/, '/' + w + 'px-$1');
+  return src;
+}
+
+/* ---------- own photo for a crop you are growing (kept on this phone, IndexedDB) ---------- */
+var PDB = null;
+function pdb(){
+  if(PDB) return PDB;
+  PDB = new Promise(function(res, rej){
+    try{ var r = indexedDB.open('ankurit-photos', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('p'); }; r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); }; }catch(e){ rej(e); }
+  });
+  return PDB;
+}
+function pdbDo(mode, fn){ return pdb().then(function(db){ return new Promise(function(res, rej){ var tx = db.transaction('p', mode), st = tx.objectStore('p'), out = fn(st); tx.oncomplete = function(){ res(out && out.result); }; tx.onerror = function(){ rej(tx.error); }; }); }); }
+function photoLoadAll(){
+  return pdb().then(function(db){ return new Promise(function(res){ var map = {}, tx = db.transaction('p', 'readonly'), cur = tx.objectStore('p').openCursor();
+    cur.onsuccess = function(){ var c = cur.result; if(c){ map[c.key] = c.value; c.continue(); } else res(map); }; cur.onerror = function(){ res(map); }; }); })
+    .then(function(map){ S.cphoto = map; render(); }).catch(function(){});
+}
+function photoSave(id, file){
+  return new Promise(function(res, rej){
+    var url = URL.createObjectURL(file), im = new Image();
+    im.onload = function(){ try{
+      var s = Math.min(1, 1600 / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+      cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      var d = cv.toDataURL('image/jpeg', 0.86);
+      pdbDo('readwrite', function(st){ return st.put(d, id); }).then(function(){ S.cphoto[id] = d; res(d); }).catch(rej);
+    }catch(e){ rej(e); } };
+    im.onerror = function(){ rej(new Error('bad image')); }; im.src = url;
+  });
+}
+function photoDel(id){ delete S.cphoto[id]; return pdbDo('readwrite', function(st){ return st.delete(id); }).catch(function(){}); }
+function cycImg(c){ return (S.cphoto && S.cphoto[c.id]) || ''; }
+function cycDot(c, big){
+  var cr = crop(c.crop) || CROPS[0], own = cycImg(c);
+  if(!own) return cropDot(cr, big);
+  return '<span class="' + (big ? 'cbig' : 'cdot') + ' own" style="background:' + CATCOL[cr.cat] + '" aria-hidden="true">' + esc(first(L(cr.n))) + '<img src="' + own + '" alt=""></span>';
+}
+function cycBanner(c){
+  var own = cycImg(c), cr = crop(c.crop) || CROPS[0], src = own || sized(cropImg(cr), 1280);
+  return '<div class="cbanner cyb">' + (src ? '<img src="' + esc(src) + '" alt=""' + (own ? '' : ' referrerpolicy="no-referrer" onerror="this.remove()"') + '>' : '') +
+    '<div class="cybtn">' + (own ? '<span class="chip g">' + I('camera').replace('<svg', '<svg width="13" height="13" stroke="currentColor"') + esc(t('ph_own')) + '</span>' : '') +
+    '<label class="btn bsm cyup">' + I('camera') + esc(own ? t('ph_change') : t('ph_add')) + '<input type="file" accept="image/*" data-act="cycphoto" data-v="' + c.id + '" hidden></label>' +
+    (own ? '<button class="btn bsm cyrm" data-act="cycphotodel" data-v="' + c.id + '" aria-label="' + esc(t('ph_remove')) + '">' + I('trash') + '</button>' : '') + '</div></div>';
+}
+
+/* ---------- पीक रक्षक: weather numbers for the next hours/days ---------- */
+var PR_LS = 'pr';
+function wxHours(){
+  var h = S.wx && S.wx.hourly; if(!h || !h.time) return [];
+  var now = Date.now() - 3600000, out = [];
+  for(var i = 0; i < h.time.length; i++){
+    var tm = new Date(h.time[i]).getTime(); if(tm < now) continue;
+    out.push({t: new Date(tm), T: h.temperature_2m[i], rh: h.relative_humidity_2m[i], dp: h.dew_point_2m ? h.dew_point_2m[i] : null, p: h.precipitation[i] || 0, pp: h.precipitation_probability ? (h.precipitation_probability[i] || 0) : 0,
+      ws: h.wind_speed_10m[i], wg: h.wind_gusts_10m ? h.wind_gusts_10m[i] : null, code: h.weather_code[i]});
+  }
+  return out;
+}
+function prMetrics(hs){
+  var m = {hours: hs.length, wet: 0, humid: 0, warmHumid: 0, rain: 0, rainHours: 0, maxPP: 0, maxT: -99, minT: 99, maxGust: 0, storm: 0, hail: 0, heat: 0, cold: 0};
+  hs.forEach(function(x){
+    var wet = x.rh >= 90 || (x.dp != null && x.T - x.dp <= 2);
+    if(wet) m.wet++; if(x.rh >= 85) m.humid++; if(x.rh >= 85 && x.T >= 15 && x.T <= 30) m.warmHumid++;
+    m.rain += x.p; if(x.p >= 0.5) m.rainHours++; m.maxPP = Math.max(m.maxPP, x.pp);
+    m.maxT = Math.max(m.maxT, x.T); m.minT = Math.min(m.minT, x.T); if(x.wg != null) m.maxGust = Math.max(m.maxGust, x.wg);
+    if(x.code >= 95) m.storm++; if(x.code === 96 || x.code === 99) m.hail++; if(x.T >= 35) m.heat++; if(x.T <= 10) m.cold++;
+  });
+  m.rain = Math.round(m.rain * 10) / 10;
+  return m;
+}
+/* Good spraying hours: daylight, no rain now or in the next 4 h, light wind (3–15 km/h), not too hot. */
+function sprayWindows(hs){
+  var slots = hs.slice(0, 48).map(function(x, i){
+    var hr = x.t.getHours(), next = hs.slice(i, i + 5);
+    var dry = next.every(function(y){ return y.p < 0.2 && y.pp < 50; });
+    var ok = hr >= 6 && hr <= 18 && dry && x.ws >= 3 && x.ws <= 15 && (x.wg == null || x.wg < 25) && x.T <= 32;
+    var why = !dry ? 'rain' : (x.ws > 15 || (x.wg != null && x.wg >= 25) ? 'wind' : (x.ws < 3 ? 'calm' : (x.T > 32 ? 'hot' : (hr < 6 || hr > 18 ? 'night' : ''))));
+    return {t: x.t, ok: ok, why: why};
+  });
+  var wins = [], cur = null;
+  slots.forEach(function(s){ if(s.ok){ if(!cur){ cur = {from: s.t, to: s.t, n: 0}; wins.push(cur); } cur.to = s.t; cur.n++; } else cur = null; });
+  return {slots: slots, wins: wins.filter(function(w){ return w.n >= 2; })};
+}
+/* Weather alerts — IMD terms: heavy rain ≥ 64.5 mm/day, very heavy ≥ 115.6 mm/day. */
+function prAlerts(){
+  var d = S.wx && S.wx.daily; if(!d || !d.time) return [];
+  var out = [], hs = wxHours();
+  d.time.forEach(function(day, i){
+    var dt = new Date(day + 'T00:00:00'), code = d.weather_code[i], rain = d.precipitation_sum[i] || 0;
+    if(diffDays(dt, today0()) < 0) return;
+    if(code === 96 || code === 99) out.push({k: 'hail', d: dt, sev: 3});
+    else if(code === 95) out.push({k: 'storm', d: dt, sev: 2});
+    if(rain >= 115.6) out.push({k: 'vheavy', d: dt, v: rain, sev: 3}); else if(rain >= 64.5) out.push({k: 'heavy', d: dt, v: rain, sev: 2});
+    if(d.temperature_2m_max[i] >= 40) out.push({k: 'heat', d: dt, v: d.temperature_2m_max[i], sev: 2});
+    if(d.temperature_2m_min[i] <= 8) out.push({k: 'cold', d: dt, v: d.temperature_2m_min[i], sev: 2});
+  });
+  var gust = 0, gd = null; hs.forEach(function(x){ if(x.wg != null && x.wg > gust){ gust = x.wg; gd = x.t; } });
+  if(gust >= 50) out.push({k: 'wind', d: gd, v: Math.round(gust), sev: 2});
+  out.sort(function(a, b){ return a.d - b.d || b.sev - a.sev; });
+  var seen = {}; out = out.filter(function(a){ if(seen[a.k]) return false; seen[a.k] = 1; return true; });
+  return out.slice(0, 6);
+}
+function prDaily(){
+  var d = S.wx && S.wx.daily; if(!d || !d.time) return [];
+  return d.time.map(function(day, i){ return {date: day, tmax: d.temperature_2m_max[i], tmin: d.temperature_2m_min[i], rain_mm: d.precipitation_sum[i], rain_prob: d.precipitation_probability_max[i], wind_max: d.wind_speed_10m_max[i], et0: d.et0_fao_evapotranspiration ? d.et0_fao_evapotranspiration[i] : null, code: d.weather_code[i]}; });
+}
+function prKey(c){ return c.id + '|' + isoDate(today0()) + '|' + S.lang; }
+function prGet(c){ var all = S.prCache || {}; return all[prKey(c)]; }
+function prRun(c, force){
+  var k = prKey(c); S.prCache = S.prCache || {};
+  if(!force && S.prCache[k] && (S.prCache[k].busy || S.prCache[k].data || (S.prCache[k].err && Date.now() - (S.prCache[k].at || 0) < 5 * 60000))) return;
+  if(!S.sample){ return; }
+  var hs = wxHours(); if(!hs.length){ if(!S.wxBusy && !S.wxErr) loadWx(false); return; }
+  var x = cycInfo(c), cr = x.cr, m72 = prMetrics(hs.slice(0, 72)), m7 = prMetrics(hs);
+  S.prCache[k] = {busy: true}; prPatch();
+  var stage = x.day < 1 ? 'not sown yet (sowing in ' + (1 - x.day) + ' days)' : (x.done ? 'harvest finished' : (T.en['st_' + (x.cur ? x.cur.k : 'germ')] + ', day ' + x.day + ' of about ' + x.dur));
+  var prompt = 'TASK: Crop-protection forecast (पीक रक्षक) for ONE plot for the next 7 days. Base every risk ONLY on the weather numbers below and the crop stage.\n' +
+    'Crop: ' + cr.n.en + (c.variety ? ' (variety ' + c.variety + ')' : '') + '. Stage: ' + stage + '. Irrigation: ' + (c.irr || 'rainfed') + '. Area: ' + c.area + ' acre.\n' +
+    'Next 72 h: hours with leaf wetness (RH≥90% or dew-point gap ≤2°C) = ' + m72.wet + '; hours RH≥85% at 15–30°C = ' + m72.warmHumid + '; rain = ' + m72.rain + ' mm in ' + m72.rainHours + ' h; max rain chance = ' + m72.maxPP + '%; temperature ' + m72.minT + '–' + m72.maxT + '°C; max gust = ' + m72.maxGust + ' km/h; thunderstorm hours = ' + m72.storm + ' (hail-code hours ' + m72.hail + ').\n' +
+    'Next 7 days: leaf-wet hours = ' + m7.wet + '; rain = ' + m7.rain + ' mm; hours ≥35°C = ' + m7.heat + '; hours ≤10°C = ' + m7.cold + '.\n' +
+    'Daily forecast (JSON): ' + JSON.stringify(prDaily()) + '\n\n' +
+    'Rules: list only diseases/pests that really attack ' + cr.n.en + ' at this stage in this region, and say how the given numbers raise or lower each risk (quote the numbers). Max 4 risks, highest first. If weather is not favourable, say risk is low — do not alarm. ' +
+    'Organic/biological option first. For chemicals give only the active ingredient and the label dose per litre (or per 15-litre pump) that is approved (CIB&RC label) for this crop and problem; if unsure write that the farmer should check the label or ask the agriculture officer. Add the pre-harvest waiting days when the crop is near harvest. ' +
+    'Water: use rain and ET0 to say whether to irrigate in the next 3 days (for ' + (c.irr || 'rainfed') + ').\n' +
+    'Write for a farmer in VERY SIMPLE words: short sentences, no jargon, each field at most about 20 words. "watch" must describe exactly what the farmer will see on the leaves/plant. ' +
+    'For "id" use one of these known ids when the risk matches: ' + cr.p.concat(cr.ds).join(', ') + ' — otherwise leave it empty.\n' +
+    'Reply with ONLY JSON: {"summary":"<one short line>","risks":[{"id":"","name":"","kind":"disease|pest|weather|nutrient","level":"high|medium|low","why":"","watch":"<what to look for in the field>","organic":"","chemical":"","when":""}],"today":["<2-4 short actions for today/tomorrow>"],"water":"","harvest":"<only if within 20 days of harvest, else empty>"}\n' +
+    'Keep JSON keys and the fixed values (disease, pest, weather, nutrient, high, medium, low) in English; write all other values in the answer language.';
+  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only.'), task: 'json'}).then(function(d){
+    S.prCache[k] = {data: d && Array.isArray(d.risks) ? d : {risks: [], today: [], summary: ''}, at: Date.now(), m72: m72};
+    prStore(); prPatch();
+  }).catch(function(e){ S.prCache[k] = {err: aiMsg(e), at: Date.now()}; prPatch(); });
+}
+function prStore(){ var keep = {}, today = isoDate(today0()); Object.keys(S.prCache || {}).forEach(function(k){ var v = S.prCache[k]; if(v && v.data && k.indexOf('|' + today + '|') > 0) keep[k] = v; }); lsSet(PR_LS, keep); }
+function prPatch(){ var v = route().v; if(v === 'rakshak'){ var b = $('#prbody'); if(b){ b.innerHTML = prBody(); return; } } if(v === 'home'){ var hc = $('#prhome'); if(hc){ hc.outerHTML = prHomeCard(); } } }
+var PRLEV = {high: ['r', 'pr_high'], medium: ['s', 'pr_med'], low: ['g', 'pr_low']};
+function prLevel(lv){ var l = PRLEV[lv] || PRLEV.low; return '<span class="chip ' + l[0] + ' prlv">' + esc(t(l[1])) + '</span>'; }
+function hhmm(d){ return String(d.getHours()).padStart(2, '0') + ':00'; }
+function dayWord(d){ var dd = diffDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), today0()); return dd === 0 ? t('today') : (dd === 1 ? t('tomorrow') : fmtDs(d)); }
+function alertText(a){ return t('pra_' + a.k, {v: a.v != null ? num(Math.round(a.v), 0) : '', d: dayWord(a.d)}); }
+function prHomeCard(){
+  var hs = wxHours(), active = S.cycles.filter(function(c){ return !cycInfo(c).done; });
+  var h = '<a class="card prhome" id="prhome" href="#rakshak"><div class="prh"><span class="ico g">' + I('shield') + '</span><div style="flex:1;min-width:0"><b>' + esc(t('pr_h')) + '</b><small>' + esc(t('pr_home_d')) + '</small></div>' + I('chev', 'chev') + '</div>';
+  if(!hs.length) return h + '<div class="prline mu">' + esc(S.wxErr || t('wx_loading')) + '</div></a>';
+  var al = prAlerts().filter(function(a){ return diffDays(new Date(a.d.getFullYear(), a.d.getMonth(), a.d.getDate()), today0()) <= 3; });
+  if(al.length) h += '<div class="pralert sev' + al[0].sev + '">' + I('alert') + '<span>' + esc(alertText(al[0])) + '</span></div>';
+  var sw = sprayWindows(hs), w0 = sw.wins[0];
+  h += '<div class="prline">' + I('drop') + '<span>' + (w0 ? esc(t('pr_spray_ok', {d: dayWord(w0.from), a: hhmm(w0.from), b: hhmm(new Date(w0.to.getTime() + 3600000))})) : esc(t('pr_spray_none'))) + '</span></div>';
+  if(!active.length) return h + '<div class="prline mu">' + esc(t('pr_nocrops')) + '</div></a>';
+  if(S.sample) setTimeout(function(){ active.slice(0, 4).forEach(function(c){ prRun(c, false); }); }, 600);
+  h += '<div class="prcrops">' + active.slice(0, 4).map(function(c){ var r = prGet(c), cr = crop(c.crop) || CROPS[0], top = r && r.data && r.data.risks && r.data.risks[0];
+    return '<span class="prc">' + cycDot(c) + '<span class="prcn">' + esc(L(cr.n)) + '</span>' + (top ? prLevel(top.level) : (r && r.busy ? '<span class="spin sm"></span>' : '<span class="chip">' + esc(t('pr_check')) + '</span>')) + '</span>'; }).join('') + '</div></a>';
+  return h;
+}
+function vRakshak(){
+  if(S.wx && S.wx.hourly && !S.wx.hourly.dew_point_2m && !S.wxBusy) setTimeout(function(){ loadWx(true); }, 0);
+  var h = '<div class="ph"><h1>' + esc(t('pr_h')) + '</h1><p>' + esc(t('pr_d')) + '</p></div>';
+  return h + '<div id="prbody">' + prBody() + '</div>';
+}
+function prReport(cid){
+  var c = cyc(cid); if(!c) return null; var r = prGet(c); if(!r || !r.data) return null; var d = r.data, cr = crop(c.crop) || CROPS[0];
+  var md = '## ' + L(cr.n) + (c.plot ? ' · ' + c.plot : '') + '\n' + (d.summary ? d.summary + '\n' : '');
+  (d.risks || []).forEach(function(k){ md += '\n### ' + k.name + ' — ' + t((PRLEV[k.level] || PRLEV.low)[1]) + '\n' + (k.why ? '- **' + t('pr_why') + ':** ' + k.why + '\n' : '') + (k.watch ? '- **' + t('pr_watch') + ':** ' + k.watch + '\n' : '') + (k.organic ? '- **' + t('pr_org') + ':** ' + k.organic + '\n' : '') + (k.chemical ? '- **' + t('pr_chem') + ':** ' + k.chemical + '\n' : '') + (k.when ? '- **' + t('pr_when') + ':** ' + k.when + '\n' : ''); });
+  if(d.today && d.today.length) md += '\n### ' + t('pr_today') + '\n' + d.today.map(function(s){ return '- ' + s; }).join('\n') + '\n';
+  if(d.water) md += '\n**' + t('pr_water') + ':** ' + d.water + '\n';
+  return {title: t('pr_h') + ' — ' + L(cr.n) + ' · ' + fmtD(today0()), md: md};
+}
+/* 72-hour crop-loss claim helper (PMFBY: report localised loss within 72 hours) */
+function claimKit(){
+  var opts = S.cycles.map(function(c){ var cr = crop(c.crop) || CROPS[0]; return '<option value="' + c.id + '">' + esc(L(cr.n) + (c.plot ? ' · ' + c.plot : '')) + '</option>'; }).join('');
+  modal('<div class="modal" role="dialog" aria-modal="true"><div class="box" style="max-width:560px"><div class="mhead" style="padding:0 0 10px"><h2>' + esc(t('ck_h')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<div class="note r" style="margin-bottom:12px">' + I('alert') + esc(t('ck_72')) + '</div>' +
+    '<ol class="ckl"><li>' + esc(t('ck_s1')) + '</li><li>' + esc(t('ck_s2')) + '</li><li>' + esc(t('ck_s3')) + '</li><li>' + esc(t('ck_s4')) + '</li></ol>' +
+    '<div class="row wrap" style="margin:12px 0"><a class="btn bp" href="tel:14447">' + I('phone') + esc(t('ck_call')) + ' 14447</a><a class="btn bs" href="https://pmfby.gov.in" target="_blank" rel="noopener">pmfby.gov.in' + I('ext') + '</a></div>' +
+    '<h3 style="font-size:16px;margin:14px 0 8px">' + esc(t('ck_note_h')) + '</h3>' +
+    '<div class="formgrid">' + (opts ? '<label class="f full">' + esc(t('f_crop')) + '<select class="inp" id="ckcrop">' + opts + '</select></label>' : '') +
+    '<label class="f">' + esc(t('ck_date')) + '<input class="inp" type="date" id="ckdate" value="' + isoDate(today0()) + '"></label>' +
+    '<label class="f">' + esc(t('ck_cause')) + '<select class="inp" id="ckcause">' + ['hail', 'heavy', 'flood', 'wind', 'animal', 'pest', 'other'].map(function(k){ return '<option value="' + k + '">' + esc(t('ckc_' + k)) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">' + esc(t('ck_survey')) + '<input class="inp" id="cksurvey" maxlength="40"></label><label class="f">' + esc(t('ck_loss')) + '<input class="inp" type="number" id="ckloss" min="0" max="100" step="5"></label></div>' +
+    '<div class="acts"><button class="btn bs" data-act="close">' + esc(t('close')) + '</button><button class="btn bp" data-act="ckshare">' + I('share') + esc(t('ck_share')) + '</button></div></div></div>');
+}
+function claimText(){
+  var c = cyc(($('#ckcrop') || {}).value), cr = c && crop(c.crop);
+  var lines = [t('ck_msg_h'), t('ck_name') + ': ______', t('ck_place') + ': ' + place(), t('ck_survey') + ': ' + (($('#cksurvey') || {}).value || '______'),
+    t('f_crop') + ': ' + (cr ? cr.n.en + ' / ' + L(cr.n) : '______') + (c ? ' · ' + num(c.area) + ' ' + t('acres_short') : ''), t('ck_cause') + ': ' + t('ckc_' + (($('#ckcause') || {}).value || 'other')),
+    t('ck_date') + ': ' + (($('#ckdate') || {}).value || ''), t('ck_loss') + ': ' + ((($('#ckloss') || {}).value) || '__') + '%', t('ck_msg_f')];
+  return lines.join('\n');
+}
+
+/* ---------- योजना (government schemes) ---------- */
+var Y_NEEDS = ['income', 'insurance', 'credit', 'drip', 'well', 'solar', 'machine', 'horti', 'poly', 'dairy', 'storage', 'organic', 'seed', 'women'];
+function yDefault(){
+  var crops = []; S.cycles.forEach(function(c){ var cr = crop(c.crop); if(cr && crops.indexOf(cr.n.en) < 0) crops.push(cr.n.en); });
+  var area = S.cycles.reduce(function(a, c){ return a + (+c.area || 0); }, 0);
+  return {state: S.state, district: (S.gps && S.gps.en && S.gps.en.district) || S.district || '', taluka: (S.gps && S.gps.en && S.gps.en.taluka) || '', land: area ? Math.round(area * 100) / 100 : '', own: 'own', cat: 'general', gender: 'male', age: '', crops: crops, irr: 'well', fid: 'dk', kcc: 'no', bank: 'yes', income: 'l1', need: ['income', 'insurance'], stock: '', already: ''};
+}
+function vYojana(){
+  var p = S.yprof || yDefault(), r = S.yres;
+  var h = '<div class="ph"><h1>' + esc(t('y_h')) + '</h1><p>' + esc(t('y_d')) + '</p></div>' + yUpdates();
+  if(S.yBusy) return h + '<div class="card pad"><div class="load"><span class="spin"></span>' + esc(t('y_busy')) + '</div><p class="sm mu" style="margin:8px 0 0">' + esc(t('y_busy_d')) + '</p></div>';
+  if(r && !S.yEdit) return h + yResults(r);
+  if(S.yErr) h += '<div class="note r" style="margin-bottom:12px">' + I('alert') + esc(S.yErr) + '</div>';
+  var sel = function(id, list, cur, pre){ return '<select class="inp" id="' + id + '">' + list.map(function(k){ return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(t((pre || 'y_') + k)) + '</option>'; }).join('') + '</select>'; };
+  var ds = DISTRICTS[p.state];
+  h += '<form class="card pad yform" id="yform"><h2 style="font-size:18px">' + esc(t('y_form_h')) + '</h2><p class="sm mu" style="margin:2px 0 12px">' + esc(t('y_form_d')) + '</p><div class="formgrid">' +
+    '<label class="f">' + esc(t('state')) + '<select class="inp" id="ystate" data-act="ystate">' + STATES.map(function(s){ return '<option' + (s === p.state ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f">' + esc(t('district')) + (ds ? '<select class="inp" id="ydist"><option value=""></option>' + ds.map(function(d){ return '<option' + (d === p.district ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') + '</select>' : '<input class="inp" id="ydist" value="' + esc(p.district) + '">') + '</label>' +
+    '<label class="f">' + esc(t('y_taluka')) + '<input class="inp" id="ytaluka" value="' + esc(p.taluka || '') + '" maxlength="40"></label>' +
+    '<label class="f">' + esc(t('y_land')) + '<input class="inp" type="number" id="yland" min="0" step="0.05" value="' + esc(p.land) + '"></label>' +
+    '<label class="f">' + esc(t('y_own')) + sel('yown', ['own', 'lease', 'share', 'landless'], p.own, 'yo_') + '</label>' +
+    '<label class="f">' + esc(t('y_cat')) + sel('ycat', ['general', 'obc', 'sc', 'st', 'nt', 'ews'], p.cat, 'yc_') + '</label>' +
+    '<label class="f">' + esc(t('y_gender')) + sel('ygender', ['male', 'female', 'other'], p.gender, 'yg_') + '</label>' +
+    '<label class="f">' + esc(t('y_age')) + '<input class="inp" type="number" id="yage" min="14" max="100" value="' + esc(p.age) + '"></label>' +
+    '<label class="f">' + esc(t('y_irr')) + sel('yirr', ['well', 'bore', 'canal', 'pond', 'river', 'rainfed'], p.irr, 'yi_') + '</label>' +
+    '<label class="f">' + esc(t('y_income')) + sel('yincome', ['l1', 'l2', 'l3', 'l4'], p.income, 'yn_') + '</label>' +
+    '<label class="f">' + esc(t('y_fid')) + sel('yfid', ['yes', 'no', 'dk'], p.fid, 'yy_') + '</label>' +
+    '<label class="f">' + esc(t('y_kcc')) + sel('ykcc', ['yes', 'no'], p.kcc, 'yy_') + '</label>' +
+    '<label class="f">' + esc(t('y_bank')) + sel('ybank', ['yes', 'no', 'dk'], p.bank, 'yy_') + '</label>' +
+    '<label class="f full">' + esc(t('y_crops')) + '<input class="inp" id="ycrops" value="' + esc((p.crops || []).join(', ')) + '" placeholder="' + esc(t('y_crops_ph')) + '"></label>' +
+    '<label class="f full">' + esc(t('y_stock')) + '<input class="inp" id="ystock" value="' + esc(p.stock || '') + '" placeholder="' + esc(t('y_stock_ph')) + '"></label>' +
+    '<div class="f full">' + esc(t('y_need')) + '<div class="chips ychips" role="group">' + Y_NEEDS.map(function(k){ return '<button type="button" data-act="yneed" data-v="' + k + '" aria-pressed="' + ((p.need || []).indexOf(k) > -1) + '">' + esc(t('yd_' + k)) + '</button>'; }).join('') + '</div></div>' +
+    '<label class="f full">' + esc(t('y_already')) + '<input class="inp" id="yalready" value="' + esc(p.already || '') + '" placeholder="' + esc(t('y_already_ph')) + '"></label>' +
+    '</div><div class="acts" style="margin-top:14px">' + (r ? '<button type="button" class="btn bs" data-act="ycancel">' + esc(t('cancel')) + '</button>' : '') + '<button type="button" class="btn bp" data-act="yfind">' + I('search') + esc(t('y_find')) + '</button></div>' +
+    '<p class="xs mu2" style="margin:10px 0 0">' + esc(t('y_privacy')) + '</p></form>';
+  return h;
+}
+function yRead(){
+  var v = function(id){ var e = $('#' + id); return e ? String(e.value || '').trim() : ''; };
+  var p = S.yprof || yDefault();
+  return {state: v('ystate') || p.state, district: v('ydist'), taluka: v('ytaluka'), land: v('yland'), own: v('yown'), cat: v('ycat'), gender: v('ygender'), age: v('yage'), irr: v('yirr'), income: v('yincome'),
+    fid: v('yfid'), kcc: v('ykcc'), bank: v('ybank'), crops: v('ycrops').split(/[,،]/).map(function(s){ return s.trim(); }).filter(Boolean), stock: v('ystock'), already: v('yalready'), need: (p.need || []).slice()};
+}
+function yFind(){
+  var p = yRead(); S.yprof = p; lsSet('yprof', p);
+  var prof = Object.assign({}, p, {own: T.en['yo_' + p.own], cat: T.en['yc_' + p.cat], gender: T.en['yg_' + p.gender], irr: T.en['yi_' + p.irr], income: T.en['yn_' + p.income],
+    fid: T.en['yy_' + p.fid], kcc: T.en['yy_' + p.kcc], bank: T.en['yy_' + p.bank], need: p.need.map(function(k){ return T.en['yd_' + k]; })});
+  S.yBusy = true; S.yErr = null; S.yEdit = false; render();
+  fetch('/api/schemes', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({profile: prof, lang: S.lang})})
+    .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
+    .then(function(j){ j.lang = S.lang; S.yres = j; lsSet('yres', j); S.yOpen = 0; saveReport('yojana'); })
+    .catch(function(e){ S.yErr = e.message || t('err'); })
+    .then(function(){ S.yBusy = false; if(route().v === 'yojana') render(); });
+}
+var YMATCH = {eligible: ['g', 'ym_eligible'], likely: ['s', 'ym_likely'], check: ['', 'ym_check']};
+function yResults(r){
+  var h = '<div class="card pad ytop">' + (r.grounded ? '<div class="note g">' + I('check') + '<span>' + esc(t('y_live', {d: fmtD(new Date(r.date + 'T00:00:00'))})) + '</span></div>' : '<div class="note r">' + I('alert') + '<span>' + esc(t(r.note === 'search_off' ? 'y_nolive_key' : 'y_nolive')) + '</span></div>') +
+    '<div class="row wrap" style="margin-top:12px"><button class="btn bs bsm" data-act="yedit">' + I('edit') + esc(t('y_edit')) + '</button><button class="btn bs bsm" data-act="yfind2">' + I('refresh') + esc(t('news_refresh')) + '</button>' + dlBtn('yojana') + '</div></div>';
+  if(r.lang && r.lang !== S.lang) h += '<div class="note" style="margin:10px 0">' + I('info') + esc(t('y_lang')) + ' <button class="btn bs bsm" data-act="yfind2">' + esc(t('news_refresh')) + '</button></div>';
+  if(!r.schemes || !r.schemes.length) return h + '<div class="card pad" style="margin-top:12px"><p class="mu" style="margin:0">' + esc(t('y_none')) + '</p></div>';
+  h += '<div class="ylist">' + r.schemes.map(function(s, i){ var mm = YMATCH[s.match] || YMATCH.check, open = S.yOpen === i;
+    var rows = [['y_time', s.time], ['y_cost', s.cost], ['y_deadline', s.deadline]].filter(function(x){ return x[1]; });
+    return '<div class="card yscheme' + (open ? ' open' : '') + '"><button type="button" class="yhead" data-act="yopen" data-v="' + i + '" aria-expanded="' + open + '"><span class="ynum">' + (i + 1) + '</span><span class="ytt"><b>' + esc(s.name) + '</b>' + (s.name_en && s.name_en !== s.name ? '<small>' + esc(s.name_en) + '</small>' : '') +
+      '<span class="ychips2"><span class="chip ' + mm[0] + '">' + esc(t(mm[1])) + '</span><span class="chip">' + esc(t(s.level === 'state' ? 'y_state' : 'y_central')) + '</span>' + (s.status !== 'unknown' ? '<span class="chip ' + (s.status === 'closed' ? 'r' : '') + '">' + esc(t('ys_' + s.status)) + '</span>' : '') + '</span></span>' + I('chev', 'chev') + '</button>' +
+      (s.amount || s.benefit ? '<div class="yamt">' + I('rupee') + '<span>' + esc(s.amount || s.benefit) + '</span></div>' : '') +
+      (open ? '<div class="ybody">' + (s.why ? '<p class="ywhy"><b>' + esc(t('y_why')) + ':</b> ' + esc(s.why) + '</p>' : '') + (s.benefit && s.amount ? '<p><b>' + esc(t('y_benefit')) + ':</b> ' + esc(s.benefit) + '</p>' : '') +
+        (rows.length ? '<div class="ygrid">' + rows.map(function(x){ return '<div><small>' + esc(t(x[0])) + '</small><b>' + esc(x[1]) + '</b></div>'; }).join('') + '</div>' : '') +
+        (s.documents.length ? '<h4>' + I('file') + esc(t('y_docs')) + '</h4><ul class="ydocs">' + s.documents.map(function(d, j){ var k = 'yd|' + (s.name_en || s.name) + '|' + j; return '<li><label><input type="checkbox" data-act="ydoc" data-v="' + esc(k) + '"' + ((S.ydocs || {})[k] ? ' checked' : '') + '><span>' + esc(d) + '</span></label></li>'; }).join('') + '</ul>' : '') +
+        (s.steps.length ? '<h4>' + I('list') + esc(t('y_steps')) + '</h4><ol class="ysteps">' + s.steps.map(function(d){ return '<li>' + esc(d) + '</li>'; }).join('') + '</ol>' : '') +
+        (s.apply_where ? '<p><b>' + esc(t('y_where')) + ':</b> ' + esc(s.apply_where) + '</p>' : '') + (s.helpline ? '<p><b>' + esc(t('y_help')) + ':</b> ' + esc(s.helpline) + '</p>' : '') + (s.notes ? '<p class="sm mu">' + esc(s.notes) + '</p>' : '') +
+        '<div class="row wrap" style="margin-top:10px">' + (s.apply_link ? '<a class="btn bp bsm" href="' + esc(s.apply_link) + '" target="_blank" rel="noopener">' + esc(t('y_apply')) + I('ext') + '</a>' : '') + '<a class="btn bs bsm" href="https://www.myscheme.gov.in/search?keyword=' + encodeURIComponent(s.name_en || s.name) + '" target="_blank" rel="noopener">myScheme' + I('ext') + '</a></div></div>' : '') + '</div>'; }).join('') + '</div>';
+  if(r.common_documents && r.common_documents.length) h += '<div class="card pad" style="margin-top:12px"><h2 style="font-size:18px">' + I('file') + esc(t('y_common')) + '</h2><ul class="ydocs plain">' + r.common_documents.map(function(d){ return '<li>' + esc(d) + '</li>'; }).join('') + '</ul></div>';
+  if(r.tips && r.tips.length) h += '<div class="card pad" style="margin-top:12px"><h2 style="font-size:18px">' + I('info') + esc(t('y_tips')) + '</h2><ul class="ydocs plain">' + r.tips.map(function(d){ return '<li>' + esc(d) + '</li>'; }).join('') + '</ul></div>';
+  if(r.sources && r.sources.length) h += '<div class="card pad ysrc" style="margin-top:12px"><h2 style="font-size:16px">' + esc(t('y_sources')) + '</h2>' + r.sources.map(function(s){ return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + I('ext') + esc(s.title || s.url) + '</a>'; }).join('') + '</div>';
+  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('y_disclaimer')) + '</p>';
+  return h;
+}
+function yReport(){
+  var r = S.yres; if(!r || !r.schemes || !r.schemes.length) return null;
+  var md = '';
+  r.schemes.forEach(function(s, i){
+    md += '## ' + (i + 1) + '. ' + s.name + (s.name_en && s.name_en !== s.name ? ' (' + s.name_en + ')' : '') + '\n' + t((YMATCH[s.match] || YMATCH.check)[1]) + ' · ' + t(s.level === 'state' ? 'y_state' : 'y_central') + '\n\n';
+    if(s.why) md += '**' + t('y_why') + ':** ' + s.why + '\n\n';
+    if(s.benefit) md += '**' + t('y_benefit') + ':** ' + s.benefit + (s.amount ? ' — ' + s.amount : '') + '\n\n';
+    [['y_time', s.time], ['y_cost', s.cost], ['y_deadline', s.deadline], ['y_where', s.apply_where], ['y_help', s.helpline]].forEach(function(x){ if(x[1]) md += '- **' + t(x[0]) + ':** ' + x[1] + '\n'; });
+    if(s.documents.length) md += '\n**' + t('y_docs') + ':**\n' + s.documents.map(function(d){ return '- ' + d; }).join('\n') + '\n';
+    if(s.steps.length) md += '\n**' + t('y_steps') + ':**\n' + s.steps.map(function(d, j){ return (j + 1) + '. ' + d; }).join('\n') + '\n';
+    if(s.apply_link) md += '\n' + t('y_apply') + ': ' + s.apply_link + '\n';
+    md += '\n';
+  });
+  if(r.sources && r.sources.length) md += '\n### ' + t('y_sources') + '\n' + r.sources.map(function(s){ return '- ' + (s.title || '') + ' ' + s.url; }).join('\n') + '\n';
+  return {title: t('y_h') + ' — ' + fmtD(new Date(r.date + 'T00:00:00')), md: md};
+}
+
+
+/* ---------- v7: reliability + polish ---------- */
+/* saved data is checked once at start, so a damaged phone storage can never break a page */
+(function sanitize(){
+  function arr(v){ return Array.isArray(v) ? v : []; }
+  function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : null; }
+  function numOk(v){ return typeof v === 'number' && isFinite(v); }
+  if(['mr', 'hi', 'en'].indexOf(S.lang) < 0) S.lang = 'mr';
+  if(typeof S.state !== 'string' || !S.state) S.state = 'Maharashtra';
+  if(typeof S.district !== 'string') S.district = '';
+  var before = JSON.stringify(S.cycles);
+  S.cycles = arr(S.cycles).filter(function(c){ return obj(c) && typeof c.id === 'string' && c.id && typeof c.crop === 'string' && crop(c.crop); }).map(function(c){
+    c.exp = arr(c.exp).filter(obj); c.inc = arr(c.inc).filter(obj); c.log = arr(c.log).filter(obj);
+    if(!numOk(+c.area) || +c.area <= 0) c.area = 1; else c.area = +c.area;
+    if(typeof c.sow !== 'string' || isNaN(new Date(c.sow).getTime())) c.sow = isoDate(today0());
+    if(c.plan != null){ if(!obj(c.plan)) delete c.plan; else { c.plan.items = arr(c.plan.items).filter(function(it){ return obj(it) && typeof it.id === 'string' && typeof it.day === 'number' && isFinite(it.day) && typeof it.title === 'string' && it.title; }); } }
+    if(c.stg != null && !obj(c.stg)) delete c.stg;
+    if(c.hv != null && !(Array.isArray(c.hv) && c.hv.length === 2)) delete c.hv;
+    return c; });
+  if(JSON.stringify(S.cycles) !== before) lsSet('cycles', S.cycles);
+  S.reports = arr(S.reports).filter(function(r){ return obj(r) && r.id; });
+  S.soils = arr(S.soils).filter(obj);
+  var g = obj(S.gps); S.gps = g && numOk(g.lat) && numOk(g.lon) && Math.abs(g.lat) <= 90 && Math.abs(g.lon) <= 180 ? g : null;
+  if(S.gps){ S.gps.en = obj(S.gps.en) || {}; S.gps.local = obj(S.gps.local) || {}; }
+  var w = obj(S.wx); S.wx = w && obj(w.current) && obj(w.hourly) && obj(w.daily) ? w : null;
+  S.mk = obj(S.mk) && S.mk.district ? S.mk : null;
+  ['cimg', 'photoPick', 'prCache', 'ydocs', 'soilForm'].forEach(function(k){ S[k] = obj(S[k]) || {}; });
+  S.yprof = obj(S.yprof); S.yres = obj(S.yres);
+  if(S.yres && !Array.isArray(S.yres.schemes)) S.yres = null;
+  if([0, 25, 50, 100, 200].indexOf(S.mkR) < 0) S.mkR = 100;
+  S.bigText = S.bigText === true; S.mkNear = S.mkNear === true;
+  if(typeof S.mkCrop !== 'string') S.mkCrop = '';
+})();
+var lastRouteKey = '', navScroll = {}, navStack = [location.hash.slice(1) || 'home'], installEvt = null, lastClickAt = 0;
+function reduceMotion(){ try{ return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
+function isStandalone(){ try{ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }catch(e){ return false; } }
+function loadBox(text, n){ var b = ''; for(var i = 0; i < (n || 3); i++) b += '<i style="width:' + [92, 78, 64, 85, 70][i % 5] + '%"></i>'; return '<div class="load"><span class="spin"></span>' + esc(text) + '</div><div class="skel" aria-hidden="true">' + b + '</div>'; }
+function crashView(err, v){
+  try{ console.error('[Ankurit] view "' + v + '" failed:', err); lsSet('lastErr', {v: v, m: String(err && err.message || err).slice(0, 300), at: Date.now()}); }catch(e){}
+  return '<div class="card pad crash"><span class="ico r">' + I('alert') + '</span><h2>' + esc(t('v7_oops_h')) + '</h2><p class="mu">' + esc(t('v7_oops_d')) + '</p><div class="row wrap" style="justify-content:center"><button class="btn bp" data-act="crashretry">' + I('refresh') + esc(t('v7_retry')) + '</button><a class="btn bs" href="#home">' + I('home') + esc(t('nav_home')) + '</a></div></div>';
+}
+/* images fade in once loaded; broken images never leave an invisible hole */
+function imgSettle(root){ var im = (root || document).querySelectorAll('img:not(.ld)'); for(var i = 0; i < im.length; i++){ if(im[i].complete) im[i].classList.add('ld'); } }
+document.addEventListener('load', function(e){ var el = e.target; if(el && el.tagName === 'IMG') el.classList.add('ld'); }, true);
+document.addEventListener('error', function(e){ var el = e.target; if(el && el.tagName === 'IMG') el.classList.add('ld', 'bad'); }, true);
+
+/* network: timeout + one retry for GET /api, marks answers that came from the offline copy */
+(function(){
+  if(!window.fetch || window.fetch.__ank) return;
+  var raw = window.fetch.bind(window);
+  var LIMIT = {mandi: 70000, schemes: 100000, news: 30000, article: 20000, weather: 25000, revgeo: 15000, geosearch: 15000, cropimgs: 20000};
+  function one(input, init, ms){
+    var ctrl = window.AbortController ? new AbortController() : null, outer = init && init.signal, timer = null, opts = {};
+    for(var k in (init || {})) opts[k] = init[k];
+    if(ctrl){ opts.signal = ctrl.signal; if(outer){ if(outer.aborted) ctrl.abort(); else outer.addEventListener('abort', function(){ ctrl.abort(); }); } timer = setTimeout(function(){ ctrl.timedOut = true; ctrl.abort(); }, ms); }
+    return raw(input, opts).then(function(r){ clearTimeout(timer); return r; }, function(e){ clearTimeout(timer); if(ctrl && ctrl.timedOut && !(outer && outer.aborted)){ var te = new Error(t('v7_slow')); te.name = 'TimeoutError'; throw te; } throw e; });
+  }
+  var f = function(input, init){
+    var url = typeof input === 'string' ? input : (input && input.url) || '', m = url.match(/\/api\/([a-z-]+)/), method = String((init && init.method) || 'GET').toUpperCase();
+    if(!m || method !== 'GET' || m[1] === 'ai') return raw(input, init);
+    var ms = LIMIT[m[1]] || 25000;
+    return one(input, init, ms).then(function(r){
+      if(r.status >= 502 && r.status <= 504) return new Promise(function(res){ setTimeout(res, 900); }).then(function(){ return one(input, init, ms); });
+      return r;
+    }, function(e){
+      if(e && (e.name === 'AbortError' || e.name === 'TimeoutError')) throw e;
+      return new Promise(function(res){ setTimeout(res, 900); }).then(function(){ return one(input, init, ms); });
+    }).then(function(r){
+      var st = r.headers && r.headers.get('X-Ankurit-Stale');
+      if(st){ S.staleAt = Math.max(S.staleAt || 0, +st || Date.now()); S.staleSeen = true; offBanner(); }
+      else if(r.ok && S.staleSeen && navigator.onLine !== false){ S.staleSeen = false; offBanner(); }
+      return r;
+    });
+  };
+  f.__ank = true; window.fetch = f;
+})();
+
+/* offline / saved-data banner */
+function offBanner(){
+  var off = navigator.onLine === false, show = (off || S.staleSeen) && !S.offHide, b = document.getElementById('offbar');
+  if(!show){ if(b) b.remove(); document.body.classList.remove('isoff'); return; }
+  var txt = off ? t('v7_off') : t('v7_saved', {t: ago(S.staleAt || Date.now())});
+  if(!b){ b = document.createElement('div'); b.id = 'offbar'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
+  b.innerHTML = '<span class="dot"></span><span>' + esc(txt) + '</span><button type="button" data-act="offx" aria-label="' + esc(t('close')) + '">' + I('x') + '</button>';
+  document.body.classList.add('isoff');
+}
+window.addEventListener('offline', function(){ S.offHide = false; offBanner(); });
+window.addEventListener('online', function(){ S.staleSeen = false; S.offHide = false; offBanner(); toast(t('v7_online')); var v = route().v; if(v === 'home' || v === 'weather' || v === 'rakshak') loadWx(true); if(v === 'market'){ var k = mkKey(); if(S.mkData[k] && S.mkData[k].err) delete S.mkData[k]; } if(v === 'news' && S.news && S.news.err) S.news = null; softRender(); });
+
+/* errors never leave the user stuck: log, and if it followed a tap tell them gently */
+document.addEventListener('click', function(){ lastClickAt = Date.now(); }, true);
+function softFail(msg){ try{ console.error('[Ankurit]', msg); }catch(e){} if(Date.now() - lastClickAt < 1500) toast(t('v7_oops_t')); var sp = document.querySelectorAll('#modalwrap .spin'); if(sp.length && Date.now() - lastClickAt < 1500){ /* leave modals usable */ } }
+window.addEventListener('error', function(e){ if(e && e.target && e.target !== window) return; softFail((e && e.message) || 'error'); });
+window.addEventListener('unhandledrejection', function(e){ var r = e && e.reason; if(r && (r.name === 'AbortError')) return; try{ console.warn('[Ankurit] unhandled', r); }catch(x){} });
+
+/* light touch feedback on main actions (phones only, never with reduced motion) */
+document.addEventListener('click', function(e){
+  if(!navigator.vibrate || reduceMotion() || !window.matchMedia || !matchMedia('(pointer: coarse)').matches) return;
+  var el = e.target.closest && e.target.closest('.bp, .bnav a, .botfab, [data-act="send"], [data-act="analyze"]');
+  if(el) try{ navigator.vibrate(8); }catch(x){}
+}, true);
+
+/* install as app */
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); installEvt = e; refreshMenu(); });
+window.addEventListener('appinstalled', function(){ installEvt = null; var ic = $('#instcard'); if(ic) ic.remove(); toast(t('v7_installed')); refreshMenu(); });
+function doInstall(){ if(!installEvt) return; var ev = installEvt; closeModal(); ev.prompt(); (ev.userChoice || Promise.resolve({})).then(function(c){ if(c && c.outcome === 'accepted'){ installEvt = null; } else lsSet('instx', Date.now()); var ic = $('#instcard'); if(ic) ic.remove(); refreshMenu(); }); }
+function instCard(){
+  if(!installEvt || isStandalone() || $('#instcard')) return;
+  var x = lsGet('instx', 0); if(x && Date.now() - x < 14 * 86400000) return;
+  var visits = lsGet('visits', 0); if(visits < 2) return;
+  var host = $('#view'); if(!host) return;
+  var d = document.createElement('div'); d.id = 'instcard'; d.className = 'instcard';
+  d.innerHTML = '<span class="mk">' + MARK + '</span><span class="tx"><b>' + esc(t('v7_install')) + '</b><small>' + esc(t('v7_install_d')) + '</small></span><button class="btn bp bsm" data-act="install">' + esc(t('v7_install_btn')) + '</button><button class="xbtn" data-act="installx" aria-label="' + esc(t('close')) + '">' + I('x') + '</button>';
+  host.insertBefore(d, host.firstChild);
+}
+
+/* service worker: offline app + last good data */
+if('serviceWorker' in navigator && location.protocol !== 'file:' && !/[?&]nosw\b/.test(location.search)){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').then(function(reg){
+      reg.addEventListener('updatefound', function(){ var w = reg.installing; if(!w) return; w.addEventListener('statechange', function(){ if(w.state === 'activated' && navigator.serviceWorker.controller && S.hadSW){ S.swUpdated = true; } }); });
+    }).catch(function(e){ try{ console.warn('[Ankurit] offline mode unavailable', e && e.message); }catch(x){} });
+    S.hadSW = !!navigator.serviceWorker.controller;
+  });
+}
+lsSet('visits', lsGet('visits', 0) + 1);
+if(!S.district && S.gps && S.gps.en && S.gps.en.district){ (function(){ var dd = matchDistrict(S.state, S.gps.en.district); if(dd){ S.district = dd; lsSet('district', dd); } })(); }
+
+
+/* =====================================================================
+   v7.7 — AI वेळापत्रक (crop timetable): spraying, water, fertiliser, organic inputs, weeding, scouting, harvest.
+   Stored in the crop record as c.plan = {at, lang, mode, items:[{id, day (days after sowing), type, title, detail, dose, done, doneAt, note, src, logId}]}
+   ===================================================================== */
+ICONS.note = 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5';
+ICONS.spray = 'M8 10h7v11H8zM11.5 10V6M9 6h6l2.5-2M18 7h2.5M18 10h2.5M17.5 13H20';
+ICONS.sack = 'M7.5 7C7 5 9 3 12 3s5 2 4.5 4L19 19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM8 7h8M10 13h4';
+ICONS.eye = 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z';
+ICONS.cut = 'M6 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12';
+ICONS.hand = 'M7 11V5.5a1.5 1.5 0 0 1 3 0V11M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.3 14a1.5 1.5 0 0 1 2.4-1.8L7 12.5';
+var PLTYPE = {spray: ['spray', 'r', 'spray'], water: ['drop', 'b', 'irrigate'], fert: ['sack', 'o', 'manure'], organic: ['leaf', 'g', 'manure'], weed: ['cut', 's', 'weed'], scout: ['eye', 'g', 'scout'], harvest: ['star', 's', 'harvest'], other: ['dots', '', 'other']};
+var PLTYPES = ['spray', 'water', 'fert', 'organic', 'weed', 'scout', 'harvest', 'other'];
+S.planBusy = {}; S.planErr = {}; S.planF = 'all'; S.planDone = false;
+
+function planItems(c){ var p = c && c.plan; if(!p || !Array.isArray(p.items)) return []; return p.items.filter(function(it){ return it && typeof it.day === 'number' && isFinite(it.day) && it.title; }).slice().sort(function(a, b){ return a.day - b.day || (a.type < b.type ? -1 : 1); }); }
+function planDate(c, it){ return addDays(parseD(c.sow), it.day); }
+function planDD(c, it){ return diffDays(planDate(c, it), today0()); }
+function planBorn(c, it){ var at = it.src === 'me' ? (it.at || 0) : ((c.plan && c.plan.at) || 0); if(!at) return true; var b = new Date(at); b.setHours(0, 0, 0, 0); return planDate(c, it) >= b; }
+function planPast(c, it){ return !it.done && planDD(c, it) < 0 && !planBorn(c, it); }
+function planDueCount(c){ return planItems(c).filter(function(it){ return !it.done && planDD(c, it) <= 0 && planBorn(c, it); }).length; }
+function planDayLbl(it){ return it.day >= 0 ? t('day_n', {n: it.day + 1}) : t('pl_before', {n: -it.day}); }
+function plIcon(type, big){ var p = PLTYPE[type] || PLTYPE.other; return '<span class="plic ' + p[1] + (big ? ' big' : '') + '">' + I(p[0]) + '</span>'; }
+function planPeek(c){
+  var its = planItems(c).filter(function(it){ return !it.done && (planDD(c, it) >= 0 || planBorn(c, it)); }).slice(0, 3);
+  if(!c.plan || !planItems(c).length) return '<div class="plpeek empty"><span class="ico g">' + I('spark') + '</span><div><b>' + esc(t('pl_cta')) + '</b><small>' + esc(t('pl_cta_d')) + '</small></div><button class="btn bp bsm" data-act="cyctab" data-v="plan">' + esc(t('pl_open')) + '</button></div>';
+  return '<div class="plpeek"><div class="row" style="justify-content:space-between;align-items:center"><b class="sm">' + esc(t('pl_next')) + '</b><button class="lnk" data-act="cyctab" data-v="plan">' + esc(t('pl_all')) + ' →</button></div>' + (its.length ? its.map(function(it){ return planRow(c, it, true); }).join('') : '<p class="sm mu" style="margin:6px 0 0">' + esc(t('pl_none_next')) + '</p>') + '</div>';
+}
+function planWhen(c, it){ var dd = planDD(c, it); return dd === 0 ? t('today') : (dd === 1 ? t('tomorrow') : (dd < 0 ? t('pl_late', {n: -dd}) : t('in_days', {n: dd}))); }
+function planRow(c, it, mini){
+  var d = planDate(c, it), dd = planDD(c, it), late = !it.done && dd < 0 && planBorn(c, it);
+  return '<div class="plrow' + (it.done ? ' done' : '') + (late ? ' late' : '') + (dd === 0 && !it.done ? ' today' : '') + (mini ? ' mini' : '') + '" id="pl-' + esc(it.id) + '">' +
+    '<span class="pldate"><b>' + d.getDate() + '</b><small>' + esc(MONTHS[S.lang][d.getMonth()]) + '</small></span>' + plIcon(it.type) +
+    '<span class="pltx"' + (mini ? '' : ' role="button" tabindex="0" data-act="pledit" data-v="' + c.id + '" data-k="' + esc(it.id) + '" title="' + esc(t('edit')) + '"') + '><b>' + esc(it.title) + (mini ? '' : ' ' + I('edit', 'pled')) + '</b>' + (!mini && it.detail ? '<span>' + esc(it.detail) + '</span>' : '') + (!mini && it.dose ? '<span class="pldose">' + I('flask') + esc(it.dose) + '</span>' : '') +
+      '<small>' + esc(t('pt_' + (PLTYPE[it.type] ? it.type : 'other'))) + ' · ' + esc(it.done ? t('pl_done_on', {d: it.doneAt ? fmtDs(new Date(it.doneAt)) : ''}) : planWhen(c, it)) + ' · ' + esc(planDayLbl(it)) + (it.src === 'me' ? ' · ' + esc(t('pl_mine')) : '') + '</small>' +
+      (!mini && it.note ? '<span class="plnote">' + I('note') + esc(it.note) + '</span>' : '') + '</span>' +
+    (mini ? '' : '<button type="button" class="plb' + (it.note ? ' has' : '') + '" data-act="plnote" data-v="' + c.id + '" data-k="' + esc(it.id) + '" aria-label="' + esc(t('pl_note')) + '" title="' + esc(t('pl_note')) + '">' + I('note') + '</button>') +
+    '<button type="button" class="plchk' + (it.done ? ' on' : '') + '" data-act="pldone" data-v="' + c.id + '" data-k="' + esc(it.id) + '" aria-pressed="' + !!it.done + '" aria-label="' + esc(t('pl_mark')) + '">' + I('check') + '</button></div>';
+}
+function planTab(c){
+  var its = planItems(c), busy = S.planBusy[c.id], err = S.planErr[c.id], mode = (c.plan && c.plan.mode) || 'mixed';
+  var h = '<div class="card pad plhead"><div class="row" style="gap:12px;align-items:flex-start"><span class="ico g">' + I('spark') + '</span><div style="flex:1;min-width:0"><h2 style="font-size:19px">' + esc(t('pl_h')) + '</h2><p class="sm mu" style="margin:4px 0 0">' + esc(t('pl_d')) + '</p></div></div>' +
+    '<div class="plmode" role="group" aria-label="' + esc(t('pl_mode')) + '"><span class="sm mu">' + esc(t('pl_mode')) + ':</span>' + ['mixed', 'organic'].map(function(m){ return '<button type="button" data-act="plmode" data-v="' + c.id + '" data-k="' + m + '" aria-pressed="' + (mode === m) + '">' + (m === 'organic' ? I('leaf') : I('flask')) + esc(t('pl_m_' + m)) + '</button>'; }).join('') + '</div>' +
+    '<div class="row wrap" style="margin-top:12px;gap:8px"><button class="btn bp" data-act="plrun" data-v="' + c.id + '"' + (busy || !S.sample ? ' disabled' : '') + '>' + I(its.length ? 'refresh' : 'spark') + esc(its.length ? t('pl_regen') : t('pl_make')) + '</button><button class="btn bs" data-act="pladd" data-v="' + c.id + '">' + I('plus') + esc(t('pl_add')) + '</button></div>' +
+    (its.length && c.plan && c.plan.at ? '<p class="xs mu2" style="margin:8px 0 0">' + esc(t('pl_made', {t: ago(c.plan.at)})) + '</p>' : '') + '</div>';
+  if(!S.sample && S.sampleReady) h += '<div class="note r" style="margin-top:12px">' + I('alert') + esc(t('ai_off')) + '</div>';
+  if(busy) h += '<div class="card pad" style="margin-top:12px">' + loadBox(t('pl_busy'), 5) + '<p class="xs mu2" style="margin:6px 0 0">' + esc(t('pl_busy_d')) + '</p></div>';
+  if(err) h += '<div class="note r" style="margin-top:12px">' + I('alert') + esc(err) + '</div>';
+  if(!its.length){ if(!busy) h += '<div class="card" style="margin-top:12px"><div class="empty"><span class="ico g">' + I('cal') + '</span><p style="margin:0 0 6px"><b>' + esc(t('pl_empty')) + '</b></p><p class="sm mu" style="margin:0">' + esc(t('pl_empty_d')) + '</p></div></div>'; return h; }
+  var counts = {all: 0}; its.forEach(function(it){ counts.all++; counts[it.type] = (counts[it.type] || 0) + 1; });
+  var doneN = its.filter(function(it){ return it.done; }).length;
+  h += '<div class="card pad plprog"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><b>' + esc(t('pl_prog', {d: num(doneN, 0), n: num(its.length, 0)})) + '</b><button type="button" class="btn bs bsm" data-act="pltoday">' + I('cal') + esc(t('pl_gotoday')) + '</button></div><div class="prog" style="margin-top:10px"><i style="width:' + Math.round(doneN / its.length * 100) + '%"></i></div></div>';
+  h += '<div class="chips plchips" role="group" style="margin:14px 0 4px">' + ['all'].concat(PLTYPES).filter(function(k){ return counts[k]; }).map(function(k){ return '<button type="button" data-act="plf" data-v="' + k + '" aria-pressed="' + (S.planF === k) + '">' + (k === 'all' ? '' : I((PLTYPE[k] || PLTYPE.other)[0])) + esc(k === 'all' ? t('all') : t('pt_' + k)) + ' <span class="cnt">' + num(counts[k], 0) + '</span></button>'; }).join('') + '</div>';
+  h += planFlow(c, its.filter(function(it){ return S.planF === 'all' || it.type === S.planF; }));
+  h += '<p class="xs mu2" style="margin:12px 0 0">' + esc(t('pl_disc')) + '</p>';
+  return h;
+}
+function planPrompt(c){
+  var x = cycInfo(c), cr = x.cr, mode = (c.plan && c.plan.mode) || 'mixed';
+  var soil = (S.soils || [])[0], wx = prDaily().slice(0, 7);
+  return 'TASK: Make a complete, practical crop timetable (वेळापत्रक) for ONE plot, from land preparation to harvest.\n' +
+    'Crop: ' + cr.n.en + (c.variety ? ' (variety ' + c.variety + ')' : '') + '. Sowing/transplanting date: ' + c.sow + ' (today is day ' + x.day + '). Expected duration about ' + x.dur + ' days; harvest about day ' + diffDays(x.h1, x.sow) + ' to ' + diffDays(x.h2, x.sow) + '.\n' +
+    'Growth stages (start day): ' + x.stages.map(function(s){ return T.en['st_' + s.k] + ' ' + s.start; }).join(', ') + '.\n' +
+    'Area: ' + c.area + ' acre. Irrigation: ' + (c.irr || 'rainfed') + '. Place: ' + place() + '. Season now: ' + seasonNow() + '.\n' +
+    (soil ? 'Latest soil test (JSON): ' + JSON.stringify(soil).slice(0, 600) + '\n' : 'No soil test available — use the general recommended dose for this crop and region (state the basis).\n') +
+    (wx.length ? 'Next 7 days weather (JSON): ' + JSON.stringify(wx) + ' — adjust the first week (no spraying or fertiliser on heavy-rain days).\n' : '') +
+    'Method: ' + (mode === 'organic' ? 'ORGANIC ONLY — use only organic and biological inputs (FYM, vermicompost, Jeevamrut, Ghanjeevamrut, Panchagavya, neem products, Trichoderma, Pseudomonas, Beauveria, Metarhizium, pheromone/yellow sticky traps, etc.). No chemical fertiliser or pesticide.' : 'INTEGRATED — recommended fertiliser schedule (basal + top dressings, split by stage) plus IPM; prefer organic/biological options first and use chemicals only where usually needed.') + '\n' +
+    'Include: basal dose and every top dressing (with quantity per acre), irrigation rhythm by stage (one entry per change of interval, with interval in days and critical stages), weeding/hoeing, scouting checks for the main pests/diseases of this crop at the right stages, preventive or common sprays at the stages they are usually needed, micronutrient/foliar sprays if commonly recommended, and harvest.\n' +
+    'Rules: 22 to 45 items in date order. "day" = whole number of days after sowing (negative for land preparation, e.g. -10). Doses per acre or per 15-litre pump; for chemicals give the active ingredient and the label dose approved (CIB&RC) for this crop and problem; if not sure, write "check label". Add the pre-harvest waiting days for sprays near harvest. Keep each title under 7 words and each detail to one short simple sentence.\n' +
+    'Reply with ONLY JSON: {"items":[{"day":0,"type":"spray|water|fert|organic|weed|scout|harvest|other","title":"","detail":"","dose":""}]}\n' +
+    'Keep JSON keys and the fixed type values in English; write title, detail and dose in the answer language.';
+}
+function planRun(cid){
+  var c = cyc(cid); if(!c || !S.sample || S.planBusy[cid]) return;
+  S.planBusy[cid] = true; S.planErr[cid] = null; softRender();
+  S.sample.json(planPrompt(c), {system: sysPrompt('Reply with JSON only.'), task: 'guide'}).then(function(d){
+    var raw = d && Array.isArray(d.items) ? d.items : [];
+    var items = raw.map(function(r){ var day = Math.round(+r.day); return {id: uid('p'), day: isFinite(day) ? Math.max(-60, Math.min(1500, day)) : NaN, type: PLTYPE[r.type] ? r.type : 'other', title: String(r.title || '').trim().slice(0, 90), detail: String(r.detail || '').trim().slice(0, 300), dose: String(r.dose || '').trim().slice(0, 160), src: 'ai', done: false}; }).filter(function(it){ return isFinite(it.day) && it.title; }).slice(0, 60);
+    if(!items.length) throw {code: 'empty', message: t('pl_err_empty')};
+    var cc = clone(cyc(cid)); if(!cc) return;
+    var keep = ((cc.plan && cc.plan.items) || []).filter(function(it){ return it.src === 'me' || it.done || it.note; });
+    cc.plan = {at: Date.now(), lang: S.lang, mode: (cc.plan && cc.plan.mode) || 'mixed', items: keep.concat(items)};
+    writeCycle(cc); S.planBusy[cid] = false; S.planF = 'all'; softRender(); toast(t('pl_ready', {n: num(items.length, 0)}));
+  }).catch(function(e){ S.planBusy[cid] = false; S.planErr[cid] = e && e.code === 'empty' ? e.message : aiMsg(e); softRender(); });
+}
+function planFind(c, id){ var its = (c.plan && c.plan.items) || []; for(var i = 0; i < its.length; i++) if(its[i].id === id) return its[i]; return null; }
+function planToggle(cid, id){
+  var c = clone(cyc(cid)); if(!c) return; var it = planFind(c, id); if(!it) return;
+  it.done = !it.done;
+  if(it.done){ it.doneAt = Date.now(); var lg = {id: uid('r'), date: isoDate(today0()), act: (PLTYPE[it.type] || PLTYPE.other)[2], note: (it.title + (it.dose ? ' — ' + it.dose : '') + (it.note ? '\n' + it.note : '')).slice(0, 300), plan: it.id}; c.log = (c.log || []).concat([lg]); it.logId = lg.id; }
+  else { var lid = it.logId; delete it.doneAt; delete it.logId; if(lid) c.log = (c.log || []).filter(function(l){ return l.id !== lid; }); }
+  writeCycle(c);
+  if(it.done){ toast(t('pl_done_t')); }
+  softRender();
+}
+function planSheet(cid, id){
+  var c = cyc(cid); if(!c) return; var it = id ? planFind(c, id) : null, isNew = !it;
+  it = it || {day: Math.max(0, cycInfo(c).day - 1), type: 'spray', title: '', detail: '', dose: '', note: ''};
+  var d = isoDate(addDays(parseD(c.sow), it.day));
+  modal('<div class="modal" role="dialog" aria-modal="true" aria-labelledby="plh"><div class="box"><div class="mhead" style="padding:0 0 12px"><h2 id="plh">' + esc(isNew ? t('pl_add') : t('pl_edit')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div><form id="plform" class="formgrid">' +
+    '<label class="f">' + esc(t('date')) + '<input class="inp" type="date" name="date" value="' + esc(d) + '" required></label>' +
+    '<label class="f">' + esc(t('pl_type')) + '<select class="inp" name="type">' + PLTYPES.map(function(k){ return '<option value="' + k + '"' + (k === it.type ? ' selected' : '') + '>' + esc(t('pt_' + k)) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="f full">' + esc(t('pl_title')) + '<input class="inp" name="title" maxlength="90" value="' + esc(it.title) + '" required placeholder="' + esc(t('pl_title_ph')) + '"></label>' +
+    '<label class="f full">' + esc(t('pl_detail')) + '<textarea class="inp" name="detail" rows="2" maxlength="300">' + esc(it.detail || '') + '</textarea></label>' +
+    '<label class="f full">' + esc(t('pl_dose')) + '<input class="inp" name="dose" maxlength="160" value="' + esc(it.dose || '') + '" placeholder="' + esc(t('pl_dose_ph')) + '"></label>' +
+    '<label class="f full">' + I('note') + ' ' + esc(t('pl_note')) + '<textarea class="inp" name="note" rows="2" maxlength="500">' + esc(it.note || '') + '</textarea></label>' +
+    '</form><div class="acts">' + (isNew ? '' : '<button class="btn bd" data-act="pldel" data-v="' + cid + '" data-k="' + esc(it.id) + '" style="margin-right:auto">' + I('trash') + esc(t('delete')) + '</button>') + '<button class="btn bs" data-act="close">' + esc(t('cancel')) + '</button><button class="btn bp" data-act="plsave" data-v="' + cid + '" data-k="' + esc(it.id || '') + '">' + I('check') + esc(t('save')) + '</button></div></div></div>');
+}
+function planSave(cid, id){
+  var f = $('#plform'); if(!f) return; var fd = new FormData(f), title = String(fd.get('title') || '').trim(), date = fd.get('date');
+  if(!title || !date){ f.reportValidity && f.reportValidity(); return; }
+  var c = clone(cyc(cid)); if(!c) return; c.plan = c.plan || {at: 0, lang: S.lang, mode: 'mixed', items: []}; c.plan.items = c.plan.items || [];
+  var it = id ? planFind(c, id) : null; if(!it){ it = {id: uid('p'), src: 'me', done: false, at: Date.now()}; c.plan.items.push(it); }
+  it.day = diffDays(parseD(date), parseD(c.sow)); it.type = PLTYPE[fd.get('type')] ? fd.get('type') : 'other'; it.title = title.slice(0, 90);
+  it.detail = String(fd.get('detail') || '').trim().slice(0, 300); it.dose = String(fd.get('dose') || '').trim().slice(0, 160); it.note = String(fd.get('note') || '').trim().slice(0, 500);
+  writeCycle(c); closeModal(); toast(t('saved')); softRender();
+}
+function planDel(cid, id){ var c = clone(cyc(cid)); if(!c || !c.plan) return; c.plan.items = (c.plan.items || []).filter(function(x){ return x.id !== id; }); writeCycle(c); closeModal(); softRender(); }
+function noteSheet(cid, id){
+  var c = cyc(cid); if(!c) return; var it = planFind(c, id); if(!it) return;
+  modal('<div class="modal" role="dialog" aria-modal="true" aria-labelledby="nth"><div class="box" style="max-width:480px"><div class="mhead" style="padding:0 0 10px"><h2 id="nth" style="display:flex;gap:8px;align-items:center">' + I('note') + esc(t('pl_note')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    '<div class="plrow mini" style="border:0;padding:0 0 10px">' + plIcon(it.type) + '<span class="pltx"><b>' + esc(it.title) + '</b><small>' + esc(fmtD(planDate(c, it))) + '</small></span></div>' +
+    '<textarea class="inp" id="plnotein" rows="4" maxlength="500" placeholder="' + esc(t('pl_note_ph')) + '">' + esc(it.note || '') + '</textarea>' +
+    '<div class="acts"><button class="btn bs" data-act="close">' + esc(t('cancel')) + '</button><button class="btn bp" data-act="plnotesave" data-v="' + cid + '" data-k="' + esc(id) + '">' + I('check') + esc(t('save')) + '</button></div></div></div>');
+  var ta = $('#plnotein'); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+function noteSave(cid, id){ var c = clone(cyc(cid)); if(!c) return; var it = planFind(c, id); if(!it) return; it.note = String(($('#plnotein') || {}).value || '').trim().slice(0, 500); writeCycle(c); closeModal(); toast(t('saved')); softRender(); }
+
+/* flow chart: growth stages as milestones, tasks as nodes under them (same look as the आढावा timeline) */
+function planFlow(c, list){
+  var x = cycInfo(c), st = x.stages.slice(), today = x.day - 1;
+  var groups = [{k: 'prep', name: t('pl_prep'), start: -9999, end: 0}];
+  st.forEach(function(s2, i){ groups.push({k: s2.k, name: t('st_' + s2.k), start: s2.start, end: i < st.length - 1 ? st[i + 1].start : Math.max(s2.end, 9999), stage: s2}); });
+  var hv = diffDays(x.h1, x.sow);
+  var h = '<div class="plflow">';
+  groups.forEach(function(g, gi){
+    var items = list.filter(function(it){ return it.day >= g.start && it.day < g.end; });
+    if(g.k === 'prep' && !items.length) return;
+    var state = today >= g.end ? 'done' : (today >= g.start ? 'now' : '');
+    var from = g.k === 'prep' ? null : addDays(x.sow, g.start);
+    h += '<div class="fstage ' + state + '"><span class="fdot big">' + (state === 'done' ? I('check') : '') + '</span><div class="fst"><b>' + esc(g.name) + (state === 'now' ? ' <span class="fnow">' + esc(t('pl_now')) + '</span>' : '') + '</b><small>' + (from ? esc(fmtDs(from)) + ' · ' + esc(t('day_n', {n: g.start + 1})) : esc(t('pl_prep_d'))) + (g.k !== 'prep' && g.start <= hv && hv < g.end ? ' · ' + esc(t('exp_harvest')) + ' ' + esc(fmtDs(x.h1)) : '') + '</small></div></div>';
+    items.forEach(function(it){ h += planNode(c, it); });
+    if(!items.length) h += '<div class="fnode empty"><span class="fdot sm"></span><p class="xs mu2">' + esc(t('pl_stage_none')) + '</p></div>';
+  });
+  h += '<div class="fstage end' + (x.done ? ' done' : '') + '"><span class="fdot big">' + I('star') + '</span><div class="fst"><b>' + esc(t('exp_harvest')) + '</b><small>' + esc(fmtDs(x.h1) + ' – ' + fmtDs(x.h2)) + '</small></div></div></div>';
+  return h;
+}
+function planNode(c, it){
+  var d = planDate(c, it), dd = planDD(c, it), p = PLTYPE[it.type] || PLTYPE.other;
+  var cls = it.done ? 'done' : (dd === 0 ? 'today' : (dd < 0 ? (planBorn(c, it) ? 'late' : 'past') : ''));
+  return '<div class="fnode ' + cls + '" id="pl-' + esc(it.id) + '"><span class="fdot ' + p[1] + '">' + I(p[0]) + '</span><div class="fcard">' +
+    '<div class="ftop"><label class="fdate" title="' + esc(t('pl_change_date')) + '">' + I('cal') + '<span>' + esc(fmtDs(d)) + '</span><input type="date" data-act="pldate" data-v="' + c.id + '" data-k="' + esc(it.id) + '" value="' + esc(isoDate(d)) + '" aria-label="' + esc(t('pl_change_date')) + '"></label>' +
+      '<span class="fwhen">' + esc(it.done ? t('pl_done_on', {d: it.doneAt ? fmtDs(new Date(it.doneAt)) : ''}) : (cls === 'past' ? t('pl_pastlbl') : planWhen(c, it))) + '</span><span class="ftype ' + p[1] + '">' + esc(t('pt_' + (PLTYPE[it.type] ? it.type : 'other'))) + '</span></div>' +
+    '<b class="ftitle">' + esc(it.title) + (it.src === 'me' ? ' <span class="edtag">' + esc(t('pl_mine')) + '</span>' : '') + '</b>' + (it.detail ? '<p class="fdet">' + esc(it.detail) + '</p>' : '') + (it.dose ? '<p class="pldose">' + I('flask') + esc(it.dose) + '</p>' : '') +
+    (it.note ? '<p class="plnote">' + I('note') + esc(it.note) + '</p>' : '') +
+    '<div class="fnact"><button type="button" class="fchk' + (it.done ? ' on' : '') + '" data-act="pldone" data-v="' + c.id + '" data-k="' + esc(it.id) + '" aria-pressed="' + !!it.done + '"><span class="bx">' + I('check') + '</span>' + esc(it.done ? t('pl_isdone') : t('pl_markdone')) + '</button>' +
+      '<button type="button" class="fbtn' + (it.note ? ' has' : '') + '" data-act="plnote" data-v="' + c.id + '" data-k="' + esc(it.id) + '" aria-label="' + esc(t('pl_note')) + '" title="' + esc(t('pl_note')) + '">' + I('note') + '</button>' +
+      '<button type="button" class="fbtn" data-act="pledit" data-v="' + c.id + '" data-k="' + esc(it.id) + '" aria-label="' + esc(t('edit')) + '" title="' + esc(t('edit')) + '">' + I('edit') + '</button></div></div></div>';
+}
+function planSetDate(cid, id, val){
+  if(!val) return; var c = clone(cyc(cid)); if(!c) return; var it = planFind(c, id); if(!it) return;
+  var nd = diffDays(parseD(val), parseD(c.sow)); if(!isFinite(nd) || nd === it.day) return;
+  it.day = Math.max(-120, Math.min(1500, nd)); it.moved = true; writeCycle(c); toast(t('pl_moved', {d: fmtDs(parseD(val))})); softRender();
+  setTimeout(function(){ var el = document.getElementById('pl-' + id); if(el){ el.scrollIntoView({block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth'}); el.classList.add('flash'); setTimeout(function(){ el.classList.remove('flash'); }, 1400); } }, 60);
+}
+function planGoToday(){
+  var el = document.querySelector('.plflow .fnode.today') || document.querySelector('.plflow .fnode.late') || document.querySelector('.plflow .fnode:not(.done):not(.past):not(.empty)') || document.querySelector('.plflow .fstage.now');
+  if(el){ el.scrollIntoView({block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth'}); el.classList.add('flash'); setTimeout(function(){ el.classList.remove('flash'); }, 1400); }
+}
+document.addEventListener('change', function(e){ var el = e.target; if(el && el.getAttribute && el.getAttribute('data-act') === 'pldate') planSetDate(el.getAttribute('data-v'), el.getAttribute('data-k'), el.value); });
+/* edit stage dates (पीक वेळापत्रक) */
+function stageSheet(cid){
+  var c = cyc(cid); if(!c) return; var x = cycInfo(c);
+  modal('<div class="modal" role="dialog" aria-modal="true" aria-labelledby="sgh"><div class="box" style="max-width:520px"><div class="mhead" style="padding:0 0 10px"><h2 id="sgh">' + esc(t('stg_h')) + '</h2><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div><p class="sm mu" style="margin:0 0 12px">' + esc(t('stg_d')) + '</p><form id="stgform" class="stglist">' +
+    x.stages.map(function(s){ return '<label class="stgrow"><span><b>' + esc(t('st_' + s.k)) + '</b><small>' + esc(t('day_n', {n: s.start + 1})) + '</small></span><input class="inp" type="date" name="st_' + s.k + '" value="' + esc(isoDate(addDays(x.sow, s.start))) + '" min="' + esc(c.sow) + '"></label>'; }).join('') +
+    '<label class="stgrow"><span><b>' + esc(t('exp_harvest')) + '</b><small>' + esc(t('stg_from')) + '</small></span><input class="inp" type="date" name="h1" value="' + esc(isoDate(x.h1)) + '" min="' + esc(c.sow) + '"></label>' +
+    '<label class="stgrow"><span><b>' + esc(t('exp_harvest')) + '</b><small>' + esc(t('stg_to')) + '</small></span><input class="inp" type="date" name="h2" value="' + esc(isoDate(x.h2)) + '" min="' + esc(c.sow) + '"></label></form>' +
+    '<div class="acts">' + (c.stg || c.hv ? '<button class="btn bs" data-act="stgreset" data-v="' + cid + '" style="margin-right:auto">' + I('refresh') + esc(t('stg_reset')) + '</button>' : '') + '<button class="btn bs" data-act="close">' + esc(t('cancel')) + '</button><button class="btn bp" data-act="stgsave" data-v="' + cid + '">' + I('check') + esc(t('save')) + '</button></div></div></div>');
+}
+function stageSave(cid){
+  var f = $('#stgform'); if(!f) return; var c = clone(cyc(cid)); if(!c) return; var x = cycInfo(cyc(cid)), fd = new FormData(f), sow = parseD(c.sow), stg = {};
+  x.stages.forEach(function(s){ var v = fd.get('st_' + s.k); if(v){ var dd = diffDays(parseD(v), sow); if(dd >= 0) stg[s.k] = dd; } });
+  var h1 = fd.get('h1') ? diffDays(parseD(fd.get('h1')), sow) : 0, h2 = fd.get('h2') ? diffDays(parseD(fd.get('h2')), sow) : 0;
+  if(h1 > 0 && h2 >= h1) c.hv = [h1, h2]; else if(h1 > 0 && h2 < h1){ toast(t('stg_bad')); return; }
+  c.stg = stg; writeCycle(c); closeModal(); toast(t('saved')); softRender();
+}
+function stageReset(cid){ var c = clone(cyc(cid)); if(!c) return; delete c.stg; delete c.hv; writeCycle(c); closeModal(); softRender(); }
+/* add an item from elsewhere (Crop Guardian, organic recipes) */
+function planAddQuick(cid, it){
+  var c = clone(cyc(cid)); if(!c) return false; c.plan = c.plan || {at: 0, lang: S.lang, mode: 'mixed', items: []}; c.plan.items = c.plan.items || [];
+  var dup = c.plan.items.some(function(x){ return x.title === it.title && x.day === it.day; }); if(dup){ toast(t('pl_already')); return false; }
+  c.plan.items.push({id: uid('p'), day: it.day, type: it.type, title: String(it.title).slice(0, 90), detail: String(it.detail || '').slice(0, 300), dose: String(it.dose || '').slice(0, 160), src: 'me', done: false, at: Date.now()});
+  writeCycle(c); toast(t('pl_added')); return true;
+}
+
+/* =====================================================================
+   v7.7 — photo library (your own folders) + pest / disease info sheet
+   ===================================================================== */
+S.lib = lsGet('lib', {crops: {}, pests: {}, diseases: {}}); if(!S.lib || typeof S.lib !== 'object') S.lib = {crops: {}, pests: {}, diseases: {}};
+S.pdInfo = lsGet('pdinfo', {}); if(!S.pdInfo || typeof S.pdInfo !== 'object' || Array.isArray(S.pdInfo)) S.pdInfo = {};
+function loadLib(){ fetch('/api/cropimgs?lib=1').then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ if(!j || typeof j !== 'object') return; var nl = {crops: j.crops || {}, pests: j.pests || {}, diseases: j.diseases || {}}; var ch = JSON.stringify(nl) !== JSON.stringify(S.lib); S.lib = nl; lsSet('lib', nl); if(ch) softRender(); }).catch(function(){}); }
+function pdName(kind, id){ var m = kind === 'pest' ? PESTS[id] : DISEASES[id]; return m ? L(m) : id; }
+function pdPhotos(cropId, kind, id){ var lib = (S.lib && S.lib[kind === 'pest' ? 'pests' : 'diseases']) || {}; return (lib[cropId + '-' + id] || []).concat(lib[id] || []); }
+function pdCard(c, kind, id){
+  var ph = pdPhotos(c.id, kind, id);
+  return '<button type="button" class="pdc ' + kind + '" data-act="pdopen" data-c="' + c.id + '" data-k="' + kind + '" data-v="' + esc(id) + '"><span class="pdimg">' + (ph.length ? imgTag(ph[0]) : I(kind === 'pest' ? 'bug' : 'alert')) + '</span><span class="pdn"><b>' + esc(pdName(kind, id)) + '</b><small>' + esc(t(kind === 'pest' ? 'pd_pest' : 'pd_dis')) + '</small></span>' + I('chev', 'chev') + '</button>';
+}
+function pdKey(cropId, kind, id){ return cropId + '|' + kind + '|' + id + '|' + S.lang; }
+function pdRun(cropId, kind, id, force){
+  var k = pdKey(cropId, kind, id), cur = S.pdInfo[k]; if(!S.sample) return;
+  if(!force && cur && (cur.busy || cur.data || (cur.err && Date.now() - (cur.at || 0) < 120000))) return;
+  var cr = crop(cropId); if(!cr) return;
+  S.pdInfo[k] = {busy: true}; pdPatch();
+  var nm = kind === 'pest' ? PESTS[id] : DISEASES[id], en = nm ? nm.en : id;
+  var prompt = 'TASK: Explain the ' + (kind === 'pest' ? 'insect pest' : 'crop disease') + ' "' + en + '" on ' + cr.n.en + ' for a farmer in ' + place() + ', in very simple words.\n' +
+    'Reply with ONLY JSON: {"look":["<3-5 short signs to recognise it in the field>"],"cause":"<one line: what causes it / which insect>","when":"<when and in which weather/stage it comes>","loss":"<one line: what damage it does>","prevent":["<2-4 prevention steps>"],"organic":["<2-3 organic/biological controls with dose>"],"chemical":["<1-3 chemical options: active ingredient + label dose per litre or per 15 L pump, approved for this crop; if unsure write: check label>"],"threshold":"<when to act, e.g. economic threshold>"}\n' +
+    'Keep each item under 18 words. Keep JSON keys in English; write values in the answer language.';
+  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only.'), task: 'json', cache: {gcTime: 7 * 86400000}}).then(function(d){
+    S.pdInfo[k] = {data: d && typeof d === 'object' ? d : {}, at: Date.now()};
+    var keep = {}, keys = Object.keys(S.pdInfo).filter(function(x){ return S.pdInfo[x] && S.pdInfo[x].data; }).slice(-60); keys.forEach(function(x){ keep[x] = S.pdInfo[x]; }); lsSet('pdinfo', keep); pdPatch();
+  }).catch(function(e){ S.pdInfo[k] = {err: aiMsg(e), at: Date.now()}; pdPatch(); });
+}
+function pdBody(cropId, kind, id){
+  var r = S.pdInfo[pdKey(cropId, kind, id)];
+  if(!S.sample && S.sampleReady) return '<div class="note r">' + I('alert') + esc(t('ai_off')) + '</div>';
+  if(!r || r.busy) return loadBox(t('pd_busy'), 4);
+  if(r.err) return '<div class="note r">' + I('alert') + esc(r.err) + '</div><button class="btn bs bsm" style="margin-top:8px" data-act="pdretry" data-c="' + cropId + '" data-k="' + kind + '" data-v="' + esc(id) + '">' + I('refresh') + esc(t('v7_retry')) + '</button>';
+  var d = r.data || {}, arr = function(v){ return Array.isArray(v) ? v : (v ? [v] : []); };
+  var sec = function(ic, cls, key, v){ var a = arr(v); return a.length ? '<div class="pdsec ' + cls + '"><h4>' + I(ic) + esc(t(key)) + '</h4><ul>' + a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : ''; };
+  return (d.cause ? '<p class="pdcause">' + esc(d.cause) + '</p>' : '') + sec('eye', 'g', 'pd_look', d.look) +
+    (d.when || d.loss ? '<div class="pdmeta">' + (d.when ? '<span>' + I('cloudsun') + esc(d.when) + '</span>' : '') + (d.loss ? '<span>' + I('alert') + esc(d.loss) + '</span>' : '') + (d.threshold ? '<span>' + I('info') + esc(d.threshold) + '</span>' : '') + '</div>' : '') +
+    sec('shield', 'b', 'pd_prevent', d.prevent) + sec('leaf', 'g', 'pd_org', d.organic) + sec('flask', 'r', 'pd_chem', d.chemical) +
+    '<p class="xs mu2" style="margin:10px 0 0">' + esc(t('pd_note')) + '</p>';
+}
+function pdSheet(cropId, kind, id){
+  var cr = crop(cropId); if(!cr) return; var ph = pdPhotos(cropId, kind, id), nm = kind === 'pest' ? PESTS[id] : DISEASES[id];
+  S.pdOpen = [cropId, kind, id];
+  modal('<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pdh"><div class="box pdbox"><div class="mhead" style="padding:0 0 10px"><div><h2 id="pdh">' + esc(pdName(kind, id)) + '</h2><small class="mu">' + esc(L(cr.n)) + ' · ' + esc(t(kind === 'pest' ? 'pd_pest' : 'pd_dis')) + (nm && S.lang !== 'en' ? ' · ' + esc(nm.en) : '') + '</small></div><button class="xbtn" data-act="close" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    (ph.length ? '<div class="pdgal">' + ph.map(function(u){ return '<div class="pdph">' + imgTag(u) + '</div>'; }).join('') + '</div>' + (ph.length > 1 ? '<p class="xs mu2" style="margin:4px 0 0;text-align:center">' + esc(t('pd_swipe', {n: ph.length})) + '</p>' : '') : '<div class="pdnoph">' + I(kind === 'pest' ? 'bug' : 'alert') + '<span>' + esc(t('pd_nophoto')) + '</span></div>') +
+    '<div id="pdbody" class="pdbody">' + pdBody(cropId, kind, id) + '</div>' +
+    '<div class="acts"><a class="btn bs" href="#scan" data-act="scanmode" data-v="' + (kind === 'pest' ? 'insect' : 'leaf') + '">' + I('camera') + esc(t('pd_scan')) + '</a><button class="btn bp" data-act="close">' + esc(t('close')) + '</button></div></div></div>');
+  pdRun(cropId, kind, id, false);
+}
+function pdPatch(){ var b = $('#pdbody'); if(b && S.pdOpen) b.innerHTML = pdBody(S.pdOpen[0], S.pdOpen[1], S.pdOpen[2]); }
+
+/* =====================================================================
+   v7.7 — पीक रक्षक (Crop Guardian), simpler and interactive
+   ===================================================================== */
+S.prDay = 0; S.prUI = lsGet('prui', {}); if(!S.prUI || typeof S.prUI !== 'object' || S.prUI.day !== isoDate(today0())) S.prUI = {day: isoDate(today0()), seen: {}, tick: {}};
+S.prOpen = {};
+function prUISave(){ lsSet('prui', S.prUI); }
+function dayHours(i){ var d0 = addDays(today0(), i), d1 = addDays(today0(), i + 1); return wxHoursAll().filter(function(x){ return x.t >= d0 && x.t < d1; }); }
+function wxHoursAll(){ var h = S.wx && S.wx.hourly; if(!h || !h.time) return []; var out = []; for(var i = 0; i < h.time.length; i++){ out.push({t: new Date(h.time[i]), T: h.temperature_2m[i], rh: h.relative_humidity_2m[i], dp: h.dew_point_2m ? h.dew_point_2m[i] : null, p: h.precipitation[i] || 0, pp: h.precipitation_probability ? (h.precipitation_probability[i] || 0) : 0, ws: h.wind_speed_10m[i], wg: h.wind_gusts_10m ? h.wind_gusts_10m[i] : null, code: h.weather_code[i]}); } return out; }
+function sprayOK(hs, i){ var x = hs[i], hr = x.t.getHours(), next = hs.slice(i, i + 5); var dry = next.every(function(y){ return y.p < 0.2 && y.pp < 50; }); var ok = hr >= 6 && hr <= 18 && dry && x.ws >= 3 && x.ws <= 15 && (x.wg == null || x.wg < 25) && x.T <= 32; return {ok: ok, why: !dry ? 'rain' : (x.ws > 15 || (x.wg != null && x.wg >= 25) ? 'wind' : (x.ws < 3 ? 'calm' : (x.T > 32 ? 'hot' : (hr < 6 || hr > 18 ? 'night' : ''))))}; }
+function dayWindows(i){
+  var all = wxHoursAll(), d0 = addDays(today0(), i), d1 = addDays(today0(), i + 1), wins = [], cur = null, why = {};
+  all.forEach(function(x, j){ if(x.t < d0 || x.t >= d1 || x.t.getTime() < Date.now() - 3600000) return; var s = sprayOK(all, j); if(s.ok){ if(!cur){ cur = {from: x.t, to: x.t, n: 0}; wins.push(cur); } cur.to = x.t; cur.n++; } else { cur = null; if(s.why && s.why !== 'night') why[s.why] = (why[s.why] || 0) + 1; } });
+  var top = Object.keys(why).sort(function(a, b){ return why[b] - why[a]; })[0];
+  return {wins: wins.filter(function(w){ return w.n >= 2; }), why: top || ''};
+}
+function dayRisk(i){
+  var hs = dayHours(i), m = prMetrics(hs), al = prAlerts().filter(function(a){ return diffDays(new Date(a.d.getFullYear(), a.d.getMonth(), a.d.getDate()), today0()) === i; });
+  var sev = al.reduce(function(a, b){ return Math.max(a, b.sev); }, 0);
+  var lv = sev >= 3 || m.rain >= 20 || m.wet >= 9 ? 'high' : (sev >= 2 || m.rain >= 5 || m.wet >= 4 || m.maxGust >= 40 ? 'medium' : 'low');
+  return {lv: lv, m: m, al: al};
+}
+function winText(w){ return hhmm(w.from) + '–' + hhmm(new Date(w.to.getTime() + 3600000)); }
+function prHero(){
+  var DMG = ['hail', 'vheavy', 'heavy', 'wind', 'storm'];
+  var al = prAlerts().filter(function(a){ return diffDays(new Date(a.d.getFullYear(), a.d.getMonth(), a.d.getDate()), today0()) <= 2 && a.sev >= 2; }).sort(function(a, b){ return (DMG.indexOf(b.k) > -1) - (DMG.indexOf(a.k) > -1) || b.sev - a.sev; });
+  var w0 = dayWindows(0), w1 = dayWindows(1);
+  var severeToday = al.some(function(a){ return a.sev >= 3 && diffDays(new Date(a.d.getFullYear(), a.d.getMonth(), a.d.getDate()), today0()) === 0; });
+  var canToday = w0.wins.length > 0 && !severeToday;
+  var cls = severeToday ? 'red' : (canToday ? 'green' : 'amber');
+  var big = canToday ? t('prh_spray_yes', {w: w0.wins.map(winText).slice(0, 2).join(', ')}) : t('prh_spray_no', {why: severeToday ? alertText(al.filter(function(a){ return a.sev >= 3; })[0]) : (w0.why ? t('sw_' + w0.why) : t('prh_nowin'))});
+  var sub = !canToday && w1.wins.length ? t('prh_next', {d: t('tomorrow'), w: winText(w1.wins[0])}) : '';
+  var h = '<div class="prhero ' + cls + '"><div class="prhi">' + I(canToday ? 'check' : 'x') + '</div><div class="prht"><small>' + esc(t('prh_today')) + '</small><b>' + esc(big) + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div></div>';
+  if(al.length){ var dmg = ['hail', 'vheavy', 'heavy', 'wind', 'storm'].indexOf(al[0].k) > -1; h += '<div class="pralert sev' + al[0].sev + ' big">' + I('alert') + '<span>' + esc(alertText(al[0])) + '</span>' + (dmg ? '<button class="btn bsm ' + (al[0].sev >= 3 ? 'bd' : 'bs') + '" data-act="claimkit">' + esc(t('prh_claim')) + '</button>' : '') + '</div>'; }
+  /* planned sprays in the next 3 days, checked against the weather */
+  var plan = [];
+  S.cycles.forEach(function(c){ if(cycInfo(c).done) return; planItems(c).forEach(function(it){ if(it.done || it.type !== 'spray' && it.type !== 'fert' && it.type !== 'organic') return; var dd = planDD(c, it); if(dd >= 0 && dd <= 2) plan.push({c: c, it: it, dd: dd}); }); });
+  if(plan.length) h += '<div class="card pad prplan"><h3>' + I('cal') + esc(t('prh_plan')) + '</h3>' + plan.slice(0, 4).map(function(p){ var w = dayWindows(p.dd), ok = p.it.type !== 'spray' ? dayRisk(p.dd).m.rain < 10 : w.wins.length > 0, cr = crop(p.c.crop) || CROPS[0];
+    return '<div class="prpl ' + (ok ? 'ok' : 'no') + '">' + plIcon(p.it.type) + '<span class="pltx"><b>' + esc(p.it.title) + '</b><small>' + esc(L(cr.n) + ' · ' + (p.dd === 0 ? t('today') : (p.dd === 1 ? t('tomorrow') : fmtDs(addDays(today0(), p.dd))))) + '</small><span class="prv">' + I(ok ? 'check' : 'alert') + esc(ok ? (p.it.type === 'spray' ? t('prh_ok_w', {w: winText(w.wins[0])}) : t('prh_ok')) : t('prh_move', {why: w.why ? t('sw_' + w.why) : t('sw_rain')})) + '</span></span><a class="lnk" href="#cycle-' + p.c.id + '" data-act="cyctab" data-v="plan">' + I('chev', 'chev') + '</a></div>'; }).join('') + '</div>';
+  return h;
+}
+function prWeek(){
+  var d = S.wx && S.wx.daily; if(!d || !d.time) return '';
+  var n = Math.min(7, d.time.length), days = [];
+  for(var i = 0; i < n; i++){ var dt = addDays(today0(), i), idx = d.time.indexOf(isoDate(dt)); if(idx < 0) continue; days.push({i: i, dt: dt, idx: idx, r: dayRisk(i)}); }
+  if(!days.length) return '';
+  var sel = days.filter(function(x){ return x.i === S.prDay; })[0] || days[0];
+  var h = '<div class="card pad prweek"><h2>' + I('cal') + esc(t('prw_h')) + '</h2><p class="sm mu" style="margin:0 0 10px">' + esc(t('prw_d')) + '</p><div class="prdays" role="tablist">' + days.map(function(x){ var code = d.weather_code[x.idx], rain = d.precipitation_sum[x.idx] || 0;
+    return '<button type="button" role="tab" class="prday lv-' + x.r.lv + '" data-act="prday" data-v="' + x.i + '" aria-selected="' + (x.i === sel.i) + '"><small>' + esc(x.i === 0 ? t('today') : (x.i === 1 ? t('tomorrow') : wkday(x.dt))) + '</small>' + I(code >= 95 ? 'storm' : (code >= 51 || rain >= 1 ? 'rain' : (code >= 3 ? 'cloud' : 'sun'))) + '<b>' + Math.round(d.temperature_2m_max[x.idx]) + '°</b><span class="dot"></span><em>' + (rain >= 1 ? num(Math.round(rain), 0) + ' mm' : '&nbsp;') + '</em></button>'; }).join('') + '</div>';
+  var r = sel.r, w = dayWindows(sel.i), di = sel.idx;
+  h += '<div class="prdet"><div class="prdh"><b>' + esc(sel.i === 0 ? t('today') : (sel.i === 1 ? t('tomorrow') : fmtD(sel.dt))) + '</b>' + prLevel(r.lv) + '</div><div class="prfacts">' +
+    '<span>' + I('thermo') + esc(Math.round(d.temperature_2m_min[di]) + '–' + Math.round(d.temperature_2m_max[di]) + '°C') + '</span>' +
+    '<span>' + I('rain') + esc(num(Math.round((d.precipitation_sum[di] || 0) * 10) / 10) + ' mm · ' + (d.precipitation_probability_max ? (d.precipitation_probability_max[di] || 0) : 0) + '%') + '</span>' +
+    '<span>' + I('wind') + esc(Math.round(d.wind_speed_10m_max[di] || 0) + ' km/h') + '</span>' +
+    '<span>' + I('drop') + esc(t('prw_wet', {n: r.m.wet})) + '</span></div>' +
+    (r.al.length ? r.al.map(function(a){ return '<div class="pralert sev' + a.sev + ' big">' + I('alert') + '<span>' + esc(alertText(a)) + '</span>' + (['hail', 'vheavy', 'heavy', 'wind', 'storm'].indexOf(a.k) > -1 ? '<button class="btn bsm bs" data-act="claimkit">' + esc(t('prh_claim')) + '</button>' : '') + '</div>'; }).join('') : '') +
+    '<p class="prsw">' + I('spray') + '<span><b>' + esc(t('prw_spray')) + ':</b> ' + esc(w.wins.length ? w.wins.map(winText).join(', ') : t('prw_nospray', {why: w.why ? t('sw_' + w.why) : t('prh_nowin')})) + '</span></p>' +
+    '<p class="xs mu2" style="margin:6px 0 0">' + esc(t(r.lv === 'high' ? 'prw_tip_high' : (r.lv === 'medium' ? 'prw_tip_med' : 'prw_tip_low'))) + '</p></div></div>';
+  return h;
+}
+function wkday(d){ try{ return d.toLocaleDateString(S.lang === 'en' ? 'en-IN' : (S.lang === 'hi' ? 'hi-IN' : 'mr-IN'), {weekday: 'short'}); }catch(e){ return fmtDs(d); } }
+function prBody(){
+  var hs = wxHours();
+  if(!hs.length){
+    if(S.wxErr && !S.wxBusy) return '<div class="card pad"><div class="note r">' + I('alert') + esc(S.wxErr) + '</div><p class="sm mu" style="margin:10px 0 0">' + esc(t('v7_wx_need')) + '</p><div class="row wrap" style="margin-top:12px"><button class="btn bp bsm" data-act="prrefresh">' + I('refresh') + esc(t('v7_retry')) + '</button><button class="btn bs bsm" data-act="menu">' + I('pin') + esc(t('my_location')) + '</button></div></div>';
+    if(!S.wxBusy) setTimeout(function(){ loadWx(true); }, 0);
+    return '<div class="card pad">' + loadBox(t('wx_loading'), 3) + '</div>'; }
+  var h = '<div class="curloc">' + I('pin') + '<div><b>' + esc(wxPlace()) + '</b><small>' + esc(t('pr_wxsrc', {t: ago(S.wx.got || Date.now())})) + '</small></div><button class="btn bs bsm" data-act="prrefresh">' + I('refresh') + esc(t('news_refresh')) + '</button></div>';
+  h += prHero();
+  var active = S.cycles.filter(function(c){ return !cycInfo(c).done; });
+  if(!active.length) h += '<div class="card"><div class="empty"><span class="ico g">' + I('sprout') + '</span><p style="margin:0 0 14px">' + esc(t('pr_nocrops')) + '</p><button class="btn bp" data-act="newcycle">' + I('plus') + esc(t('add_crop')) + '</button></div></div>';
+  else {
+    if(!S.sample && S.sampleReady) h += '<div class="note r">' + I('alert') + esc(t('ai_off')) + '</div>';
+    active.forEach(function(c){ if(S.sample) prRun(c, false); });
+    h += '<div class="h-sec" style="margin-top:18px"><h2>' + esc(t('pr_mycrops')) + '</h2></div>' + active.map(function(c){ return prCropCard(c); }).join('');
+  }
+  h += prWeek();
+  h += '<p class="xs mu2" style="margin-top:12px">' + esc(t('pr_note')) + '</p>';
+  return h;
+}
+var PRSCORE = {high: 85, medium: 55, low: 20};
+function prGauge(lv){ var p = PRSCORE[lv] || 20, col = lv === 'high' ? '#C0392B' : (lv === 'medium' ? '#D9920E' : '#2F8F57'); return '<span class="prg" style="--p:' + p + ';--c:' + col + '"><b>' + esc(t((PRLEV[lv] || PRLEV.low)[1])) + '</b></span>'; }
+function prRiskId(c, k){ var ids = (crop(c.crop) || {p: [], ds: []}); var id = String(k.id || '').toLowerCase(); if(ids.p.indexOf(id) > -1) return {kind: 'pest', id: id}; if(ids.ds.indexOf(id) > -1) return {kind: 'disease', id: id}; return null; }
+function prCropCard(c){
+  var x = cycInfo(c), cr = x.cr, r = prGet(c);
+  var st = x.day < 1 ? t('not_sown', {n: 1 - x.day}) : t('day_n', {n: x.day}) + ' · ' + t('st_' + (x.cur ? x.cur.k : 'germ'));
+  var top = r && r.data && r.data.risks && r.data.risks[0];
+  var h = '<div class="card prcrop"><div class="cth">' + cycDot(c, true) + '<span class="ctt"><b>' + esc(L(cr.n)) + (c.plot ? ' · ' + esc(c.plot) : '') + '</b><small>' + esc(st) + '</small></span>' + (top ? prGauge(top.level) : '') +
+    '<button class="xbtn" data-act="prrun" data-v="' + c.id + '" aria-label="' + esc(t('news_refresh')) + '" title="' + esc(t('news_refresh')) + '">' + I('refresh') + '</button></div><div class="prcb">';
+  if(!r || r.busy) return h + loadBox(t('pr_thinking'), 3) + '</div></div>';
+  if(r.err) return h + '<div class="note r">' + I('alert') + esc(r.err) + '</div><button class="btn bs bsm" style="margin-top:8px" data-act="prrun" data-v="' + c.id + '">' + I('refresh') + esc(t('v7_retry')) + '</button></div></div>';
+  var d = r.data;
+  if(d.summary) h += '<p class="prsum">' + esc(d.summary) + '</p>';
+  if(d.risks && d.risks.length) h += '<div class="prthreats">' + d.risks.map(function(k, i){ return prThreat(c, k, i); }).join('') + '</div>';
+  else h += '<div class="note g">' + I('check') + esc(t('pr_allok')) + '</div>';
+  if(d.today && d.today.length) h += '<div class="prtoday"><b>' + I('hand') + esc(t('pr_today')) + '</b>' + d.today.map(function(s, i){ var key = c.id + '|' + i, on = !!S.prUI.tick[key]; return '<button type="button" class="prtick' + (on ? ' on' : '') + '" data-act="prtick" data-v="' + esc(key) + '" aria-pressed="' + on + '"><span class="bx">' + I('check') + '</span><span>' + esc(s) + '</span></button>'; }).join('') + '</div>';
+  if(d.water) h += '<p class="prw">' + I('drop') + '<span><b>' + esc(t('pr_water')) + ':</b> ' + esc(d.water) + '</span></p>';
+  if(d.harvest) h += '<p class="prw">' + I('cal') + '<span><b>' + esc(t('pr_harvest')) + ':</b> ' + esc(d.harvest) + (FEATURES.market ? ' <a href="#market" data-act="mkcrop" data-v="' + cr.id + '">' + esc(t('mk_h')) + ' →</a>' : '') + '</span></p>';
+  h += '<div class="row wrap" style="margin-top:10px">' + speakBtn('pr' + c.id) + '</div>';
+  return h + '</div></div>';
+}
+function prThreat(c, k, i){
+  var key = c.id + '|' + i + '|' + (k.name || ''), open = !!S.prOpen[key], seen = S.prUI.seen[key], ref = prRiskId(c, k), ph = ref ? pdPhotos(c.crop, ref.kind, ref.id) : [];
+  var h = '<div class="prth lv-' + esc(k.level || 'low') + (open ? ' open' : '') + '"><button type="button" class="prthh" data-act="prthr" data-v="' + esc(key) + '" aria-expanded="' + open + '"><span class="prthimg">' + (ph.length ? imgTag(ph[0]) : I(k.kind === 'pest' ? 'bug' : (k.kind === 'weather' ? 'cloudsun' : (k.kind === 'nutrient' ? 'leaf' : 'alert')))) + '</span><span class="prtht"><b>' + esc(k.name) + '</b><small>' + esc(t('prk_' + (k.kind || 'disease'))) + (seen === 'yes' ? ' · ' + esc(t('pr_seen_yes_s')) : (seen === 'no' ? ' · ' + esc(t('pr_seen_no_s')) : '')) + '</small></span>' + prLevel(k.level) + I('chev', 'chev') + '</button>';
+  if(!open) return h + '</div>';
+  h += '<div class="prthb">' + (k.watch ? '<p class="prq">' + I('eye') + '<span><b>' + esc(t('pr_watch')) + ':</b> ' + esc(k.watch) + '</span></p>' : '') + (k.why ? '<p class="prq mu">' + I('info') + '<span><b>' + esc(t('pr_why')) + ':</b> ' + esc(k.why) + '</span></p>' : '');
+  if(k.kind === 'pest' || k.kind === 'disease'){
+    h += '<div class="prask"><b>' + esc(t('pr_seen_q')) + '</b><div class="row" style="gap:8px"><button type="button" class="btn bsm ' + (seen === 'yes' ? 'bd' : 'bs') + '" data-act="prseen" data-v="' + esc(key) + '" data-k="yes" data-c="' + c.id + '" data-n="' + esc(k.name) + '">' + I('alert') + esc(t('pr_seen_yes')) + '</button><button type="button" class="btn bsm ' + (seen === 'no' ? 'bp' : 'bs') + '" data-act="prseen" data-v="' + esc(key) + '" data-k="no">' + I('check') + esc(t('pr_seen_no')) + '</button></div></div>';
+    if(seen === 'no') h += '<div class="note g">' + I('check') + esc(t('pr_seen_no_d')) + '</div>';
+    if(seen === 'yes') h += '<div class="note r">' + I('alert') + esc(t('pr_seen_yes_d')) + '</div>';
+  }
+  h += '<div class="prfix' + (seen === 'yes' ? ' hot' : '') + '">' + (k.organic ? '<p><b>🌿 ' + esc(t('pr_org')) + ':</b> ' + esc(k.organic) + '</p>' : '') + (k.chemical ? '<p><b>🧪 ' + esc(t('pr_chem')) + ':</b> ' + esc(k.chemical) + '</p>' : '') + (k.when ? '<p><b>⏰ ' + esc(t('pr_when')) + ':</b> ' + esc(k.when) + '</p>' : '') + '</div>';
+  h += '<div class="row wrap" style="gap:8px;margin-top:10px">' + ((k.organic || k.chemical) ? '<button type="button" class="btn bs bsm" data-act="pradd" data-c="' + c.id + '" data-v="' + i + '">' + I('cal') + esc(t('pr_addplan')) + '</button>' : '') + (ref ? '<button type="button" class="btn bs bsm" data-act="pdopen" data-c="' + c.crop + '" data-k="' + ref.kind + '" data-v="' + esc(ref.id) + '">' + I('book') + esc(t('pr_more')) + '</button>' : '') + '<a class="btn bs bsm" href="#scan" data-act="scanmode" data-v="' + (k.kind === 'pest' ? 'insect' : 'leaf') + '">' + I('camera') + esc(t('pd_scan')) + '</a></div>';
+  return h + '</div></div>';
+}
+
+/* =====================================================================
+   v7.7 — योजना: new / upcoming scheme updates (live Google Search only)
+   ===================================================================== */
+S.yupd = lsGet('yupd', null); if(!S.yupd || typeof S.yupd !== 'object' || !Array.isArray(S.yupd.updates)) S.yupd = null;
+S.yupdBusy = false; S.yupdAll = false;
+function yUpdLoad(force){
+  if(S.yupdBusy) return; var st = (S.yprof && S.yprof.state) || S.state;
+  if(!force && S.yupd && S.yupd.date === isoDate(today0()) && S.yupd.lang === S.lang && S.yupd.state === st) return;
+  if(!force && S.yupdTry && Date.now() - S.yupdTry < 60000) return;
+  S.yupdBusy = true; S.yupdTry = Date.now(); yUpdPatch();
+  fetch('/api/schemes', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mode: 'updates', state: st, lang: S.lang})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(j){ S.yupdBusy = false; if(j && Array.isArray(j.updates)){ S.yupd = {date: isoDate(today0()), lang: S.lang, state: st, grounded: !!j.grounded, note: j.note || '', updates: j.updates, sources: j.sources || [], at: Date.now()}; if(j.updates.length) lsSet('yupd', S.yupd); } else S.yupd = {date: isoDate(today0()), lang: S.lang, state: st, updates: [], note: 'search_failed', at: Date.now()}; yUpdPatch(); })
+    .catch(function(){ S.yupdBusy = false; S.yupd = S.yupd && S.yupd.updates.length ? S.yupd : {date: isoDate(today0()), lang: S.lang, state: st, updates: [], note: 'search_failed', at: Date.now()}; yUpdPatch(); });
+}
+function yUpdPatch(){ var b = $('#yupd'); if(b) b.outerHTML = yUpdates(); }
+var YUKIND = {new: 'g', open: 'g', upcoming: 'b', deadline: 'r', change: 's', instalment: 'o'};
+function yUpdates(){
+  setTimeout(function(){ yUpdLoad(false); }, 0);
+  var u = S.yupd, h = '<div class="card pad yupd" id="yupd"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><h2>' + I('fire') + esc(t('yu_h')) + '</h2><button class="xbtn" data-act="yupdref" aria-label="' + esc(t('news_refresh')) + '" title="' + esc(t('news_refresh')) + '"' + (S.yupdBusy ? ' disabled' : '') + '>' + I('refresh') + '</button></div>';
+  if(S.yupdBusy && !(u && u.updates.length)) return h + '<p class="sm mu" style="margin:2px 0 10px">' + esc(t('yu_busy')) + '</p>' + loadBox(t('yu_busy_s'), 3) + '</div>';
+  if(!u || !u.updates.length){ return h + '<p class="sm mu" style="margin:6px 0 0">' + esc(u && u.note === 'no_gemini' ? t('ai_off') : (u && u.note === 'search_off' ? t('yu_nosearch') : t('yu_none'))) + '</p></div>'; }
+  var list = S.yupdAll ? u.updates : u.updates.slice(0, 3);
+  h += '<p class="xs mu2" style="margin:2px 0 10px">' + esc(t('yu_src', {s: u.state || S.state, t: ago(u.at || Date.now())})) + '</p><div class="yulist">' + list.map(function(x){ return '<div class="yuit"><div class="row wrap" style="gap:6px;margin-bottom:4px"><span class="chip ' + (YUKIND[x.kind] || 'g') + '">' + esc(t('yk_' + x.kind)) + '</span><span class="chip">' + esc(t('yu_lv_' + x.level)) + '</span>' + (x.date ? '<span class="xs mu2">' + esc(x.date) + '</span>' : '') + '</div><b>' + esc(x.title) + '</b>' + (x.name_en && x.name_en !== x.title ? '<small class="mu"> (' + esc(x.name_en) + ')</small>' : '') + (x.what ? '<p>' + esc(x.what) + '</p>' : '') +
+    (x.benefit ? '<p class="yub">' + I('rupee') + esc(x.benefit) + '</p>' : '') + (x.deadline ? '<p class="yud">' + I('clock') + esc(t('y_deadline')) + ': ' + esc(x.deadline) + '</p>' : '') + (x.link ? '<a class="btn bs bsm" href="' + esc(x.link) + '" target="_blank" rel="noopener">' + esc(t('yu_open')) + I('ext') + '</a>' : '') + '</div>'; }).join('') + '</div>';
+  if(u.updates.length > 3) h += '<button class="btn bs bsm" style="margin-top:10px" data-act="yupdall">' + esc(S.yupdAll ? t('yu_less') : t('yu_more', {n: num(u.updates.length - 3, 0)})) + '</button>';
+  if(u.sources && u.sources.length) h += '<details class="ysrc" style="margin-top:10px"><summary class="xs">' + esc(t('y_sources')) + ' (' + u.sources.length + ')</summary>' + u.sources.slice(0, 10).map(function(s){ return '<a class="xs" href="' + esc(s.url || s.uri || '') + '" target="_blank" rel="noopener">' + esc(s.title || s.url || '') + '</a>'; }).join('') + '</details>';
+  return h + '</div>';
+}
+
+/* =====================================================================
+   v7.7 — जैविक (organic inputs) section
+   ===================================================================== */
+S.orgK = 'all'; S.orgQ = ''; S.orgAI = lsGet('orgai', null);
+var ORGKIND = {soil: ['layers', 'g'], growth: ['sprout', 's'], pest: ['bug', 'r'], disease: ['shield', 'b'], seed: ['leaf', 'o']};
+function recKind(r){ return ORGKIND[r.kind] ? r.kind : (r.base === 'seed' ? 'seed' : (r.base === 'dilute' ? 'pest' : 'soil')); }
+function vOrganic(){
+  var q = S.orgQ.toLowerCase(), counts = {all: RECIPES.length};
+  RECIPES.forEach(function(r){ var k = recKind(r); counts[k] = (counts[k] || 0) + 1; });
+  var list = RECIPES.filter(function(r){ return (S.orgK === 'all' || recKind(r) === S.orgK) && (!q || (r.n.en + ' ' + r.n.hi + ' ' + r.n.mr + ' ' + L(r.purpose)).toLowerCase().indexOf(q) > -1); });
+  var h = '<div class="ph"><h1>' + esc(t('org_h2')) + '</h1><p>' + esc(t('org_d2')) + '</p></div>';
+  h += orgAICard();
+  h += '<div class="toolbar" style="margin-top:16px"><div class="search">' + I('search') + '<input class="inp" type="search" data-act="orgq" value="' + esc(S.orgQ) + '" placeholder="' + esc(t('org_search')) + '" aria-label="' + esc(t('org_search')) + '"></div></div>';
+  h += '<div class="chips" role="group" style="margin:10px 0 14px">' + ['all', 'soil', 'growth', 'pest', 'disease', 'seed'].filter(function(k){ return counts[k]; }).map(function(k){ return '<button type="button" data-act="orgk" data-v="' + k + '" aria-pressed="' + (S.orgK === k) + '">' + (k === 'all' ? '' : I(ORGKIND[k][0])) + esc(t('ok_' + k)) + ' <span class="cnt">' + num(counts[k], 0) + '</span></button>'; }).join('') + '</div>';
+  h += '<div class="note" style="margin-bottom:14px">' + I('info') + esc(t('org_note')) + '</div><div id="orglist" style="display:flex;flex-direction:column;gap:12px">' + orgList(list) + '</div>';
+  return h;
+}
+function orgList(list){
+  if(!list.length) return '<div class="empty">' + esc(t('org_none')) + '</div>';
+  return list.map(function(r){ var open = S.openRecipe === r.id, k = recKind(r), ic = ORGKIND[k];
+    return '<div class="rcard' + (open ? ' open' : '') + '" id="rc-' + r.id + '"><button type="button" data-act="recipe" data-v="' + r.id + '" aria-expanded="' + open + '"><span class="ico ' + ic[1] + '">' + I(ic[0]) + '</span><span class="tx"><b>' + esc(L(r.n)) + '</b><span>' + esc(L(r.purpose)) + '</span><em class="rk ' + ic[1] + '">' + esc(t('ok_' + k)) + ' · ' + esc(L(r.time)) + '</em></span>' + I('chev', 'chev') + '</button><div class="body">' + (open ? recipeBody(r) + orgPlanRow(r) : '') + '</div></div>'; }).join('');
+}
+function orgPlanRow(r){
+  var act = S.cycles.filter(function(c){ return !cycInfo(c).done; });
+  if(!act.length) return '';
+  return '<div class="orgplan"><b>' + I('cal') + esc(t('org_toplan')) + '</b><div class="row wrap" style="gap:8px">' + act.slice(0, 6).map(function(c){ var cr = crop(c.crop) || CROPS[0]; return '<button type="button" class="btn bs bsm" data-act="orgadd" data-v="' + r.id + '" data-c="' + c.id + '">' + I('plus') + esc(L(cr.n) + (c.plot ? ' · ' + c.plot : '')) + '</button>'; }).join('') + '</div></div>';
+}
+function orgAICard(){
+  var act = S.cycles.filter(function(c){ return !cycInfo(c).done; });
+  var h = '<div class="aibox orgai" id="orgai"><div class="hd"><div style="display:flex;gap:12px"><span class="ico g">' + I('spark') + '</span><div><h2 style="font-size:18px">' + esc(t('org_ai_h')) + '</h2><p class="sm mu" style="margin:4px 0 0">' + esc(t('org_ai_d')) + '</p></div></div></div>';
+  if(!act.length) return h + '<div class="row wrap" style="margin-top:10px"><button class="btn bs bsm" data-act="newcycle">' + I('plus') + esc(t('add_crop')) + '</button></div></div>';
+  var a = S.orgAI, key = orgKey();
+  if(!a || a.key !== key) return h + '<div class="row wrap" style="margin-top:10px"><button class="btn bp bsm" data-act="orgai"' + (S.sample ? '' : ' disabled') + '>' + I('spark') + esc(t('org_ai_btn')) + '</button></div></div>';
+  if(a.busy) return h + '<div style="margin-top:10px">' + loadBox(t('org_ai_busy'), 3) + '</div></div>';
+  if(a.err) return h + '<div class="note r" style="margin-top:10px">' + I('alert') + esc(a.err) + '</div><button class="btn bs bsm" style="margin-top:8px" data-act="orgai">' + I('refresh') + esc(t('v7_retry')) + '</button></div>';
+  var d = a.data || {};
+  h += '<div class="orgres">' + (d.crops || []).map(function(o){ var c = cyc(o.cid), cr = c && crop(c.crop); if(!cr) return ''; return '<div class="orgc"><div class="orgch">' + cycDot(c) + '<b>' + esc(L(cr.n) + (c.plot ? ' · ' + c.plot : '')) + '</b></div>' + (o.items || []).map(function(it){ var r = RECIPES.filter(function(x){ return x.id === it.recipe; })[0]; if(!r) return ''; return '<div class="orgit"><button type="button" class="lnk" data-act="orgopen" data-v="' + r.id + '"><b>' + esc(L(r.n)) + '</b></button><span>' + esc(it.why || '') + '</span>' + (it.when ? '<small>' + I('clock') + esc(it.when) + '</small>' : '') + '</div>'; }).join('') + '</div>'; }).join('') + '</div>';
+  if(d.tip) h += '<p class="sm" style="margin:10px 0 0">👉 ' + esc(d.tip) + '</p>';
+  return h + '<div class="row wrap" style="margin-top:10px"><button class="btn bs bsm" data-act="orgai">' + I('refresh') + esc(t('news_refresh')) + '</button></div></div>';
+}
+function orgKey(){ return isoDate(today0()) + '|' + S.lang + '|' + S.cycles.filter(function(c){ return !cycInfo(c).done; }).map(function(c){ return c.id + ':' + c.crop + ':' + c.sow; }).join(','); }
+function orgAIRun(){
+  if(!S.sample) return; var act = S.cycles.filter(function(c){ return !cycInfo(c).done; }).slice(0, 6); if(!act.length) return;
+  var key = orgKey(); S.orgAI = {key: key, busy: true}; var b = $('#orgai'); if(b) b.outerHTML = orgAICard();
+  var prompt = 'TASK: Choose organic inputs from the list below for each crop the farmer is growing now, matched to its current stage and the season.\n' +
+    'Organic inputs available (id: name — purpose): ' + RECIPES.map(function(r){ return r.id + ': ' + r.n.en + ' — ' + r.purpose.en; }).join(' | ') + '\n' +
+    'Crops: ' + act.map(function(c){ var x = cycInfo(c); return c.id + ' = ' + x.cr.n.en + ', day ' + x.day + ', stage ' + (x.cur ? T.en['st_' + x.cur.k] : 'not sown') + ', irrigation ' + (c.irr || 'rainfed'); }).join('; ') + '. Place: ' + place() + '.\n' +
+    'For each crop pick 2 or 3 inputs ONLY from the list ids. Reply with ONLY JSON: {"crops":[{"cid":"<crop id from above>","items":[{"recipe":"<id>","why":"<one short line>","when":"<when / how often, short>"}]}],"tip":"<one practical organic tip>"}\nKeep keys and ids in English; write why, when and tip in the answer language.';
+  S.sample.json(prompt, {system: sysPrompt('Reply with JSON only.'), task: 'json'}).then(function(d){ S.orgAI = {key: key, data: d || {}}; lsSet('orgai', S.orgAI); var bb = $('#orgai'); if(bb) bb.outerHTML = orgAICard(); })
+    .catch(function(e){ S.orgAI = {key: key, err: aiMsg(e)}; var bb = $('#orgai'); if(bb) bb.outerHTML = orgAICard(); });
+}
+
+/* =====================================================================
+   v7.7 — one polished picker for every dropdown (crops get photos, groups and search)
+   The real <select> stays in the page (hidden) so forms and existing handlers keep working.
+   ===================================================================== */
+function pickLabel(sel){ var o = sel.options[sel.selectedIndex]; return o ? o.text : ''; }
+function isCropSelect(sel){ var n = 0, tot = 0; for(var i = 0; i < sel.options.length && tot < 12; i++){ var v = sel.options[i].value; if(!v) continue; tot++; if(crop(v)) n++; } return tot > 3 && n / tot > 0.8; }
+function enhanceSelect(sel){
+  if(sel.__pk || sel.multiple || sel.closest('.nopick')) return; sel.__pk = true;
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'pkbtn' + (sel.classList.contains('unitsel') ? ' sm' : '') + (sel.classList.contains('mksort') ? ' sm' : ''); b.setAttribute('aria-haspopup', 'listbox');
+  var lab = sel.getAttribute('aria-label') || ''; if(!lab){ var lb = sel.closest('label'); if(lb) lab = (lb.firstChild && lb.firstChild.nodeType === 3 ? lb.firstChild.textContent : lb.textContent).trim().split('\n')[0]; }
+  b.__lab = lab; if(lab) b.setAttribute('aria-label', lab);
+  sel.classList.add('pkhid'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true'); sel.parentNode.insertBefore(b, sel.nextSibling); b.__sel = sel;
+  syncPick(b);
+  if(sel.disabled) b.disabled = true;
+  sel.addEventListener('change', function(){ syncPick(b); });
+}
+function syncPick(b){ var sel = b.__sel; if(!sel) return; var v = sel.value, cr = isCropSelect(sel) ? crop(v) : null; b.innerHTML = (cr ? cropDot(cr) : '') + '<span class="pkv">' + esc(pickLabel(sel) || '—') + '</span>' + I('chev', 'chev'); b.disabled = sel.disabled; }
+function enhanceAll(root){ var l = (root || document).querySelectorAll('select.inp'); for(var i = 0; i < l.length; i++) enhanceSelect(l[i]); }
+if(window.MutationObserver){ new MutationObserver(function(ms){ for(var i = 0; i < ms.length; i++){ var m = ms[i]; for(var j = 0; j < m.addedNodes.length; j++){ var n = m.addedNodes[j]; if(n.nodeType !== 1) continue; if(n.tagName === 'SELECT' && n.classList.contains('inp')) enhanceSelect(n); else if(n.querySelector && n.querySelector('select.inp')) enhanceAll(n); } } var bs = document.querySelectorAll('.pkbtn'); for(var k = 0; k < bs.length; k++){ var s = bs[k].__sel; if(!s || !document.body.contains(s)) bs[k].remove(); else if(bs[k].previousSibling !== s) bs[k].remove(); } }).observe(document.body, {childList: true, subtree: true}); }
+var pickCur = null;
+function openPick(b){
+  var sel = b.__sel; if(!sel || sel.disabled) return; pickCur = b; syncPick(b);
+  var crops = isCropSelect(sel), items = [], n = 0;
+  Array.prototype.forEach.call(sel.children, function(ch){
+    if(ch.tagName === 'OPTGROUP'){ items.push({g: ch.label}); Array.prototype.forEach.call(ch.children, function(o){ items.push({o: o}); n++; }); }
+    else if(ch.tagName === 'OPTION'){ items.push({o: ch}); n++; }
+  });
+  var search = n > 9;
+  var h = '<div class="pkbg" data-act="pkclose"></div><div class="pksheet" role="dialog" aria-modal="true" aria-label="' + esc(b.__lab || '') + '"><div class="pkhd"><b>' + esc(b.__lab || t('select')) + '</b><button type="button" class="xbtn" data-act="pkclose" aria-label="' + esc(t('close')) + '">' + I('x') + '</button></div>' +
+    (search ? '<div class="pksearch">' + I('search') + '<input type="search" id="pkq" placeholder="' + esc(t('pk_search')) + '" autocomplete="off" aria-label="' + esc(t('pk_search')) + '"></div>' : '') +
+    '<div class="pklist" role="listbox" id="pklist">' + items.map(function(x, i){
+      if(x.g != null) return '<div class="pkg" data-g="' + i + '">' + esc(x.g) + '</div>';
+      var o = x.o, cr = crops ? crop(o.value) : null, on = o.selected, alt = cr ? (S.lang === 'en' ? cr.n.mr : cr.n.en) : '';
+      return '<button type="button" role="option" class="pkopt' + (on ? ' on' : '') + (cr ? ' crop' : '') + '" data-act="pkpick" data-v="' + i + '" aria-selected="' + on + '"' + (o.disabled ? ' disabled' : '') + ' data-s="' + esc((o.text + ' ' + (cr ? cr.n.en + ' ' + cr.n.hi + ' ' + cr.n.mr : '')).toLowerCase()) + '">' + (cr ? cropDot(cr) : '') + '<span class="pkt"><b>' + esc(o.text || '—') + '</b>' + (alt && alt !== o.text ? '<small>' + esc(alt) + '</small>' : '') + '</span>' + (on ? I('check', 'pkck') : '') + '</button>';
+    }).join('') + '<div class="pkempty" hidden>' + esc(t('org_none')) + '</div></div></div>';
+  var w = document.createElement('div'); w.id = 'pickwrap'; w.innerHTML = h; w.__items = items; document.body.appendChild(w); document.body.classList.add('pkopen');
+  var on = $('.pkopt.on', w); if(on) on.scrollIntoView({block: 'center'});
+  var q = $('#pkq', w); if(q && window.innerWidth > 700) q.focus();
+}
+function closePick(){ var w = $('#pickwrap'); if(w) w.remove(); document.body.classList.remove('pkopen'); if(pickCur){ try{ pickCur.focus({preventScroll: true}); }catch(e){} } pickCur = null; }
+function pickChoose(i){
+  var w = $('#pickwrap'), b = pickCur; if(!w || !b) return closePick(); var x = w.__items[+i]; if(!x || !x.o) return;
+  var sel = b.__sel; if(sel.value !== x.o.value){ sel.value = x.o.value; sel.dispatchEvent(new Event('input', {bubbles: true})); sel.dispatchEvent(new Event('change', {bubbles: true})); }
+  if(document.body.contains(b)) syncPick(b); closePick();
+}
+document.addEventListener('input', function(e){
+  if(e.target.id !== 'pkq') return; var q = e.target.value.trim().toLowerCase(), w = $('#pickwrap'); if(!w) return; var shown = 0;
+  $$('.pkopt', w).forEach(function(o){ var hit = !q || o.getAttribute('data-s').indexOf(q) > -1; o.hidden = !hit; if(hit) shown++; });
+  $$('.pkg', w).forEach(function(g){ var nx = g.nextElementSibling, any = false; while(nx && !nx.classList.contains('pkg')){ if(nx.classList.contains('pkopt') && !nx.hidden) any = true; nx = nx.nextElementSibling; } g.hidden = !any; });
+  var em = $('.pkempty', w); if(em) em.hidden = shown > 0;
+});
+
+/* =====================================================================
+   v7.7 — news: full-page reader inside the app (whole article, never cut)
+   ===================================================================== */
+S.nread = null; S.nart = {};
+function openReader(id){
+  var n = newsById(id); if(!n) return; S.nread = id; S.newsSheet = null; var sh = $('#nsheet'); if(sh) sh.innerHTML = '';
+  var w = $('#nreader'); if(!w){ w = document.createElement('div'); w.id = 'nreader'; document.body.appendChild(w); }
+  document.body.classList.add('readmode'); w.innerHTML = readerHTML(); w.scrollTop = 0;
+  try{ history.pushState({nread: id}, '', location.href); }catch(e){}
+  if(!S.nart[id]){
+    S.nart[id] = {busy: true}; patchReader();
+    fetch('/api/article?url=' + encodeURIComponent(n.url)).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; })
+      .then(function(a){ S.nart[id] = {text: String((a && a.text) || '')}; patchReader(); });
+  }
+}
+function closeReader(fromPop){ var w = $('#nreader'); if(w) w.remove(); document.body.classList.remove('readmode'); var was = S.nread; S.nread = null; if(!fromPop){ try{ if(history.state && history.state.nread) history.back(); }catch(e){} } if(was){ var el = document.getElementById('n-' + was); if(el && route().v === 'news') el.scrollIntoView({block: 'start'}); } }
+window.addEventListener('popstate', function(){ if(S.nread) closeReader(true); });
+function paras(txt){ return String(txt).split(/\n{1,}/).map(function(p){ return p.trim(); }).filter(function(p){ return p.length > 1; }); }
+function readerHTML(){
+  var id = S.nread, n = id && newsById(id); if(!n) return '';
+  var a = S.nart[id] || {}, ai = S.newsAI[id], spk = S.speakingId === 'nread' + id;
+  var body = a.busy ? loadBox(t('nr_loading'), 6) : (a.text && a.text.length > 200 ? paras(a.text).map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('') : (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') + '<div class="note" style="margin-top:12px">' + I('info') + esc(t('nr_short')) + '</div>');
+  return '<div class="nrbar"><button type="button" class="xbtn" data-act="nrclose" aria-label="' + esc(t('back')) + '">' + I('arrowl') + '</button><b>' + esc(n.source) + '</b><button type="button" class="xbtn" data-act="newsshare" data-v="' + esc(id) + '" aria-label="' + esc(t('share')) + '">' + I('share') + '</button></div>' +
+    '<article class="nrart">' + (n.image ? '<div class="nrimg">' + imgTag(sized(n.image, 1280)) + '</div>' : '') +
+    '<div class="nrin"><span class="rcat" style="background:' + (NEWSCOL[n.cat] || NEWSCOL.other) + '">' + esc(t('nc_' + n.cat)) + '</span><h1>' + esc(n.title) + '</h1><p class="nrmeta">' + esc(n.source) + ' · ' + esc(ago(n.date)) + '</p>' +
+    '<div class="nracts">' + (S.sample ? '<button class="btn bp bsm" data-act="nrai" data-v="' + esc(id) + '">' + I('spark') + esc(t('news_ai_btn2')) + '</button>' : '') + (S.tts ? '<button class="btn bs bsm" data-act="speak" data-v="nread' + esc(id) + '">' + I(spk ? 'stop' : 'vol') + esc(spk ? t('stop') : t('listen')) + '</button>' : '') + '</div>' +
+    '<div id="nrai">' + nrAI(id) + '</div><div class="nrbody">' + body + '</div>' +
+    '<a class="btn bs" style="margin-top:18px;width:100%" href="' + esc(n.url) + '" target="_blank" rel="noopener">' + esc(t('nr_orig', {s: n.source})) + I('ext') + '</a><div class="nrend">' + I('check') + esc(t('nr_end')) + '</div></div></article>';
+}
+function nrAI(id){ var ai = S.newsAI[id]; if(!ai) return ''; return '<div class="nraibox"><b>' + I('spark') + esc(t('news_ai_s')) + '</b><div class="md">' + (ai.text ? md(ai.text) : '') + (ai.busy ? '<div class="load" style="padding:4px 0"><span class="spin"></span>' + (ai.text ? '' : esc(t('thinking'))) + '</div>' : '') + (ai.err ? '<div class="note r">' + I('alert') + esc(ai.err) + '</div>' : '') + '</div></div>'; }
+function patchReader(){ var w = $('#nreader'); if(!w || !S.nread) return; var st = w.scrollTop; w.innerHTML = readerHTML(); w.scrollTop = st; }
+
+/* =====================================================================
+   v7.7 — "Install app / Continue on web" screen (first visit, then every 7 days, never once installed)
+   ===================================================================== */
+function gateDue(){ if(isStandalone() || location.protocol === 'file:' || /[?&]nogate\b/.test(location.search)) return false; var at = lsGet('gateAt', 0); return !at || Date.now() - at > 7 * 86400000; }
+function platform(){ var ua = navigator.userAgent || ''; if(/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios'; if(/Android/i.test(ua)) return 'android'; return 'desktop'; }
+function gateHTML(steps){
+  var p = platform();
+  return '<div class="gate" role="dialog" aria-modal="true" aria-labelledby="gth"><div class="gbox"><div class="glang">' + [['mr','मरा'],['hi','हिं'],['en','EN']].map(function(l){ return '<button type="button" data-act="gatelang" data-v="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="gicon"><img src="/icon-192.png" alt="" width="84" height="84"></div><h1 id="gth">' + esc(t('app')) + '</h1><p class="gsub">' + esc(t('g_sub')) + '</p>' +
+    '<ul class="gfeat"><li>' + I('scan') + esc(t('g_f1')) + '</li><li>' + I('shield') + esc(t('g_f2')) + '</li><li>' + I('cal') + esc(t('g_f3')) + '</li><li>' + I('globe') + esc(t('g_f4')) + '</li></ul>' +
+    (steps ? '<div class="gsteps"><b>' + esc(t('g_how')) + '</b><ol>' + (p === 'ios' ? '<li>' + esc(t('g_ios1')) + '</li><li>' + esc(t('g_ios2')) + '</li><li>' + esc(t('g_ios3')) + '</li>' : (p === 'android' ? '<li>' + esc(t('g_and1')) + '</li><li>' + esc(t('g_and2')) + '</li><li>' + esc(t('g_and3')) + '</li>' : '<li>' + esc(t('g_desk1')) + '</li><li>' + esc(t('g_desk2')) + '</li>')) + '</ol></div>' : '') +
+    '<button type="button" class="btn bp glg" data-act="gateinstall">' + I('download') + esc(t('g_install')) + '</button><button type="button" class="btn bs glg" data-act="gateweb">' + I('globe') + esc(t('g_web')) + '</button><p class="xs mu2" style="margin:10px 0 0;text-align:center">' + esc(t('g_note')) + '</p></div></div>';
+}
+function showGate(steps){ var g = $('#gatewrap'); if(!g){ g = document.createElement('div'); g.id = 'gatewrap'; document.body.appendChild(g); } g.innerHTML = gateHTML(steps); document.body.classList.add('gated'); }
+function hideGate(){ var g = $('#gatewrap'); if(g) g.remove(); document.body.classList.remove('gated'); lsSet('gateAt', Date.now()); }
+function gateInstall(){ if(installEvt){ var ev = installEvt; ev.prompt(); (ev.userChoice || Promise.resolve({})).then(function(c){ if(c && c.outcome === 'accepted'){ installEvt = null; hideGate(); } else showGate(false); }); return; } showGate(true); var s = $('.gsteps'); if(s) s.scrollIntoView({block: 'center', behavior: 'smooth'}); }
+window.addEventListener('appinstalled', function(){ lsSet('gateAt', Date.now()); var g = $('#gatewrap'); if(g){ g.remove(); document.body.classList.remove('gated'); } });
+
+/* ---------- v7.7 click / change handlers ---------- */
+document.addEventListener('click', function(e){
+  var pb = e.target.closest && e.target.closest('.pkbtn'); if(pb){ e.preventDefault(); openPick(pb); return; }
+  var el = e.target.closest && e.target.closest('[data-act]'); if(!el) return;
+  var a = el.getAttribute('data-act'), v = el.getAttribute('data-v'), k = el.getAttribute('data-k'), cc = el.getAttribute('data-c');
+  switch(a){
+    case 'pkclose': closePick(); break;
+    case 'pkpick': pickChoose(v); break;
+    case 'plrun': planRun(v); break;
+    case 'pladd': planSheet(v, null); break;
+    case 'pledit': planSheet(v, k); break;
+    case 'plsave': planSave(v, k); break;
+    case 'pldel': planDel(v, k); break;
+    case 'pldone': planToggle(v, k); break;
+    case 'plnote': noteSheet(v, k); break;
+    case 'plnotesave': noteSave(v, k); break;
+    case 'plf': S.planF = v; softRender(); break;
+    case 'pltoday': planGoToday(); break;
+    case 'pldonetoggle': S.planDone = !S.planDone; break;
+    case 'plmode': var pc = clone(cyc(v)); if(pc){ pc.plan = pc.plan || {at: 0, lang: S.lang, items: []}; pc.plan.mode = k; writeCycle(pc); softRender(); } break;
+    case 'stgedit': stageSheet(v); break;
+    case 'stgsave': stageSave(v); break;
+    case 'stgreset': stageReset(v); break;
+    case 'pdopen': e.preventDefault(); pdSheet(cc, k, v); break;
+    case 'pdretry': pdRun(cc, k, v, true); break;
+    case 'prday': S.prDay = +v || 0; prPatch(); break;
+    case 'prthr': S.prOpen[v] = !S.prOpen[v]; prPatch(); break;
+    case 'prtick': S.prUI.tick[v] = !S.prUI.tick[v]; prUISave(); el.classList.toggle('on'); el.setAttribute('aria-pressed', !!S.prUI.tick[v]); break;
+    case 'prseen':
+      S.prUI.seen[v] = S.prUI.seen[v] === k ? '' : k; prUISave();
+      if(S.prUI.seen[v] === 'yes' && cc){ var sc = clone(cyc(cc)); if(sc){ sc.log = (sc.log || []).concat([{id: uid('r'), date: isoDate(today0()), act: 'scout', note: t('pr_log_seen', {n: el.getAttribute('data-n') || ''})}]); writeCycle(sc); toast(t('pr_logged')); } }
+      prPatch(); break;
+    case 'pradd': var ac = cyc(cc), rr = ac && prGet(ac), rk = rr && rr.data && rr.data.risks && rr.data.risks[+v];
+      if(rk){ var todayOff = Math.max(0, cycInfo(ac).day - 1), plusD = dayWindows(0).wins.length ? 0 : 1; if(planAddQuick(cc, {day: todayOff + plusD, type: 'spray', title: rk.name, detail: rk.organic || rk.chemical || '', dose: rk.organic && rk.chemical ? rk.chemical : ''})) prPatch(); } break;
+    case 'yupdref': yUpdLoad(true); break;
+    case 'yupdall': S.yupdAll = !S.yupdAll; yUpdPatch(); break;
+    case 'orgk': S.orgK = v; softRender(); break;
+    case 'orgai': orgAIRun(); break;
+    case 'orgopen': S.openRecipe = v; S.orgK = 'all'; S.orgQ = ''; render(); setTimeout(function(){ var r = document.getElementById('rc-' + v); if(r) r.scrollIntoView({block: 'start', behavior: reduceMotion() ? 'auto' : 'smooth'}); }, 60); break;
+    case 'orgadd': var rc = RECIPES.filter(function(x){ return x.id === v; })[0], oc = cyc(cc); if(rc && oc){ var kk = recKind(rc); planAddQuick(cc, {day: Math.max(0, cycInfo(oc).day), type: kk === 'pest' || kk === 'disease' ? 'spray' : 'organic', title: L(rc.n), detail: L(rc.purpose), dose: L(rc.use).slice(0, 160)}); } break;
+    case 'nread': e.preventDefault(); openReader(v); break;
+    case 'nrclose': closeReader(false); break;
+    case 'nrai': var ex = S.newsAI[v]; if(!(ex && (ex.busy || ex.text))) runNewsAI(v); S.newsSheet = null; var shh = $('#nsheet'); if(shh) shh.innerHTML = ''; patchReader(); setTimeout(function(){ var b = $('#nrai'); if(b) b.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }, 50); break;
+    case 'chatdetail': var src = S.chat[+v - 1]; if(src && src.role === 'user') sendChat(t('chat_detail_q'), true); break;
+    case 'gateinstall': gateInstall(); break;
+    case 'gateweb': hideGate(); break;
+    case 'gatelang': S.lang = v; lsSet('lang', v); document.documentElement.lang = v; render(); showGate(!!$('.gsteps')); break;
+  }
+});
+document.addEventListener('input', function(e){
+  if(e.target.getAttribute && e.target.getAttribute('data-act') === 'orgq'){ S.orgQ = e.target.value; var q = S.orgQ.toLowerCase(); var list = RECIPES.filter(function(r){ return (S.orgK === 'all' || recKind(r) === S.orgK) && (!q || (r.n.en + ' ' + r.n.hi + ' ' + r.n.mr + ' ' + L(r.purpose)).toLowerCase().indexOf(q) > -1); }); var ol = $('#orglist'); if(ol) ol.innerHTML = orgList(list); }
+});
+document.addEventListener('keydown', function(e){ if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('pltx') && e.target.getAttribute('data-act')){ e.preventDefault(); e.target.click(); return; } if(e.key === 'Escape'){ if($('#pickwrap')){ closePick(); e.stopPropagation(); } else if(S.nread) closeReader(false); } }, true);
+
 /* ---------- boot ---------- */
 S.calc = {};
 render();
@@ -1533,7 +2656,10 @@ initCaps();
 window.addEventListener('resize', function(){ if(route().v === 'news'){ var rr = $('#reels'), i = reelIndex(); sizeReels(); if(rr) rr.scrollTop = i * rr.clientHeight; } });
 document.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.target && e.target.id === 'placeq'){ e.preventDefault(); searchPlace(e.target.value); return; } if(route().v !== 'news' || $('#modalwrap') || /INPUT|SELECT|TEXTAREA/.test((e.target || {}).tagName || '')) return; if(e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'j'){ e.preventDefault(); reelScrollTo(reelIndex() + 1); } if(e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'k'){ e.preventDefault(); reelScrollTo(Math.max(0, reelIndex() - 1)); } });
 loadCropImgs();
+photoLoadAll();
 applyBigText();
 loadWx(false);
+offBanner();
+setTimeout(function(){ if(gateDue()) showGate(false); }, 400); loadLib();
 
 })();

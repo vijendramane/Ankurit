@@ -1,6 +1,6 @@
 {
   "name": "ankurit",
-  "version": "5.0.0",
+  "version": "7.8.0",
   "description": "Ankurit (अंकुरित) — AI farming companion for Indian farmers. Marathi, Hindi, English.",
   "main": "server.js",
   "scripts": {

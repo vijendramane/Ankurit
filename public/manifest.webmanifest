@@ -1,9 +1,90 @@
 {
-  "name": "Ankurit — AI farming companion",
-  "short_name": "Ankurit",
-  "start_url": "/",
+  "id": "/",
+  "name": "Ankurit",
+  "short_name": "अंकुरित",
+  "description": "AI farming companion for Indian farmers — crop doctor, crop guardian, market prices, schemes and weather in Marathi, Hindi and English.",
+  "lang": "mr",
+  "start_url": "/#home",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F4F5EF",
   "theme_color": "#14532F",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "categories": [
+    "productivity",
+    "utilities",
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "पीक डॉक्टर",
+      "short_name": "Crop doctor",
+      "url": "/#scan",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "पीक रक्षक",
+      "short_name": "Crop guardian",
+      "url": "/#rakshak",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "माझी पिके",
+      "short_name": "My crops",
+      "url": "/#farm",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "योजना",
+      "short_name": "Schemes",
+      "url": "/#yojana",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

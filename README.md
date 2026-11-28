@@ -6,6 +6,51 @@
 
 ---
 
+## What's new in v7.8
+
+- **News, fixed for good:** the news page is now a full-screen stage sized by the browser itself (no app header, nothing measured in code), so the bottom can never fall off the screen — on phones, tablets, laptops and the installed desktop app. Each card shows up to 3 lines of headline and 3 lines of summary; on smaller screens the summary shrinks first, so the source line and "पूर्ण बातमी वाचा" are always visible. Tested on 7 screen sizes with very long headlines.
+- **Sharper news photos:** the server now asks ABP, Maharashtra Times/TOI, NDTV, Zee, Hindustan Times, Loksatta, Sakal/Agrowon and others for their large (1200 px) images.
+- **Farming news only:** off-topic stories (lifestyle, film, etc.) are dropped unless they mention farming.
+- **Home:** बातम्या moved below आगामी शेतीकामे.
+- **AI वेळापत्रक as a flow chart** like आढावा: growth stages are milestones, tasks hang under them. Tap a date to change it, tick "पूर्ण करा", 📝 note, ✏️ edit. Progress bar and "आजच्या कामावर जा" button.
+
+## What's new in v7.7
+
+- **AI वेळापत्रक (AI crop schedule)** — new tab in every crop: day-by-day spraying, irrigation, fertiliser, organic inputs, weeding, field checks and harvest, made for the crop, variety, sowing date, place, soil test and 7-day weather. Integrated or organic-only. Every task can be edited, deleted or added; tick when done (adds a diary entry); 📝 note on each task. Due tasks show on the home screen and in Crop Guardian.
+- **पीक वेळापत्रक editable** — change stage dates and the harvest window (✏️ बदला); everything else follows.
+- **पीक रक्षक rebuilt** — one clear "today" decision (spray yes/no with safe hours), risk ring per crop, tap-to-open threats with photo, "do you see this in your field?" check (saves to diary), organic + chemical remedy, add-to-schedule, 7-day tappable forecast, planned sprays checked against weather.
+- **Pest & disease photos** — tap any pest/disease on a crop page for photos + simple AI explanation (how to recognise, prevention, organic, chemical).
+- **योजना updates** — "New scheme updates" card: new, open, upcoming, deadline, instalment — only from a live Google Search with official links (never from AI memory).
+- **Ankur AI chat** — short, easy replies by default; "सविस्तर अहवाल" button gives the detailed report when needed. Greeting popup removed (the button flashes once).
+- **News** — tap any story for a full-page reader inside the app (whole article, scrolls to the end); cards always keep text and buttons visible on every screen size. Fixed: on Vercel the article reader returned nothing on a cold start.
+- **जैविक** replaces बाजारभाव in the bottom bar — filters, search, AI organic plan for your crops, add a recipe to a crop's schedule.
+- **Market prices hidden for now** — all code kept. To bring it back set `var FEATURES = {market: true};` in `public/js/app.js`.
+- **New dropdowns everywhere** — searchable sheet with crop photos and groups.
+- **Install screen** — first visit (then every 7 days, never after install): "Install app" or "Continue on web", with exact steps for Android, iPhone and computer.
+- Still exactly **12 Vercel functions**. No new environment variables.
+
+## Adding your own photos (no coding)
+
+| What | Folder | File name |
+|---|---|---|
+| Crop photo | `public/img/crops/` | `<cropId>.jpg` e.g. `onion.jpg` |
+| Pest (किडी) | `public/img/pests/` | `<pestId>.jpg` e.g. `thrips.jpg` |
+| Disease (रोग) | `public/img/diseases/` | `<diseaseId>.jpg` e.g. `purpleblotch.jpg` |
+| Only for one crop | same folder | `<cropId>-<id>.jpg` e.g. `onion-thrips.jpg` |
+| More photos | same folder | add `-2`, `-3` … e.g. `thrips-2.jpg` |
+
+The full list of every crop, pest and disease file name is in **`public/img/PHOTO-NAMES.txt`**. Allowed: .jpg .jpeg .png .webp. Keep each photo under ~400 KB (about 1200×900). Then `git add`, `git commit`, `git push` — Vercel picks them up automatically.
+
+## What's new in v7 — smooth, glassy, never stuck
+
+- **Glass look, same theme:** frosted header, bottom bar and sheets; deeper hero; soft-glass cards; smooth page transitions; press feedback; images fade in; skeleton loaders.
+- **Works offline:** service worker (`public/sw.js`). The app opens without internet and shows the last saved weather, market prices and news, with a clear banner. When the internet returns, the data refreshes automatically.
+- **Never stuck:** every network call has a timeout and one automatic retry. Every screen shows a clear error and a retry button instead of an endless spinner. Pages are protected so a bug shows a friendly card, never a blank screen. Damaged saved data is repaired at start.
+- **Fixed retry loops:** when weather, news or AI failed, Crop Guardian, News and the home screen could re-request forever. They now stop after one retry.
+- **Install as app:** proper PNG icons (Android, iOS), a maskable icon, shortcuts (Crop doctor, Crop guardian, Market), and an install button in settings.
+- **UX:** scroll position comes back when you press Back; bigger tap targets; one toast at a time; light vibration on main buttons (phones only).
+- Still exactly **12 Vercel functions**. No new environment variables.
+
 ## Features
 
 | Module | What it does | Needs AI key? |
@@ -174,6 +219,17 @@ After `npm start`, open **http://localhost:3000/api/ai-check** in your browser. 
 ## Deploy on Vercel
 
 See **DEPLOY-VERCEL.md** — the project includes `vercel.json` and an `api/` folder so the AI, news, weather, location and photo services run as Vercel Functions (Mumbai region). Add your keys as Environment Variables in Vercel, push to GitHub, then open `/api/ai-check`.
+
+## What's new in v6
+- **पीक रक्षक (Crop Guardian)** — for every crop in My Crops it takes the hourly 7-day Open-Meteo forecast for your exact location and works out: hours of leaf wetness (RH ≥ 90% or dew-point gap ≤ 2 °C), humid-warm hours, rain, gusts, heat/cold and thunderstorm/hail codes. It then:
+  - shows **weather alerts** (hail, heavy rain ≥ 64.5 mm/day and very heavy ≥ 115.6 mm/day as IMD defines them, gusts ≥ 50 km/h, heat ≥ 40 °C, cold ≤ 8 °C);
+  - draws a **48-hour spray window** (daylight, no rain now or in the next 4 h, wind 3–15 km/h, ≤ 32 °C);
+  - asks the AI for that crop's **disease/pest risks at its current stage**, quoting the weather numbers, with organic first and label-dose chemicals (once a day per crop, cached);
+  - gives a **72-hour crop-insurance claim helper** (steps, call 14447, ready-made loss note to share).
+- **Your own crop photo** — on any crop in My Crops tap "Add your photo" (camera or gallery). It is resized to 1600 px, kept on the phone (IndexedDB) and shown on My Crops, the crop page, tasks and Crop Guardian.
+- **HD images** — news photos are requested at 1200 px (Agrowon/Quintype, The Hindu, Google News, WordPress), small RSS thumbnails are replaced with the article's og:image, crop photos are 1280 px with smaller standard sizes used for small icons.
+- **बाजारभाव in detail** — each mandi is placed on the map by matching its town to the right district (Open-Meteo geocoding with state + district check; "≈" when only the district centre is known). Filter 25/50/100/200 km or all, sort by distance/price/latest, include neighbouring states, see every variety (min/max/modal), the real 7-day trend from the "Variety-wise daily market prices" dataset, change vs the previous report, and a district-wise summary. Correct data.gov.in filters are used (`state.keyword`, `commodity` for today; `State`, `Commodity`, `Arrival_Date` for history).
+- **योजना (Schemes)** — the farmer fills a short form (land, ownership, category, gender, age, water, income, Farmer ID, KCC, crops, needed help). The server asks Gemini **with Google Search** to check today's official sources and returns eligible schemes with benefit/amount, why it fits, documents (tick-list), steps, where to apply, official link (only .gov.in/.nic.in kept), time, cost, deadline, helpline and the **sources it used**. If live search isn't allowed for the key, the list is clearly marked "not checked today". Saved to My reports with PDF.
 
 ## What's new in v5
 - **News (full-photo reels):** one story per screen with the photo filling the screen, the headline and summary on it, and buttons on the right (सोपे / ऐका / शेअर / उघडा). The first tab, **🔥 मुख्य बातम्या**, shows the top headlines. The **अA** button changes the news language. The "simple words" answer opens in a sheet over the story; it stays there until the app is closed and is not saved in My reports. No bottom bar on News and on the full-screen chat.

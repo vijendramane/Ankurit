@@ -34,6 +34,8 @@ Vercel dashboard → your project → **Settings**:
 | `DATA_GOV_API_KEY` | needed for **बाजारभाव** (free from data.gov.in → My Account → API key) |
 | `AI_FAST` | optional, `groq` = chat answers from Groq first (fastest) |
 
+**Schemes (योजना) live check** uses Gemini's *Grounding with Google Search*. If your key's project doesn't allow it, the app still works but marks the list "not checked today". **Vercel Hobby allows 12 functions — v6 uses exactly 12 files in `api/`; don't add more.**
+
 Do **not** set `PORT` on Vercel.
 
 ## 3. Redeploy

@@ -1,0 +1,243 @@
+ANKURIT — PHOTO FILE NAMES (रोग / किडी / पिके फोटो यादी)
+=========================================================
+
+Put each photo in the folder shown, with EXACTLY this file name. Allowed: .jpg .jpeg .png .webp
+More than one photo? Add -2, -3 ... (example: thrips-2.jpg).
+Same pest looks different on one crop? Use <crop>-<pest>.jpg (example: onion-thrips.jpg) — it is used only for that crop.
+
+1) CROP PHOTOS  →  public/img/crops/
+------------------------------------
+rice.jpg                भात / Rice (Paddy)
+wheat.jpg               गहू / Wheat
+jowar.jpg               ज्वारी / Jowar (Sorghum)
+bajra.jpg               बाजरी / Bajra (Pearl millet)
+maize.jpg               मका / Maize
+ragi.jpg                नाचणी / Ragi (Finger millet)
+tur.jpg                 तूर / Tur (Pigeon pea)
+chana.jpg               हरभरा / Chana (Chickpea)
+moong.jpg               मूग / Moong (Green gram)
+urad.jpg                उडीद / Urad (Black gram)
+soybean.jpg             सोयाबीन / Soybean
+groundnut.jpg           भुईमूग / Groundnut
+mustard.jpg             मोहरी / Mustard
+sunflower.jpg           सूर्यफूल / Sunflower
+cotton.jpg              कापूस / Cotton
+sugarcane.jpg           ऊस / Sugarcane
+turmeric.jpg            हळद / Turmeric
+onion.jpg               कांदा / Onion
+tomato.jpg              टोमॅटो / Tomato
+potato.jpg              बटाटा / Potato
+brinjal.jpg             वांगी / Brinjal
+chilli.jpg              मिरची / Chilli
+okra.jpg                भेंडी / Okra (Bhindi)
+banana.jpg              केळी / Banana
+pomegranate.jpg         डाळिंब / Pomegranate
+vari.jpg                वरई (वरी) / Vari (Little millet)
+matki.jpg               मटकी / Matki (Moth bean)
+chavali.jpg             चवळी / Chavali (Cowpea)
+kulith.jpg              कुळीथ (हुलगा) / Kulith (Horse gram)
+masoor.jpg              मसूर / Masoor (Lentil)
+pavta.jpg               पावटा (वाल) / Pavta / Wal (Field bean)
+rajma.jpg               राजमा / Rajma (Kidney bean)
+safflower.jpg           करडई / Safflower (Kardai)
+sesame.jpg              तीळ / Sesame (Til)
+niger.jpg               कारळे / Niger (Karale)
+linseed.jpg             जवस / Linseed (Jawas)
+castor.jpg              एरंडी / Castor
+mulberry.jpg            तुती (रेशीम शेती) / Mulberry (for silkworm)
+betel.jpg               खाऊचे पान (नागवेल) / Betel leaf (Paan)
+arecanut.jpg            सुपारी / Areca nut (Supari)
+garlic.jpg              लसूण / Garlic
+ginger.jpg              आले / Ginger
+blackpepper.jpg         मिरी / Black pepper (Miri)
+cabbage.jpg             कोबी / Cabbage
+cauliflower.jpg         फुलकोबी / Cauliflower
+capsicum.jpg            ढोबळी मिरची / Capsicum (Shimla mirch)
+cucumber.jpg            काकडी / Cucumber (Kakdi)
+bottlegourd.jpg         दुधी भोपळा / Bottle gourd (Dudhi)
+bittergourd.jpg         कारले / Bitter gourd (Karle)
+ridgegourd.jpg          दोडका / Ridge gourd (Dodka)
+spongegourd.jpg         घोसाळे / Sponge gourd (Ghosale)
+snakegourd.jpg          पडवळ / Snake gourd (Padval)
+pumpkin.jpg             लाल भोपळा (डांगर) / Pumpkin (Lal bhopla)
+ivygourd.jpg            तोंडली / Ivy gourd (Tondli)
+drumstick.jpg           शेवगा / Drumstick (Shevga / Moringa)
+clusterbean.jpg         गवार / Cluster bean (Gavar)
+frenchbean.jpg          फरसबी (श्रावण घेवडा) / French bean (Farasbi)
+ghevada.jpg             घेवडा (वालपापडी) / Indian bean (Ghevada / Walpapdi)
+peas.jpg                वाटाणा / Green peas (Vatana)
+carrot.jpg              गाजर / Carrot
+radish.jpg              मुळा / Radish (Mula)
+beetroot.jpg            बीट / Beetroot
+sweetpotato.jpg         रताळे / Sweet potato (Ratale)
+colocasia.jpg           अळू / Colocasia / Taro (Alu)
+suran.jpg               सुरण / Elephant foot yam (Suran)
+methi.jpg               मेथी / Fenugreek (Methi)
+palak.jpg               पालक / Spinach (Palak)
+kothimbir.jpg           कोथिंबीर / Coriander (Kothimbir)
+shepu.jpg               शेपू / Dill (Shepu)
+lalmath.jpg             लाल माठ / Amaranth (Lal math)
+ambadi.jpg              अंबाडी / Roselle leaves (Ambadi)
+mint.jpg                पुदिना / Mint (Pudina)
+curryleaf.jpg           कढीपत्ता / Curry leaf (Kadipatta)
+mango.jpg               आंबा (हापूस / केशर) / Mango (Hapus / Kesar)
+lime.jpg                कागदी लिंबू / Lime (Kagzi limbu)
+chiku.jpg               चिकू / Sapota (Chiku)
+guava.jpg               पेरू / Guava (Peru)
+custardapple.jpg        सीताफळ / Custard apple (Sitaphal)
+grapes.jpg              द्राक्ष / Grapes
+orange.jpg              संत्रा (नागपुरी) / Nagpur orange (Santra)
+mosambi.jpg             मोसंबी / Sweet lime (Mosambi)
+fig.jpg                 अंजीर / Fig (Anjeer)
+cashew.jpg              काजू / Cashew (Kaju)
+coconut.jpg             नारळ / Coconut (Naral)
+jackfruit.jpg           फणस / Jackfruit (Phanas)
+kokum.jpg               कोकम (रातांबा) / Kokum (Ratamba)
+jamun.jpg               जांभूळ / Jamun
+ber.jpg                 बोर / Ber (Bor)
+amla.jpg                आवळा / Amla (Indian gooseberry)
+tamarind.jpg            चिंच / Tamarind (Chinch)
+watermelon.jpg          कलिंगड / Watermelon (Kalingad)
+muskmelon.jpg           खरबूज / Muskmelon (Kharbuj)
+marigold.jpg            झेंडू / Marigold (Zendu)
+rose.jpg                गुलाब / Rose (Gulab)
+shevanti.jpg            शेवंती / Chrysanthemum (Shevanti)
+tuberose.jpg            निशिगंध / Tuberose (Nishigandh)
+mogra.jpg               मोगरा / Jasmine (Mogra)
+aster.jpg               ॲस्टर / China aster
+lucerne.jpg             लसूण घास / Lucerne (Lasun ghas)
+napier.jpg              संकरित नेपियर गवत / Hybrid Napier grass
+dragonfruit.jpg         ड्रॅगन फ्रूट (कमलम) / Dragon fruit (Kamalam)
+avocado.jpg             ॲव्होकॅडो / Avocado
+strawberry.jpg          स्ट्रॉबेरी / Strawberry
+broccoli.jpg            ब्रोकोली / Broccoli
+ccapsicum.jpg           रंगीत ढोबळी मिरची / Coloured capsicum
+cherrytomato.jpg        चेरी टोमॅटो / Cherry tomato
+zucchini.jpg            झुकिनी / Zucchini
+lettuce.jpg             आइसबर्ग लेट्यूस / Iceberg lettuce
+quinoa.jpg              किनोआ / Quinoa
+chia.jpg                चिया / Chia seed
+kiwi.jpg                किवी / Kiwi
+blueberry.jpg           ब्लूबेरी / Blueberry
+passionfruit.jpg        पॅशन फ्रूट / Passion fruit
+saffron.jpg             केशर / Saffron
+mushroom.jpg            ऑयस्टर मशरूम (अळिंबी) / Oyster mushroom
+papaya.jpg              तैवान पपई (रेड लेडी) / Taiwan papaya (Red Lady)
+datepalm.jpg            खजूर / Date palm (Khajur)
+sweetcorn.jpg           स्वीट कॉर्न / Sweet corn
+
+2) PEST (किडी) PHOTOS  →  public/img/pests/
+--------------------------------------------
+stemborer.jpg           खोडकिडा / Stem borer   — भात, ज्वारी, मका, नाचणी, स्वीट कॉर्न
+bph.jpg                 तपकिरी तुडतुडे / Brown planthopper   — भात
+leaffolder.jpg          पाने गुंडाळणारी अळी / Leaf folder   — भात
+aphid.jpg               मावा / Aphids   — गहू, नाचणी, भुईमूग, मोहरी, बटाटा, केळी
+termite.jpg             वाळवी / Termites   — गहू, सुरण, संकरित नेपियर गवत
+shootfly.jpg            खोडमाशी / Shoot fly   — ज्वारी, बाजरी, वरई (वरी)
+faw.jpg                 लष्करी अळी / Fall armyworm   — ज्वारी, मका, स्वीट कॉर्न
+whitegrub.jpg           हुमणी / White grub   — बाजरी, भुईमूग, ऊस, सुपारी, आले
+podborer.jpg            घाटे/शेंगा अळी (हेलिकोव्हर्पा) / Pod / fruit borer (Helicoverpa)   — तूर, हरभरा, उडीद, सूर्यफूल, मटकी, चवळी
+podfly.jpg              शेंगमाशी / Pod fly   — तूर, चवळी, शेवगा, घेवडा (वालपापडी)
+cutworm.jpg             कटवर्म अळी / Cutworm   — हरभरा, बटाटा, वरई (वरी), मसूर, कारळे, गाजर
+whitefly.jpg            पांढरी माशी / Whitefly   — मूग, उडीद, कापूस, टोमॅटो, वांगी, भेंडी
+thrips.jpg              फुलकिडे / Thrips   — मूग, कापूस, कांदा, मिरची, केळी, डाळिंब
+jassid.jpg              तुडतुडे / Jassids (leafhopper)   — सूर्यफूल, कापूस, वांगी, भेंडी, मटकी, तीळ
+girdle.jpg              चक्रीभुंगा / Girdle beetle   — सोयाबीन
+spodoptera.jpg          पाने खाणारी अळी (स्पोडोप्टेरा) / Tobacco caterpillar (Spodoptera)   — सोयाबीन, कोबी, फुलकोबी, रताळे, अळू, पालक
+stemfly.jpg             खोडमाशी / Stem fly   — सोयाबीन, राजमा, फरसबी (श्रावण घेवडा)
+leafminer.jpg           पाने पोखरणारी अळी / Leaf miner   — भुईमूग, टोमॅटो, दोडका, वाटाणा, बीट, मेथी
+pinkbollworm.jpg        गुलाबी बोंडअळी / Pink bollworm   — कापूस
+shootborer.jpg          खोडकिडा / Shoot borer   — ऊस, हळद, आले, फणस
+woollyaphid.jpg         लोकरी मावा / Woolly aphid   — ऊस
+rhizomescale.jpg        कंदावरील खवले कीड / Rhizome scale   — हळद, आले
+fruitborer.jpg          फळ पोखरणारी अळी / Fruit borer   — टोमॅटो, मिरची, ढोबळी मिरची, बोर, चिंच, चेरी टोमॅटो
+tubermoth.jpg           बटाटा कंद पतंग / Potato tuber moth   — बटाटा
+sfborer.jpg             शेंडा व फळ पोखरणारी अळी / Shoot & fruit borer   — वांगी, भेंडी
+mites.jpg               कोळी / Mites   — मिरची, डाळिंब, खाऊचे पान (नागवेल), सुपारी, लसूण, ढोबळी मिरची
+weevil.jpg              कंद भुंगा / Rhizome weevil   — केळी, रताळे, नारळ, खजूर
+anarbutterfly.jpg       डाळिंब फुलपाखरू (फळ पोखरणारी अळी) / Anar butterfly (fruit borer)   — डाळिंब
+shothole.jpg            खोड भुंगेरा / Shot-hole borer   — डाळिंब
+mangohopper.jpg         आंब्यावरील तुडतुडे / Mango hopper   — आंबा (हापूस / केशर)
+citruspsylla.jpg        सिट्रस सायला / Citrus psylla   — कढीपत्ता, कागदी लिंबू, संत्रा (नागपुरी), मोसंबी
+citrusbutterfly.jpg     लिंबावरील फुलपाखराची अळी / Lemon butterfly caterpillar   — कागदी लिंबू
+redpumpkinbeetle.jpg    लाल भुंगेरे (लाल भोपळा भुंगा) / Red pumpkin beetle   — काकडी, दुधी भोपळा, कारले, दोडका, घोसाळे, पडवळ
+fleabeetle.jpg          उडद्या भुंगेरे (फ्ली बीटल) / Flea beetle   — मुळा, द्राक्ष
+leafwebber.jpg          पाने गुंडाळणारी अळी / Leaf webber / roller   — तीळ, लाल माठ, चिकू, जांभूळ
+hairycaterpillar.jpg    केसाळ अळी / Hairy caterpillar   — शेवगा
+barkeater.jpg           साल खाणारी अळी / Bark-eating caterpillar   — शेवगा, पेरू, आवळा
+budborer.jpg            कळी पोखरणारी अळी / Bud borer   — चिकू, झेंडू, मोगरा
+teamosquito.jpg         ढेकण्या (टी मॉस्किटो बग) / Tea mosquito bug   — काजू
+stemrootborer.jpg       खोड व मूळ पोखरणारा भुंगा / Stem & root borer   — काजू
+rhinobeetle.jpg         गेंड्या भुंगा / Rhinoceros beetle   — नारळ
+fruitpiercing.jpg       फळातील रस शोषणारा पतंग / Fruit-sucking moth   — संत्रा (नागपुरी), मोसंबी
+nematode.jpg            मूळगाठ सूत्रकृमी / Root-knot nematode   — निशिगंध
+capsulefly.jpg          बोंडमाशी / Capsule fly   — करडई
+budfly.jpg              कळीमाशी / Bud fly   — जवस
+semilooper.jpg          उंटअळी / Semilooper   — एरंडी
+capsuleborer.jpg        बोंड पोखरणारी अळी / Capsule borer   — एरंडी
+pollubeetle.jpg         पोलू भुंगा / Pollu beetle   — मिरी
+mealybug.jpg            पिठ्या ढेकूण / Mealybug   — तुती (रेशीम शेती), खाऊचे पान (नागवेल), मिरी, तोंडली, सुरण, अंबाडी
+fruitfly.jpg            फळमाशी / Fruit fly   — काकडी, दुधी भोपळा, कारले, दोडका, घोसाळे, पडवळ
+dbm.jpg                 चौकोनी ठिपक्यांचा पतंग / Diamondback moth   — कोबी, फुलकोबी, मुळा, ब्रोकोली
+mushfly.jpg             अळिंबीवरील माशी / Mushroom flies (sciarid)   — ऑयस्टर मशरूम (अळिंबी)
+rodent.jpg              उंदीर / साळिंदर / Rodents / porcupine   — केशर
+
+3) DISEASE (रोग) PHOTOS  →  public/img/diseases/
+-------------------------------------------------
+blast.jpg               करपा (ब्लास्ट) / Blast   — भात, नाचणी
+blb.jpg                 जिवाणूजन्य करपा / Bacterial leaf blight   — भात
+sheathblight.jpg        आवरण करपा / Sheath blight   — भात
+rust.jpg                तांबेरा / Rust   — गहू, सोयाबीन, भुईमूग, वरई (वरी), चवळी, मसूर
+leafblight.jpg          पानांवरील करपा / Leaf blight   — गहू
+grainmold.jpg           दाण्यावरील बुरशी / Grain mold   — ज्वारी
+charcoalrot.jpg         खोडकूज (कोळसा कूज) / Charcoal rot   — ज्वारी, सोयाबीन, तीळ
+downymildew.jpg         केवडा / Downy mildew   — बाजरी, मका, सूर्यफूल, कोबी, फुलकोबी, काकडी
+ergot.jpg               अरगट / Ergot   — बाजरी
+turcicum.jpg            टर्सिकम करपा / Turcicum leaf blight   — मका, स्वीट कॉर्न
+wilt.jpg                मर रोग / Wilt   — तूर, हरभरा, कापूस, ऊस, डाळिंब, मसूर
+sterility.jpg           वांझ रोग / Sterility mosaic   — तूर
+dryrootrot.jpg          कोरडी मूळकूज / Dry root rot   — हरभरा
+yellowmosaic.jpg        पिवळा मोझॅक / Yellow mosaic virus   — मूग, उडीद, सोयाबीन, मटकी, चवळी, कुळीथ (हुलगा)
+powdery.jpg             भुरी / Powdery mildew   — मूग, मिरची, भेंडी, पावटा (वाल), करडई, तीळ
+leafspot.jpg            पानांवरील ठिपके / Leaf spot   — उडीद, हळद, मटकी, कारळे, तुती (रेशीम शेती), खाऊचे पान (नागवेल)
+tikka.jpg               टिक्का (पानांवरील ठिपके) / Tikka leaf spot   — भुईमूग
+collarrot.jpg           खोडकूज / Collar rot   — भुईमूग, सुरण, झेंडू, रंगीत ढोबळी मिरची, चिया, किवी
+alternaria.jpg          अल्टरनेरिया करपा / Alternaria blight   — मोहरी, सूर्यफूल, करडई, कोबी, फुलकोबी, गवार
+whiterust.jpg           पांढरा तांबेरा / White rust   — मोहरी, मुळा, लाल माठ, शेवंती
+leafcurl.jpg            चुरडा-मुरडा (पर्णगुच्छ) / Leaf curl virus   — कापूस, टोमॅटो, मिरची, ढोबळी मिरची, रंगीत ढोबळी मिरची, चेरी टोमॅटो
+bollrot.jpg             बोंडसड / Boll rot   — कापूस
+redrot.jpg              लाल कूज / Red rot   — ऊस
+smut.jpg                काणी / Smut   — ऊस, वरई (वरी)
+rhizomerot.jpg          कंदकूज / Rhizome rot   — हळद, आले, केशर
+purpleblotch.jpg        जांभळा करपा / Purple blotch   — कांदा, लसूण
+basalrot.jpg            बुडकूज / Basal rot   — कांदा, लसूण
+earlyblight.jpg         लवकर येणारा करपा / Early blight   — टोमॅटो, बटाटा, चेरी टोमॅटो
+lateblight.jpg          उशिरा येणारा करपा / Late blight   — टोमॅटो, बटाटा, चेरी टोमॅटो
+bacterialwilt.jpg       जिवाणूजन्य मर / Bacterial wilt   — टोमॅटो, वांगी, आले
+littleleaf.jpg          पर्णगुच्छ (लहान पान) / Little leaf   — वांगी
+anthracnose.jpg         फांदीमर (अँथ्रॅकनोज) / Anthracnose / die-back   — मिरची, चवळी, कुळीथ (हुलगा), राजमा, खाऊचे पान (नागवेल), सुपारी
+yvmv.jpg                पिवळा शिरा मोझॅक / Yellow vein mosaic   — भेंडी
+panama.jpg              पनामा मर / Panama wilt   — केळी
+sigatoka.jpg            सिगाटोका करपा / Sigatoka leaf spot   — केळी
+bunchytop.jpg           बंची टॉप (पर्णगुच्छ) / Bunchy top virus   — केळी
+oilyspot.jpg            तेलकट डाग रोग / Bacterial blight (oily spot)   — डाळिंब
+fruitspot.jpg           फळावरील ठिपके / Fruit spot   — डाळिंब
+canker.jpg              खैरा (कॅन्कर) / Canker   — कागदी लिंबू
+gummosis.jpg            डिंक्या (गमोसिस) / Gummosis (Phytophthora)   — कागदी लिंबू, संत्रा (नागपुरी), मोसंबी
+dieback.jpg             फांदीमर (डायबॅक) / Dieback   — कागदी लिंबू, संत्रा (नागपुरी), मोसंबी, काजू, गुलाब
+greening.jpg            सिट्रस ग्रीनिंग / Citrus greening   — संत्रा (नागपुरी), मोसंबी
+malformation.jpg        आंब्याचा गुच्छ रोग / Mango malformation   — आंबा (हापूस / केशर)
+sootymould.jpg          काळी बुरशी / Sooty mould   — आंबा (हापूस / केशर), चिकू
+blackrot.jpg            काळी कूज / Black rot   — कोबी, फुलकोबी
+mosaic.jpg              मोझॅक (केवडा) / Mosaic virus   — काकडी, दुधी भोपळा, कारले, दोडका, घोसाळे, लाल भोपळा (डांगर)
+bacterialblight.jpg     जिवाणूजन्य करपा / Bacterial blight   — गवार
+rootrot.jpg             मूळकूज / Root rot   — राजमा, एरंडी, तुती (रेशीम शेती), शेवगा, बीट, मेथी
+fruitrot.jpg            फळकूज / Fruit rot   — सुपारी, पेरू, सीताफळ, फणस, आवळा
+budrot.jpg              शेंडेकूज / Bud rot   — सुपारी, नारळ
+phyllody.jpg            फायलोडी / Phyllody   — तीळ
+blackspot.jpg           काळे ठिपके / Black spot   — गुलाब
+stemrot.jpg             खोडकूज / Stem rot   — निशिगंध, ड्रॅगन फ्रूट (कमलम)
+phytophthora.jpg        फायटोफ्थोरा मुळकूज / Phytophthora root rot   — खाऊचे पान (नागवेल), मिरी, अळू, ॲव्होकॅडो, किवी, ब्लूबेरी
+greymould.jpg           करडी बुरशी (बोट्रायटिस) / Grey mould (Botrytis)   — एरंडी, स्ट्रॉबेरी
+prsv.jpg                पपई रिंग स्पॉट विषाणू / Papaya ring spot virus   — तैवान पपई (रेड लेडी)
+greenmould.jpg          हिरवी बुरशी / Green mould (Trichoderma contamination)   — ऑयस्टर मशरूम (अळिंबी)
